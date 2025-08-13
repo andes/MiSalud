@@ -1,0 +1,173 @@
+﻿@using AndesServices.Entities
+@using Microsoft.AspNetCore.Authentication.Cookies;
+@using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authentication
+@* @inject LogOutService LogOutService *@
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+@inherits LayoutComponentBase
+@using Newtonsoft.Json;
+@using Newtonsoft.Json.Linq
+@inject IConfiguration configuration;
+
+@* <NotAuthorized> *@
+
+<div class="container">
+    <div class="d-flex justify-content-center h-100">
+        <div class="card">
+            <div class="card-header">
+                <h3>Iniciar sesión</h3>
+            </div>
+            <div class="card-body">
+                <form @onsubmit="OnSubmitLogin">
+                    <div class="input-group form-group">
+                        <div class="input-group-prepend" style="margin-bottom:0.6px;">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        </div>
+                        <input id="txtUsuario" @bind="txtUsuario" type="text" class="form-control" placeholder="usuario">
+
+                    </div>
+                    <div class="input-group form-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        </div>
+                        <input id="txtPassword" @bind="txtPassword" type="password" class="form-control" placeholder="contraseña">
+                    </div>
+                    <div class="row align-items-center remember">
+                        <input type="checkbox">Recordarme
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label">
+                            <label class="badge bg-danger" style="max-width:250px;white-space:unset;">@lblResultadoLogin</label>
+                        </div>
+                        <input type="submit" value="Iniciar sesión" class="btn float-right login_btn">
+                        @* <button @onclick="sendLoginCredentials">Iniciar sesión</button> *@
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-center links">
+                    No tenés cuenta?<a href="#">Crear cuenta</a>
+                </div>
+                <div class="d-flex justify-content-center">
+                    <a href="#">Olvidaste tu contraseña?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@* <button class="btn" @onclick="Login" style="margin:10px;">Iniciar Sesión</button> *@
+@* <a aria-label="Sign in" href="~/User/LogIn(Nav)"><img role="presentation" src="icons/user.svg" /></a> *@
+@* </NotAuthorized> *@
+@code {
+
+    string txtUsuario = string.Empty;
+    string txtPassword = string.Empty;
+    Ref<string> lblResultadoLogin = string.Empty;
+
+    private IConfiguration _configuration;
+
+    private async Task OnSubmitLogin()
+    {
+        if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+
+            if (string.IsNullOrEmpty(txtUsuario) || string.IsNullOrEmpty(txtPassword))
+            {
+                return;
+            }
+            bool isLoggedIn = false;
+            //----------------------------
+            var conexionServicios = new AndesServices.Entities.ConexionServicios();
+            lblResultadoLogin = "";
+            isLoggedIn = await customAuthProvider.Login(txtUsuario, txtPassword, lblResultadoLogin);
+            
+            // _configuration = configuration;
+            // _configuration.GetSection("urlServicios").Bind(conexionServicios);
+
+            // AndesServices.Entities.User user = new AndesServices.Entities.User
+            // {
+            //     email = txtUsuario,
+            //     password = txtPassword
+            // };
+
+
+            // string url = conexionServicios.usarProd
+            //     ? conexionServicios.UrlProyectoServiciosProd + "/mobileApp/login"
+            //     : conexionServicios.UrlProyectoServiciosDemo + "/mobileApp/login";
+
+            // using (HttpClient client = new HttpClient())
+            // {
+            //     var userJson = new StringContent(JsonConvert.SerializeObject(user), System.Text.Encoding.UTF8, "application/json");
+            //     using (HttpResponseMessage res = await client.PostAsync(url, userJson))
+            //     {
+            //         if (res.IsSuccessStatusCode)
+            //         {
+            //             AndesServices.Entities.LoginResp? loginResp = await res.Content.ReadFromJsonAsync<AndesServices.Entities.LoginResp>();
+            //             if (loginResp == null || loginResp.user == null)
+            //             {
+            //                 lblResultadoLogin = "Usuario o contraseña incorrectos.";
+            //                 isLoggedIn = false;
+            //                 return;
+            //             }
+
+            //             loginResp.user.token = loginResp.token;
+
+            //             user = loginResp.user;
+            //             await customAuthProvider.MarkUserAsAuthenticated(user);
+            //             isLoggedIn = true;
+            //         }
+            //         else
+            //         {
+            //             string jsonString = await res.Content.ReadAsStringAsync();
+            //             // var errorObj = JObject.Parse(jsonString);
+            //             lblResultadoLogin = jsonString + "Usuario: " + txtUsuario + " . Password: " + txtPassword;
+            //             isLoggedIn = false;
+            //             return;
+            //         }
+            //     }
+            // }
+
+            //----------------------------
+            // isLoggedIn = await customAuthProvider.Login(txtUsuario, txtPassword);
+
+            if (isLoggedIn)
+            {
+                Nav.NavigateTo("/home", true);
+            }
+            // else
+            // {
+            //     lblResultadoLogin = "Usuario o contraseña incorrectos";
+            // }
+        }
+        else
+        {
+
+        }
+    }
+    private async Task Logout()
+    {
+        if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            await customAuthProvider.MarkUserAsLoggedOut();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            Nav.NavigateTo("/home", true);
+        }
+    }
+}
+@*@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    private Task LogOutAsync()
+        => LogOutService.LogOutAsync(HttpContext!);
+}*@

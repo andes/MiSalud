@@ -1,0 +1,69 @@
+﻿@page "/grupofamiliar"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@using SaludPortal.Web.Services
+@using AndesServices.Entities
+@inject BlazorSpinner.SpinnerService _spinnerService
+
+<h1>Mis Datos</h1>
+
+<br />
+@if (unPaciente != null)
+{
+    <div class="form-control paciente">
+        <p>DNI: @unPaciente.documento</p>
+        <p>Apellido y nombre: @unPaciente.nombreCompleto</p>
+        <p>Edad: @unPaciente.edad</p>
+        <p>Sexo: @unPaciente.sexo</p>
+        <p>Género: @unPaciente.genero</p>
+        <p>Fecha nacimiento: @unPaciente.fechaNacimiento?.ToString("dd/MM/yyyy")</p>
+    </div>
+    <p style="text-decoration:underline;margin-top:10px;"><strong>Relaciones</strong></p>
+    @if (unPaciente.relaciones != null)
+    {
+        @foreach (var relacion in unPaciente.relaciones)
+        {
+            <div class="form-control" style="box-shadow: 2px 2px 4px #000000;">
+                @if (relacion != null)
+                {
+                    <p><strong>@relacion.relacion.nombre</strong></p>
+                }
+                @if (relacion.nombre != null)
+                {
+                    <p><strong>Nombre: </strong>@relacion.apellido @relacion.nombre</p>
+                }
+            </div>
+            <hr />
+        }
+    }
+}
+
+@code {
+    private AndesServices.Entities.Paciente unPaciente = new AndesServices.Entities.Paciente();
+    private PacienteService? _pacienteService;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                await customAuthProvider.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/");
+            }
+        }
+        _pacienteService = new PacienteService(Configuration);
+
+        if (_pacienteService != null && GlobalServices.Usuario?.token != null)
+        {
+            _spinnerService.Show();
+            unPaciente = await _pacienteService.ObtenerPacientePorIdAsync(GlobalServices.Usuario.token, GlobalServices.Usuario.pacientes[0].id);
+            _spinnerService.Hide();
+        }
+    }
+}

@@ -1,0 +1,211 @@
+﻿@page "/turnosnuevo"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@inject IHttpClientFactory httpClientFactory
+@using SaludPortal.Web.Services
+@using System.Security.Claims
+@using AndesServices.Entities
+@inject BlazorSpinner.SpinnerService _spinnerService
+
+<h1>Nuevo turno</h1>
+
+<h2>Agendas disponibles</h2>
+
+@if (lstAgendas != null && lstAgendas.Count > 0)
+{
+    var tipoPrestacionIndex = 0;
+    <div class="accordion" id="accAgendas">
+        @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
+        {
+            var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
+            var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
+            var accOrgId = $"accOrganizaciones_{tipoPrestacionIndex}";
+            var organizacionIndex = 0;
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="@tipoId">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
+                        @tipoPrestaciones.term
+                    </button>
+                </h2>
+                <div id="@collapseTipoId" class="accordion-collapse collapse" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
+                    <div class="accordion-body">
+                        <div class="accordion" id="@accOrgId">
+                            @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
+                            {
+                                var orgId = $"Organizacion_{tipoPrestacionIndex}_{organizacionIndex}";
+                                var collapseOrgId = $"collapseOrg_{tipoPrestacionIndex}_{organizacionIndex}";
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="@orgId">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseOrgId" aria-expanded="true" aria-controls="@collapseOrgId">
+                                            <div>
+                                                <i class="fa fa-h-square" aria-hidden="true"></i> @efectores.Efector.nombre
+                                                <br />
+                                                <i class="fa fa-map-marker" aria-hidden="true"></i> @efectores.Domicilio
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="@collapseOrgId" class="accordion-collapse collapse" aria-labelledby="@orgId" data-bs-parent="#@accOrgId">
+                                        <div class="accordion-body">
+                                            @foreach (var bloque in RecuperarAgendas(tipoPrestaciones.id, efectores.Efector._id))
+                                            {
+                                                var turnosPorFecha = bloque.turnos
+                                                .GroupBy(t => t.horaInicio.Date)
+                                                .OrderBy(g => g.Key);
+
+                                                foreach (var grupo in turnosPorFecha)
+                                                {
+                                                    <div>
+                                                        <strong>@grupo.Key.ToString("dd/MM/yyyy") (@grupo.Count() disponibles)</strong>
+                                                        <div>
+                                                            @foreach (var turno in grupo)
+                                                            {
+                                                                <button class="btn btn-info" style="margin:3px;" title="Seleccionar"><i class="fa fa-calendar" aria-hidden="true"></i> @turno.horaInicio.ToString("HH:mm") </button>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr />
+                                organizacionIndex++;
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
+            tipoPrestacionIndex++;
+        }
+    </div>
+}
+else
+{
+    <p>No hay turnos disponibles.</p>
+}
+
+@code {
+    private List<OrganizacionAgenda> lstAgendas = new List<OrganizacionAgenda>();
+    private MisTurnosService? _misTurnosService;
+    private PacienteService? _unPacienteService;
+    private Paciente? _unPaciente = new Paciente();
+    private Direccion _direccionGeoreferencia = new Direccion();
+    private userLocation _userLocation = new userLocation();
+    private int itemForeachtipoPrestaciones;
+    private int itemForeachOrganizaciones;
+    private SaludPortal.Web.Services.OrganizacionService? _organizacionService;
+    private Organizacion organizacion = new Organizacion();
+    private Dictionary<string, string> _domiciliosOrganizaciones = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                await customAuthProvider.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/");
+            }
+        }
+
+        // Obtengo el paciente
+        _unPacienteService = new PacienteService(Configuration);
+        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(GlobalServices.Usuario.token, GlobalServices.Usuario.pacientes[0].id);
+
+        // Verifico que domicilio utilizar para referencia a las organizaciones
+        if (_unPaciente != null)
+        {
+            _direccionGeoreferencia = _unPaciente.direccion[1] != null ? _unPaciente.direccion[1] : _unPaciente.direccion[0];
+        }
+        if (_direccionGeoreferencia == null) return;
+
+        _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
+        string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
+        _userLocation = await _unPacienteService.ObtenerGeoreferenciaPacienteAsync(direccion);
+
+        if (_misTurnosService != null && GlobalServices.Usuario?.token != null)
+        {
+            _spinnerService.Show();
+            lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(GlobalServices.Usuario.token, GlobalServices.Usuario.pacientes[0].id, _userLocation);
+
+            // Obtener todos los IDs de organizaciones únicos
+            var orgIds = lstAgendas
+                .SelectMany(e => e.agendas)
+                .Select(a => a.organizacion._id)
+                .Distinct()
+                .ToList();
+
+            // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
+            _organizacionService = new OrganizacionService(Configuration, httpClientFactory);
+            foreach (var orgId in orgIds)
+            {
+                var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(GlobalServices.Usuario.token, orgId);
+                if (organizacion != null && !_domiciliosOrganizaciones.ContainsKey(orgId))
+                {
+                    // Asume que organizacion.direccion?.valor es el domicilio
+                    _domiciliosOrganizaciones[orgId] = organizacion.direccion?.valor ?? "";
+                }
+            }
+            _spinnerService.Hide();
+        }
+    }
+
+    private IEnumerable<(string term, string id)> ObtenerTipoPrestacionesDisponibles()
+    {
+        return lstAgendas?
+        .SelectMany(e => e.agendas)
+        .Where(a => a.bloques != null && a.bloques.Count > 0 && a.bloques.Any(b => b.restantesMobile > 0))
+        .SelectMany(a => (a.tipoPrestaciones ?? new List<TipoPrestacion>()))
+        .Where(tp => !string.IsNullOrWhiteSpace(tp.term))
+        .Select(tp => (term: tp.term, id: tp._id))
+        .Distinct()
+        .OrderBy(t => t)
+        ?? Enumerable.Empty<(string, string)>();
+    }
+
+    private IEnumerable<(AgendaOrganizacion Efector, string Domicilio)> ObtenerEfectores(string _idTipoPrestacion)
+    {
+        return lstAgendas?
+            .SelectMany(e => e.agendas
+                .Where(a => a.bloques != null && a.bloques.Any(b => b.restantesMobile > 0))
+                .Where(a => (a.tipoPrestaciones ?? new List<TipoPrestacion>())
+                    .Any(tp => tp!._id == _idTipoPrestacion))
+                .Select(a => (
+                    a.organizacion,
+                    _domiciliosOrganizaciones.TryGetValue(a.organizacion._id, out var domicilio) ? domicilio : ""
+                ))
+            )
+            .Where(x => x.organizacion != null)
+            .DistinctBy(x => x.organizacion!._id)
+            ?? Enumerable.Empty<(AgendaOrganizacion, string)>();
+    }
+
+    private IEnumerable<Bloque> RecuperarAgendas(string _idTipoPrestacion, string Efector)
+    {
+        return lstAgendas?
+            .SelectMany(e => e.agendas
+                    .Where(a =>
+                a.bloques != null
+                && a.organizacion?._id == Efector
+                && (a.tipoPrestaciones ?? new List<TipoPrestacion>())
+                    .Any(tp => tp._id == _idTipoPrestacion)
+                && a.bloques.Any(b =>
+                    b.restantesMobile > 0
+                    && b.turnos.Any(c => c.estado == "disponible")
+                )
+            )
+            .SelectMany(a => a.bloques
+                .Where(b =>
+                    b.restantesMobile > 0
+                    && b.turnos.Any(c => c.estado == "disponible")
+                )
+            )
+        )
+        ?? Enumerable.Empty<Bloque>();
+    }
+}

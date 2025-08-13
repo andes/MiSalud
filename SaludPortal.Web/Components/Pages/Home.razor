@@ -1,0 +1,17 @@
+﻿@page "/"
+@page "/home"
+@using AndesServices.Entities
+@rendermode InteractiveServer
+
+<PageTitle>Home</PageTitle>
+
+<h1>Bienvenido al Portal de Salud de Neuquén</h1>
+<p>Seleccione una opción del menú para continuar.</p>
+@* <p>Usuario está autenticado: @IsAuthenticated</p>
+<p> Usuario es: @usuario.nombre @usuario.apellido</p> *@
+
+@code{
+    // public AndesServices.Entities.User usuario = GlobalServices.Usuario;
+
+    // public bool IsAuthenticated => usuario != null && usuario.email.Length > 0;
+}

@@ -1,0 +1,74 @@
+﻿@page "/historiasalud"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@using SaludPortal.Web.Services
+@using AndesServices.Entities.ViewModels
+@using AndesServices.Entities
+@inject BlazorSpinner.SpinnerService _spinnerService
+
+@inject AndesServices.Entities.ViewModels.VMHistoriaSalud Model
+
+<h1>Historia de Salud</h1>
+<br />
+<div class="form-control">
+    <p>
+        Categorias:
+        <InputSelect id="categorias" @bind-Value="Model.lstCategoriasHistoriaSalud" aria-label="Seleccione una categoria">
+            <option value="">(Seleccione una categoria)</option>
+            @if (Model.lstCategoriasHistoriaSalud != null)
+            {
+                @foreach (var categoria in Model.lstCategoriasHistoriaSalud)
+                {
+                    <option value="@categoria._id">@categoria.Titulo</option>
+                }
+            }
+        </InputSelect>
+    </p>
+    <p><button class="btn btn-verde" @onclick="BuscarHistoriaSalud">Buscar</button></p>
+    </div>
+@code {
+    private VMHistoriaSalud vmHistoriaSalud = new VMHistoriaSalud();
+    private List<AndesServices.Entities.CategoriaHistoriaSalud> lstCategorias = new List<AndesServices.Entities.CategoriaHistoriaSalud>();
+    private MiHistoriaSaludService? _miHistoriaSaludService;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                await customAuthProvider.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/");
+            }
+        }
+        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration);
+        _spinnerService.Show();
+        Model.lstCategoriasHistoriaSalud = await _miHistoriaSaludService.ObtenerCategoriaHistoriaSaludAsync(GlobalServices.Usuario.token);
+        _spinnerService.Hide();
+    }
+
+    protected async Task BuscarHistoriaSalud()
+    {
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                await customAuthProvider.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/");
+            }
+        }
+
+        // _farmaciasTurnoService = new FarmaciasTurnoService(Configuration);
+        _spinnerService.Show();
+        // Model.LstFarmaciasTurno = await _farmaciasTurnoService.ObtenerFarmaciasTurnoAsync(Model.LocalidadId, Model.FechaDesde, Model.FechaHasta);
+        _spinnerService.Hide();
+    }
+
+}

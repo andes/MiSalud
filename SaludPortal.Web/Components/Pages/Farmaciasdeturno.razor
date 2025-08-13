@@ -1,0 +1,91 @@
+﻿@page "/Farmaciasdeturno"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@using SaludPortal.Web.Services
+@using AndesServices.Entities.ViewModels
+@using AndesServices.Entities
+@inject BlazorSpinner.SpinnerService _spinnerService
+
+@inject AndesServices.Entities.ViewModels.VMFarmaciasTurno Model
+
+<h1>Farmacias de turno</h1>
+<div class="form-control">
+    <p>
+        Localidad:
+        <InputSelect id="localidades" @bind-Value="Model.LocalidadId" aria-label="Seleccione una localidad">
+            <option value="">(Seleccione una localidad)</option>
+            @if (Model.LstLocalidad != null)
+            {
+                @foreach (var localidad in Model.LstLocalidad)
+                {
+                    <option value="@localidad.localidadId">@localidad.nombre</option>
+                }
+            }
+        </InputSelect>
+    </p>
+    @* <p>Fecha desde: <InputText type="date" id="fechaDesde" @bind-value="Model.FechaDesde" aria-label="Fecha desde" /></p>
+    <p>Fecha hasta: <InputText type="date" id="fechaHasta" @bind-Value="Model.FechaHasta" aria-label="Fecha hasta" /></p> *@
+
+    <p><button class="btn btn-verde" @onclick="BuscarFarmacias">Buscar</button></p>
+
+    <div>
+
+        @if (Model.LstFarmaciasTurno != null)
+        {
+            @foreach (FarmaciasTurno unaFarmacia in Model.LstFarmaciasTurno)
+            {
+                <div class="form-control turno" style="box-shadow: 2px 2px 4px #000000;margin-bottom:5px;">
+                    <p><strong>Farmacia: </strong>@unaFarmacia.Nombre</p>
+                    <p>Dirección: @unaFarmacia.Direccion <a href="https://maps.google.com/?q=@unaFarmacia.Latitud.ToString().Replace(",","."),@unaFarmacia.Longitud.ToString().Replace(",",".")" target="_blank">Ver en mapa</a></p>
+                    <p>Teléfono: @unaFarmacia.Telefono</p>
+                    <p>Fecha: @unaFarmacia.Fecha.ToString("dd/MM/yyyy")</p>
+                </div>
+            }
+        }
+    </div>
+</div>
+@code {
+    private VMFarmaciasTurno VMFarmaciasTurno = new VMFarmaciasTurno();
+    private List<AndesServices.Entities.Localidad> lstLocalidades = new List<AndesServices.Entities.Localidad>();
+    private FarmaciasTurnoService? _farmaciasTurnoService;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                await customAuthProvider.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/");
+            }
+        }
+        _farmaciasTurnoService = new FarmaciasTurnoService(Configuration);
+        _spinnerService.Show();
+        Model.LstLocalidad = await _farmaciasTurnoService.ObtenerLocalidadesAsync();
+        _spinnerService.Hide();
+    }
+
+    protected async Task BuscarFarmacias()
+    {
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                await customAuthProvider.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/");
+            }
+        }
+
+        _farmaciasTurnoService = new FarmaciasTurnoService(Configuration);
+        _spinnerService.Show();
+        Model.LstFarmaciasTurno = await _farmaciasTurnoService.ObtenerFarmaciasTurnoAsync(Model.LocalidadId, DateTime.Now.ToString("yyyy-MM-dd"), DateTime.Now.ToString("yyyy-MM-dd"));
+        _spinnerService.Hide();
+    }
+}

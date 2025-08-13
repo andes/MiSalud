@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "EYQfCtxKcbBXbJDmZNkZNXODPVGt/Zekt+dJ9HgEf/w=",
+  "Source": "SaludPortal.ApiService",
+  "BasePath": "_content/SaludPortal.ApiService",
+  "Mode": "Default",
+  "ManifestType": "Publish",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

@@ -1,0 +1,6 @@
+@AndesServices_HostAddress = http://localhost:5125
+
+GET {{AndesServices_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Salud - Neuquén</title>
+  
+  <style>
+    @font-face {
+      font-family: 'NeuquenFont';
+      src: url('fonts/NeuquenFont.woff2') format('woff2'),
+           url('fonts/NeuquenFont.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    body {
+      font-family: 'NeuquenFont', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    .logo-container {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      margin: 40px 0;
+    }
+    
+    .logo-container img {
+      max-width: 150px;
+      margin: 10px;
+    }
+
+    /* Barra de navegación */
+    /* .navbar {
+      background-color: #004466;
+      padding: 10px;
+      text-align: center;
+    } */
+
+    .navbar {
+      background-color: #004466;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .navbar a {
+      float: left;
+      display: block;
+      color: #ffffff;
+      text-align: center;
+      padding: 14px 20px;
+      text-decoration: none;
+    }
+    
+    .navbar a:hover {
+      background-color: #005580;
+    }
+
+
+    .navbar .hamburger {
+      display: none;
+      font-size: 30px;
+      color: white;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .navbar-links {
+      display: flex;
+      justify-content: center;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .navbar-links li {
+      margin: 0 15px;
+    }
+
+    .navbar-links a {
+      color: #ffffff;
+      text-decoration: none;
+      padding: 10px 20px;
+      display: inline-block;
+      transition: background 0.3s;
+    }
+
+    .navbar-links a:hover {
+      background-color: #005580;
+      border-radius: 4px;
+    }
+
+    /* Estilo para los botones de burbujas */
+    .bubble-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .bubble-buttons button {
+      background-color: #0077aa;
+      color: #ffffff;
+      border: none;
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, background-color 0.3s;
+    }
+
+    .bubble-buttons button:hover {
+      transform: scale(1.1);
+      background-color: #005580;
+    }
+
+    /* Responsivo: ocultar botones estilo burbuja y mostrar el menú hamburguesa en pantallas pequeñas */
+    @media (max-width: 600px) {
+      .bubble-buttons {
+        display: none;
+      }
+
+      .navbar-links {
+        display: none;
+      }
+
+      .navbar .hamburger {
+        display: block;
+      }
+
+      .hamburger-menu {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        background-color: #004466;
+      }
+
+      .hamburger-menu a {
+        color: white;
+        text-decoration: none;
+        padding: 15px;
+        text-align: center;
+        display: block;
+      }
+
+      .hamburger-menu.active {
+        display: flex;
+      }
+    }
+    .hamburger-menu {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        background-color: #004466;
+      }
+  </style>
+</head>
+<body>
+  <!-- Barra de navegación -->
+  <nav class="navbar">
+    <a href="#home">Inicio</a>
+    <button class="hamburger" id="hamburger">&#9776;</button>
+    <!-- <ul class="navbar-links">
+      <li><a href="#historia-de-salud">Historia de Salud</a></li>
+      <li><a href="#campañas-de-salud">Campañas de Salud</a></li>
+      <li><a href="#turnos">Turnos</a></li>
+      <li><a href="#farmacias-de-turno">Farmacias</a></li>
+      <li><a href="#vacunas">Vacunas</a></li>
+      <li><a href="#laboratorios">Laboratorios</a></li>
+      <li><a href="#familiares">Familiares</a></li>
+      <li><a href="#recetas">Recetas</a></li>
+    </ul> -->
+
+    <!-- Menú hamburguesa para pantallas pequeñas -->
+    <div class="hamburger-menu" id="hamburgerMenu">
+      <a href="#historia-de-salud">Historia de Salud</a>
+      <a href="#campañas-de-salud">Campañas de Salud</a>
+      <a href="#turnos">Turnos</a>
+      <a href="#farmacias-de-turno">Farmacias</a>
+      <a href="#vacunas">Vacunas</a>
+      <a href="#laboratorios">Laboratorios</a>
+      <a href="#familiares">Familiares</a>
+      <a href="#recetas">Recetas</a>
+    </div>
+  </nav>
+
+  <!-- Contenido principal -->
+  <main style="padding:20px;">
+    <h1>Bienvenido al Portal de Salud de Neuquén</h1>
+    <p>Seleccione una opción del menú para continuar.</p>
+    
+    <!-- Contenedor central para los logos -->
+    <div class="logo-container">
+      <!-- Reemplazar 'logo_neuquen1.png', 'logo_neuquen2.png' con las rutas reales de acuerdo al manual -->
+      <img src="img/logo_neuquen1.png" alt="Logo Neuquén 1">
+      <img src="img/logo_neuquen2.png" alt="Logo Neuquén 2">
+      <!-- Puedes agregar o quitar logos según el manual -->
+    </div>
+    
+    <!-- Aquí irían las secciones referenciadas por el menú -->
+  </main>
+
+  <!-- Contenedor para los botones en forma de burbujas -->
+  <div class="bubble-buttons">
+    <button onclick="location.href='#historia-de-salud';">Historia de Salud</button>
+    <button onclick="location.href='#campañas-de-salud';">Campañas de Salud</button>
+    <button onclick="location.href='#turnos';">Turnos</button>
+    <button onclick="location.href='#farmacias-de-turno';">Farmacias</button>
+    <button onclick="location.href='#vacunas';">Vacunas</button>
+    <button onclick="location.href='#laboratorios';">Laboratorios</button>
+    <button onclick="location.href='#familiares';">Familiares</button>
+    <button onclick="location.href='#recetas';">Recetas</button>
+  </div>
+
+  <!-- Script para manejar el menú hamburguesa -->
+  <script>
+    const hamburger = document.getElementById('hamburger');
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+
+    hamburger.addEventListener('click', () => {
+      hamburgerMenu.classList.toggle('active');
+    });
+  </script>
+</body>
+</html>

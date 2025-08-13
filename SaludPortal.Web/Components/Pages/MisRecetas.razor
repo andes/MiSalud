@@ -1,0 +1,84 @@
+﻿@page "/misrecetas"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@using SaludPortal.Web.Services
+@using AndesServices.Entities
+@inject BlazorSpinner.SpinnerService _spinnerService
+
+<h1>Mis recetas</h1>
+<br />
+@if (lstRecetas != null)
+{
+    @foreach (var receta in lstRecetas)
+    {
+        <div class="form-control" style="box-shadow: 2px 2px 4px #000000;">
+            <p><strong>Fecha de registro: </strong>@receta.fechaRegistro.ToString("dd/MM/yyyy HH:mm:ss")</p>
+            <hr />
+            @if (receta.profesional != null)
+            {
+                <p>Profesional: <strong>@receta.profesional.apellido @receta.profesional.nombre</strong></p>
+                <p>MÉDICA - MP: <strong>@receta.profesional.matricula</strong></p>
+                @if (receta.profesional.especialidad.Length > 0)
+                {
+                    <p>Especialidad: @receta.profesional.especialidad</p>
+                }
+            }
+            <hr />
+            @if (receta.medicamento != null)
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <td>Medicamento</td>
+                            <td>Cantidad</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@receta.medicamento.concepto.term</td>
+                            <td>@receta.medicamento.cantEnvases envase(s) de @receta.medicamento.cantidad @receta.medicamento.presentacion</td>
+                        </tr>
+                    </tbody>
+                </table>
+            }
+            <hr />
+            <p>
+                Diagnóstico: <strong>@receta.diagnostico.term</strong>
+            </p>
+
+            <hr />
+            Estado dispensa: @receta.estadoDispensaActual?.tipo
+        </div>
+        <hr />
+    }
+}
+
+@code {
+    private List<AndesServices.Entities.MisReceta> lstRecetas = new List<AndesServices.Entities.MisReceta>();
+    private RecetasService? _recetasService;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                await customAuthProvider.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/");
+            }
+        }
+        _recetasService = new RecetasService(Configuration);
+
+        if (_recetasService != null && GlobalServices.Usuario?.token != null)
+        {
+            _spinnerService.Show();
+            lstRecetas = await _recetasService.ObtenerRecetasPacienteAsync(GlobalServices.Usuario.token, GlobalServices.Usuario.pacientes[0].id);
+            _spinnerService.Hide();
+        }
+    }
+}

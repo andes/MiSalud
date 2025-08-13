@@ -1,0 +1,12 @@
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\bin\Debug\net9.0\SaludPortal.ServiceDefaults.deps.json
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\bin\Debug\net9.0\SaludPortal.ServiceDefaults.dll
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\bin\Debug\net9.0\SaludPortal.ServiceDefaults.pdb
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\SaludPortal.ServiceDefaults.csproj.AssemblyReference.cache
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\SaludPortal.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\SaludPortal.ServiceDefaults.AssemblyInfoInputs.cache
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\SaludPortal.ServiceDefaults.AssemblyInfo.cs
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\SaludPortal.ServiceDefaults.csproj.CoreCompileInputs.cache
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\SaludPortal.ServiceDefaults.dll
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\refint\SaludPortal.ServiceDefaults.dll
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\SaludPortal.ServiceDefaults.pdb
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.ServiceDefaults\obj\Debug\net9.0\ref\SaludPortal.ServiceDefaults.dll

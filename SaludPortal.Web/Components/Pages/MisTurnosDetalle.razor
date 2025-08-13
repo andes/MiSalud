@@ -1,0 +1,46 @@
+﻿<div>
+    <h2>CENTRO DE AGENDAS Y TURNOS</h2>
+    <h3>
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
+            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+        </svg> Detalles del turno
+    </h3>
+</div>
+<div class="d-inline-flex flex-lg-row" style="background:#edfce2;color:#000;width:100%;">
+    <div class="p-sm-2 flex-shrink-1"></div>
+    <div class="p-lg-10 flex-fill flex-grow-1" style="padding:5px; width:100%">
+        <p>
+            <div><label><strong>Paciente</strong></label></div>
+            <div><label>@Paciente</label></div>
+        </p>
+        <hr />
+        <p>
+            <div><label><strong>Fecha y hora del turno</strong></label></div>
+            <div><label>@FechaHoraTurno</label></div>
+        </p>
+        <hr />
+        <p>
+            <div><label><strong>Datos de la consulta</strong></label></div>
+            <div><label>@DatosConsulta</label></div>
+        </p>
+        <hr />
+        <p>
+            <label>@Lugar</label>
+        </p>
+        <hr />
+    </div>
+</div>
+<br /><br />
+<div>
+    <button @onclick="Close" class="btn btn-outline-primary" title="Cerrar">Cerrar</button>
+    @* <button class="btn btn-outline-primary" title="Cerrar">Cerrar</button> *@
+</div>
+@code {
+    [CascadingParameter] BlazoredModalInstance ModalDetalleTurno { get; set; } = default!;
+    [CascadingParameter] IModalService ModalService { get; set; } = default!;
+    [Parameter] public string Paciente { get; set; }
+    [Parameter] public string FechaHoraTurno { get; set; }
+    [Parameter] public string DatosConsulta { get; set; }
+    [Parameter] public string Lugar { get; set; }
+     private async Task Close() => await ModalDetalleTurno.CloseAsync();
+}

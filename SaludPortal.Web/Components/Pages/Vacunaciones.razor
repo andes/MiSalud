@@ -1,0 +1,76 @@
+﻿@page "/Vacunaciones"
+@page "/misvacunas"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@using SaludPortal.Web.Services
+@using System.Security.Claims
+@using AndesServices.Entities
+@using System.Globalization
+@inject BlazorSpinner.SpinnerService _spinnerService
+
+<h1>Mis vacunas</h1>
+<br />
+@if (lstVacunaciones != null)
+{
+    @foreach (var vacunacion in lstVacunaciones)
+    {
+        <div class="form-control" style="box-shadow: 2px 2px 4px #414141;margin-bottom:5px;">
+            @if (vacunacion.vacuna != null)
+            {
+                <p><strong>Vacuna: </strong>@vacunacion.vacuna</p>
+            }
+            @if (vacunacion.efector != null)
+            {
+                <p><strong>Lugar de vacunación: </strong>@vacunacion.efector</p>
+            }
+            @if (vacunacion.dosis != null)
+            {
+                <p><strong>Dosis: </strong>@vacunacion.dosis</p>
+            }
+            @if (vacunacion.fechaAplicacion != null)
+            {
+                {
+
+
+                    fechaAplicacion = DateTime.Parse(@vacunacion.fechaAplicacion.Substring(0, 10), new CultureInfo("es-ES"));
+                }
+
+                <p><strong>Fecha de aplicación: </strong>@fechaAplicacion.ToString("dd") de @fechaAplicacion.ToString("MMMM", new CultureInfo("es-ES")) de @fechaAplicacion.ToString("yyyy")</p>
+                
+            }
+        </div>
+    }
+}
+
+@code {
+    private List<Vacunacion> lstVacunaciones = new List<Vacunacion>();
+    private VacunacionService? _vacunacionService;
+    private DateTime fechaAplicacion;
+    private string diaAplicacion;
+    private string mesAplicacion;
+    private string anioAplicacion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                await customAuthProvider.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/");
+            }
+        }
+        _vacunacionService = new VacunacionService(Configuration);
+
+        if (_vacunacionService != null && GlobalServices.Usuario?.token != null)
+        {
+            _spinnerService.Show();
+            lstVacunaciones = await _vacunacionService.ObtenerCampañasVacunacion(GlobalServices.Usuario.token);
+            _spinnerService.Hide();
+        }
+    }
+}

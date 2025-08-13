@@ -1,0 +1,94 @@
+﻿@using Microsoft.AspNetCore.Authentication.Cookies;
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authentication
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<CascadingAuthenticationState>
+    <AuthorizeView>
+        <Authorized>
+            <div class="top-row ps-3 navbar navbar-dark">
+                <div class="container-fluid">
+                    @* <a class="navbar-brand" href="">Mi cuenta</a> *@
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" style="background-color:#2b3e4c;" type="button" id="dropdownMenuMiCuenta" data-bs-toggle="dropdown" aria-expanded="false">
+                            @GlobalServices.Usuario.email
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a @onclick="Logout" class="dropdown-item" href="#">Cerrar sesión</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <input type="checkbox" title="Menu" class="navbar-toggler" />
+
+            <div class="nav-scrollable">
+                <nav class="nav flex-column">
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="" Match="NavLinkMatch.All" alt="Inicio" title="Inicio">
+                            <span class="bi bi-house-door-fill"></span> Inicio
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="misvacunas" title="Mis vacunas">
+                            <span class="bi bi-syringe"></span>Mis vacunas
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="GrupoFamiliar" title="Grupo familiar">
+                            <span class="bi bi-people-group"></span> Grupo familiar
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="HistoriaSalud" title="Historia de salud">
+                            <span class="bi bi-clipboard2-heart"></span> Historia de salud
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="MisLaboratorios" title="Mis laboratorios">
+                            <span class="bi bi-flask-vial"></span> Mis laboratorios
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="MisRecetas" title="Mis recetas">
+                            <span class="bi bi-file-medical"></span> Mis recetas
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="Misturnos" title="Mis turnos">
+                            <span class="bi bi-turnos"></span> Mis turnos
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="Farmaciasdeturno" title="Farmacias de turno">
+                            <span class="bi bi-farmaciasturno"></span> Farmacias de turno
+                        </NavLink>
+                    </div>
+                    @* <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="#" title="Accesos a la HUDS">
+                            <span class="bi "></span> Accesos a la HUDS
+                        </NavLink>
+                    </div> *@
+                </nav>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
+@code {
+    private async Task Logout()
+    {
+        if (AuthenticationStateProvider is SaludPortal.Web.Services.CustomAuthenticationStateProvider customAuthProvider)
+        {
+            await customAuthProvider.MarkUserAsLoggedOut();
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}
+@* @code {
+    [CascadingParameter]
+    public CustomAuthenticationStateProvider? customAuthProvider { get; set; }
+
+    private async Task LogOutAsync() => customAuthProvider.MarkUserAsLoggedOut();
+
+} *@
