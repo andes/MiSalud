@@ -1,0 +1,55 @@
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JSRuntime
+@inject ILogger<AuthStateViewer> Logger
+
+<div class="auth-state-viewer">
+    <AuthorizeView>
+        <Authorized>
+            <div class="alert alert-success">
+                <h4>Usuario Autenticado</h4>
+                <p>Nombre: @context.User.Identity?.Name</p>
+                <h5>Claims:</h5>
+                <ul>
+                    @foreach (var claim in context.User.Claims)
+                    {
+                        <li>@claim.Type: @claim.Value</li>
+                    }
+                </ul>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-warning">
+                <h4>No Autenticado</h4>
+                <button class="btn btn-info" @onclick="CheckCookies">Verificar Cookies</button>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    
+    private async Task CheckCookies()
+    {
+        try
+        {
+            var cookies = HttpContextAccessor.HttpContext?.Request.Cookies;
+            if (cookies != null)
+            {
+                foreach (var cookie in cookies)
+                {
+                    Logger.LogInformation("Cookie encontrada - {Name}: {Value}",
+                        cookie.Key,
+                        cookie.Value?.Substring(0, Math.Min(20, cookie.Value.Length)) + "...");
+                }
+            }
+
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                console.log('Document cookies:', document.cookie);
+            ");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error verificando cookies");
+        }
+    }
+}

@@ -1,17 +1,21 @@
 ﻿@page "/Vacunaciones"
 @page "/misvacunas"
 
+@attribute [Authorize]
 @using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Nav
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
+@using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
 @using System.Security.Claims
 @using AndesServices.Entities
 @using System.Globalization
+@inherits AuthenticatedComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
 @inject BlazorSpinner.SpinnerService _spinnerService
 
+
 <h1>Mis vacunas</h1>
+<hr />
 <br />
 @if (lstVacunaciones != null)
 {
@@ -53,23 +57,21 @@
     private string mesAplicacion;
     private string anioAplicacion;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAuthenticatedInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
-        {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-            {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
-        }
         _vacunacionService = new VacunacionService(Configuration);
+        
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
 
-        if (_vacunacionService != null && GlobalServices.Usuario?.token != null)
+        _spinnerService.Show();
+        try
         {
-            _spinnerService.Show();
-            lstVacunaciones = await _vacunacionService.ObtenerCampañasVacunacion(GlobalServices.Usuario.token);
+            lstVacunaciones = await _vacunacionService.ObtenerCampañasVacunacion(token);
+        }
+        finally
+        {
             _spinnerService.Hide();
         }
     }

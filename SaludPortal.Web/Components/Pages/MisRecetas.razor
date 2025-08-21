@@ -2,18 +2,21 @@
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Nav
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
+@using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
 @using AndesServices.Entities
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
 @inject BlazorSpinner.SpinnerService _spinnerService
 
+@inherits AuthenticatedComponentBase
+
 <h1>Mis recetas</h1>
-<br />
+<hr />
 @if (lstRecetas != null)
 {
-    @foreach (var receta in lstRecetas)
+    @foreach (var receta in lstRecetas.OrderByDescending(r=> r.fechaRegistro))
     {
         <div class="form-control" style="box-shadow: 2px 2px 4px #000000;">
             <p><strong>Fecha de registro: </strong>@receta.fechaRegistro.ToString("dd/MM/yyyy HH:mm:ss")</p>
@@ -30,11 +33,11 @@
             <hr />
             @if (receta.medicamento != null)
             {
-                <table class="table">
+                <table class="table receta" style="width:100%;">
                     <thead>
                         <tr>
-                            <td>Medicamento</td>
-                            <td>Cantidad</td>
+                            <th style="width:60%">Medicamento</th>
+                            <th>Cantidad</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -61,23 +64,18 @@
     private List<AndesServices.Entities.MisReceta> lstRecetas = new List<AndesServices.Entities.MisReceta>();
     private RecetasService? _recetasService;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAuthenticatedInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
-        {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-            {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
-        }
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
+
         _recetasService = new RecetasService(Configuration);
 
-        if (_recetasService != null && GlobalServices.Usuario?.token != null)
+        if (_recetasService != null)
         {
             _spinnerService.Show();
-            lstRecetas = await _recetasService.ObtenerRecetasPacienteAsync(GlobalServices.Usuario.token, GlobalServices.Usuario.pacientes[0].id);
+            lstRecetas = await _recetasService.ObtenerRecetasPacienteAsync(token, PacienteId);
             _spinnerService.Hide();
         }
     }

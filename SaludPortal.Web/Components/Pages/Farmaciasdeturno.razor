@@ -2,18 +2,21 @@
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Nav
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
 @using SaludPortal.Web.Services
 @using AndesServices.Entities.ViewModels
 @using AndesServices.Entities
-@inject BlazorSpinner.SpinnerService _spinnerService
+@using SaludPortal.Web.Components.Shared
 
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@inject BlazorSpinner.SpinnerService _spinnerService
 @inject AndesServices.Entities.ViewModels.VMFarmaciasTurno Model
+@inherits AuthenticatedComponentBase
 
 <h1>Farmacias de turno</h1>
-<div class="form-control">
+<hr />
+<br />
+@* <div class="form-control"> *@
     <p>
         Localidad:
         <InputSelect id="localidades" @bind-Value="Model.LocalidadId" aria-label="Seleccione una localidad">
@@ -40,30 +43,21 @@
             {
                 <div class="form-control turno" style="box-shadow: 2px 2px 4px #000000;margin-bottom:5px;">
                     <p><strong>Farmacia: </strong>@unaFarmacia.Nombre</p>
-                    <p>Dirección: @unaFarmacia.Direccion <a href="https://maps.google.com/?q=@unaFarmacia.Latitud.ToString().Replace(",","."),@unaFarmacia.Longitud.ToString().Replace(",",".")" target="_blank">Ver en mapa</a></p>
+                    <p>Dirección: @unaFarmacia.Direccion - <a href="https://maps.google.com/?q=@unaFarmacia.Latitud.ToString().Replace(",","."),@unaFarmacia.Longitud.ToString().Replace(",",".")" style="color:#fff;" target="_blank">Ver en mapa</a></p>
                     <p>Teléfono: @unaFarmacia.Telefono</p>
                     <p>Fecha: @unaFarmacia.Fecha.ToString("dd/MM/yyyy")</p>
                 </div>
             }
         }
     </div>
-</div>
+@* </div> *@
 @code {
     private VMFarmaciasTurno VMFarmaciasTurno = new VMFarmaciasTurno();
     private List<AndesServices.Entities.Localidad> lstLocalidades = new List<AndesServices.Entities.Localidad>();
     private FarmaciasTurnoService? _farmaciasTurnoService;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAuthenticatedInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
-        {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-            {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
-        }
         _farmaciasTurnoService = new FarmaciasTurnoService(Configuration);
         _spinnerService.Show();
         Model.LstLocalidad = await _farmaciasTurnoService.ObtenerLocalidadesAsync();
@@ -72,15 +66,10 @@
 
     protected async Task BuscarFarmacias()
     {
-
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
+        if (User.Identity?.IsAuthenticated != true)
         {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-            {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
+            var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+            Nav.NavigateTo($"/login", true);
         }
 
         _farmaciasTurnoService = new FarmaciasTurnoService(Configuration);

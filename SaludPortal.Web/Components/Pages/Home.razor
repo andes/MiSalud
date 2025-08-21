@@ -1,17 +1,61 @@
-﻿@page "/"
-@page "/home"
+﻿@page "/home"
 @using AndesServices.Entities
+@using SaludPortal.Web.Components.Shared
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
+@inject IJSRuntime JS
+
 
 <PageTitle>Home</PageTitle>
+@* <h1>Todo sobre vos, para cuidarte mejor.</h1> *@
+<div>
+    Tu Historia Clínica está protegida. Enterate cuándo puede ser consultada &ensp;
+    <button class="btn-homeprivacidad" @onclick="() => ShowModal()">Quiénes pueden verla</button>
+</div>
+<div class="home-banner">
+    <img src="../images/bannermisalud.png" alt="Mi Salud Banner" style="max-width: 45%;display:block; margin:0 auto;" />
+</div>
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
 
-<h1>Bienvenido al Portal de Salud de Neuquén</h1>
-<p>Seleccione una opción del menú para continuar.</p>
-@* <p>Usuario está autenticado: @IsAuthenticated</p>
-<p> Usuario es: @usuario.nombre @usuario.apellido</p> *@
+    [CascadingParameter] IModalService Modal { get; set; } = default!;
 
-@code{
-    // public AndesServices.Entities.User usuario = GlobalServices.Usuario;
+    private async Task ShowModal()
+    {
+        var options = new ModalOptions()
+        {
+            Size = ModalSize.Automatic,
+            Position = ModalPosition.TopCenter,
+            HideCloseButton = false,
+            HideHeader = true
+        };
+        // var parameters = new ModalParameters()
+        // .Add(nameof(MisTurnosDetalle.Paciente), unTurno.paciente.nombre + " " + unTurno.paciente.apellido)
+        // .Add(nameof(MisTurnosDetalle.FechaHoraTurno), unTurno.horaInicio.ToString("dd/MM/yyyy") + " " + unTurno.horaInicio.ToString("HH:mm"))
+        // .Add(nameof(MisTurnosDetalle.DatosConsulta), unTurno.motivoConsulta)
+        // .Add(nameof(MisTurnosDetalle.Lugar), unTurno.organizacion?.nombre);
 
-    // public bool IsAuthenticated => usuario != null && usuario.email.Length > 0;
+        Modal.Show<InfoBoxesPrivacidad>(options);
+
+    }
+    // private IJSObjectReference? _module;
+    // private IJSObjectReference? _blurHandle;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            var authState = await AuthenticationState;
+            if (authState.User.Identity?.IsAuthenticated == false)
+            {
+                Nav.NavigateTo("/login", true);
+            }
+        }
+        else
+        {
+            Nav.NavigateTo("/login", true);
+        }
+    }
 }

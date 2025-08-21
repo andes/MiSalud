@@ -30,8 +30,8 @@ namespace AndesServices.Services
             _configuration.GetSection("urlServicios").Bind(conexionServicios);
 
             string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/recetas"
-                : conexionServicios.UrlProyectoServiciosDemo + "/recetas";
+                ? conexionServicios.UrlProyectoServiciosProd + "/modules/recetas"
+                : conexionServicios.UrlProyectoServiciosDemo + "/modules/recetas";
 
             try
             {

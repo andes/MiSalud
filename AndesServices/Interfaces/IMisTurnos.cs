@@ -4,7 +4,7 @@ namespace AndesServices.Interfaces
 {
     public interface IMisTurnos
     {
-        Task<bool> RegistrarTurnoAsync(string token, string documento, string motivoConsulta, string profesional, string tipoPrestacion, DateTime fechaHoraDacion, string organizacionId);
+        Task<bool> RegistrarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion);
         Task<bool> ActualizarTurnoAsync(string token, string idTurno, string motivoConsulta, string profesional, DateTime fechaHoraDacion);
         Task<bool> EliminarTurnoAsync(string token, string idTurno);
         Task<List<MisTurnos>> ObtenerMisTurnosAsync(string token, string documento);

@@ -1,4 +1,6 @@
-﻿namespace AndesServices.Entities
+﻿using System.Text.Json.Serialization;
+
+namespace AndesServices.Entities
 {
     public class ObraSocial
     {
@@ -9,5 +11,7 @@
         public DateTime fechaDeActualizacion { get; set; }
         public bool? prepaga { get; set; }
         public string? id { get; set; }
+        public string? _id { get; set; }
+
     }
 }

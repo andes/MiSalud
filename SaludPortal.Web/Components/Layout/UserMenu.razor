@@ -1,18 +1,12 @@
 ﻿@using AndesServices.Entities
-@using Microsoft.AspNetCore.Authentication.Cookies;
-@using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Authentication
-@* @inject LogOutService LogOutService *@
 @inject NavigationManager Nav
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
-@inherits LayoutComponentBase
-@using Newtonsoft.Json;
-@using Newtonsoft.Json.Linq
-@inject IConfiguration configuration;
-
-@* <NotAuthorized> *@
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Models.AccountViewModels
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IHttpClientFactory HttpClientFactory
+@inject ILogger<UserMenu> Logger
+@inject IJSRuntime JS
 
 <div class="container">
     <div class="d-flex justify-content-center h-100">
@@ -21,153 +15,126 @@
                 <h3>Iniciar sesión</h3>
             </div>
             <div class="card-body">
-                <form @onsubmit="OnSubmitLogin">
+                <EditForm Model="LoginForm" OnValidSubmit="SubmitLogin" class="login-form">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
                     <div class="input-group form-group">
                         <div class="input-group-prepend" style="margin-bottom:0.6px;">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
                         </div>
-                        <input id="txtUsuario" @bind="txtUsuario" type="text" class="form-control" placeholder="usuario">
+                        <input id="txtUsuario" @bind="LoginForm.Email" type="text" class="form-control" placeholder="usuario">
 
                     </div>
                     <div class="input-group form-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-key"></i></span>
                         </div>
-                        <input id="txtPassword" @bind="txtPassword" type="password" class="form-control" placeholder="contraseña">
+                        <input id="txtPassword" @bind="LoginForm.Password" type="password" class="form-control" placeholder="contraseña">
                     </div>
                     <div class="row align-items-center remember">
-                        <input type="checkbox">Recordarme
+                        <input @bind="LoginForm.RememberMe" type="checkbox">Recordarme
                     </div>
                     <div class="form-group">
                         <div class="form-label">
                             <label class="badge bg-danger" style="max-width:250px;white-space:unset;">@lblResultadoLogin</label>
                         </div>
                         <input type="submit" value="Iniciar sesión" class="btn float-right login_btn">
-                        @* <button @onclick="sendLoginCredentials">Iniciar sesión</button> *@
                     </div>
-                </form>
+                </EditForm>
             </div>
             <div class="card-footer">
                 <div class="d-flex justify-content-center links">
-                    No tenés cuenta?<a href="#">Crear cuenta</a>
+                    <span style="color:#fff;">No tenés cuenta?</span><a style="cursor:pointer;text-decoration:underline;" @onclick="Register"> Crear cuenta</a>
                 </div>
-                <div class="d-flex justify-content-center">
+                <div class="d-flex justify-content-center links">
                     <a href="#">Olvidaste tu contraseña?</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-@* <button class="btn" @onclick="Login" style="margin:10px;">Iniciar Sesión</button> *@
-@* <a aria-label="Sign in" href="~/User/LogIn(Nav)"><img role="presentation" src="icons/user.svg" /></a> *@
-@* </NotAuthorized> *@
+
 @code {
 
-    string txtUsuario = string.Empty;
-    string txtPassword = string.Empty;
+    [SupplyParameterFromForm]
+    private LoginViewModel LoginForm { get; set; } = new();
+
+    [Parameter]
+    public string? ReturnUrl { get; set; }
     Ref<string> lblResultadoLogin = string.Empty;
 
-    private IConfiguration _configuration;
-
-    private async Task OnSubmitLogin()
+    private async Task SubmitLogin()
     {
-        if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+        if (string.IsNullOrEmpty(LoginForm.Email) || string.IsNullOrEmpty(LoginForm.Password))
         {
+            return;
+        }
+        lblResultadoLogin = string.Empty;
 
-            if (string.IsNullOrEmpty(txtUsuario) || string.IsNullOrEmpty(txtPassword))
+        var loginRequest = new LoginViewModel
+        {
+            Email = LoginForm.Email,
+            Password = LoginForm.Password,
+            RememberMe = LoginForm.RememberMe
+        };
+        try
+        {
+            var result = await JS.InvokeAsync<LoginJsResult>("authApi.login", loginRequest);
+
+            if (result.Ok)
             {
-                return;
+                Nav.NavigateTo(ReturnUrl ?? "/", forceLoad: true);
             }
-            bool isLoggedIn = false;
-            //----------------------------
-            var conexionServicios = new AndesServices.Entities.ConexionServicios();
-            lblResultadoLogin = "";
-            isLoggedIn = await customAuthProvider.Login(txtUsuario, txtPassword, lblResultadoLogin);
-            
-            // _configuration = configuration;
-            // _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            // AndesServices.Entities.User user = new AndesServices.Entities.User
-            // {
-            //     email = txtUsuario,
-            //     password = txtPassword
-            // };
-
-
-            // string url = conexionServicios.usarProd
-            //     ? conexionServicios.UrlProyectoServiciosProd + "/mobileApp/login"
-            //     : conexionServicios.UrlProyectoServiciosDemo + "/mobileApp/login";
-
-            // using (HttpClient client = new HttpClient())
-            // {
-            //     var userJson = new StringContent(JsonConvert.SerializeObject(user), System.Text.Encoding.UTF8, "application/json");
-            //     using (HttpResponseMessage res = await client.PostAsync(url, userJson))
-            //     {
-            //         if (res.IsSuccessStatusCode)
-            //         {
-            //             AndesServices.Entities.LoginResp? loginResp = await res.Content.ReadFromJsonAsync<AndesServices.Entities.LoginResp>();
-            //             if (loginResp == null || loginResp.user == null)
-            //             {
-            //                 lblResultadoLogin = "Usuario o contraseña incorrectos.";
-            //                 isLoggedIn = false;
-            //                 return;
-            //             }
-
-            //             loginResp.user.token = loginResp.token;
-
-            //             user = loginResp.user;
-            //             await customAuthProvider.MarkUserAsAuthenticated(user);
-            //             isLoggedIn = true;
-            //         }
-            //         else
-            //         {
-            //             string jsonString = await res.Content.ReadAsStringAsync();
-            //             // var errorObj = JObject.Parse(jsonString);
-            //             lblResultadoLogin = jsonString + "Usuario: " + txtUsuario + " . Password: " + txtPassword;
-            //             isLoggedIn = false;
-            //             return;
-            //         }
-            //     }
-            // }
-
-            //----------------------------
-            // isLoggedIn = await customAuthProvider.Login(txtUsuario, txtPassword);
-
-            if (isLoggedIn)
+            else
             {
-                Nav.NavigateTo("/home", true);
+                lblResultadoLogin = result.Data?.message ?? "Login fallido";
+                Logger.LogWarning("Login fallo: {Status} {Raw}", result.Status, result.Raw);
             }
-            // else
-            // {
-            //     lblResultadoLogin = "Usuario o contraseña incorrectos";
             // }
         }
-        else
+        catch (Exception ex)
         {
-
+            Logger.LogError(ex, "Error durante el inicio de sesión");
+            lblResultadoLogin = "Ocurrió un error durante el inicio de sesión";
         }
+        // finally
+        // {
+        //     isLoading = false;
+        // }
     }
-    private async Task Logout()
+    private class LoginJsResult
     {
-        if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-        {
-            await customAuthProvider.MarkUserAsLoggedOut();
-        }
+        public bool Ok { get; set; }
+        public int Status { get; set; }
+        public dynamic? Data { get; set; }
+        public string? Raw { get; set; }
     }
 
-    protected override async Task OnInitializedAsync()
+    // [Inject] private IJSRuntime JSRuntime { get; set; }
+
+    // private async Task VerifyCookiesInBrowser()
+    // {
+    //     try
+    //     {
+    //         await JSRuntime.InvokeVoidAsync("eval", @"
+    //         console.log('Cookies actuales:', document.cookie);
+    //         console.log('All cookies:', document.cookie.split(';').map(c => c.trim()));
+    //     ");
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Logger.LogError(ex, "Error verificando cookies");
+    //     }
+    // }
+
+    private class LoginResult
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated == true)
-        {
-            Nav.NavigateTo("/home", true);
-        }
+        public string? Token { get; set; }
+        public string? Message { get; set; }
+    }
+
+    private async Task Register()
+    {
+        Nav.NavigateTo("/registerqr", true);
     }
 }
-@*@code {
-    [CascadingParameter]
-    public HttpContext? HttpContext { get; set; }
-
-    private Task LogOutAsync()
-        => LogOutService.LogOutAsync(HttpContext!);
-}*@

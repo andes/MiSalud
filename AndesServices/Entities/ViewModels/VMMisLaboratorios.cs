@@ -5,5 +5,6 @@
         public List<MisLaboratorios>? LstMisLaboratorios { get; set; }
         public string FechaDesde { get; set; }
         public string FechaHasta { get; set; }
+        public List<LaboratoriosLachybs>? LstLaboratoriosLachybs { get; set; }
     }
 }

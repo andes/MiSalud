@@ -1,17 +1,21 @@
 ﻿@page "/turnosnuevo"
 
 @using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Services
+@using System.Security.Claims
+@using AndesServices.Entities
+
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IConfiguration Configuration
 @inject IHttpClientFactory httpClientFactory
-@using SaludPortal.Web.Services
-@using System.Security.Claims
-@using AndesServices.Entities
 @inject BlazorSpinner.SpinnerService _spinnerService
 
-<h1>Nuevo turno</h1>
+@inherits AuthenticatedComponentBase
 
+<h1>Nuevo turno</h1>
+<hr />
 <h2>Agendas disponibles</h2>
 
 @if (lstAgendas != null && lstAgendas.Count > 0)
@@ -41,9 +45,9 @@
                                     <h2 class="accordion-header" id="@orgId">
                                         <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseOrgId" aria-expanded="true" aria-controls="@collapseOrgId">
                                             <div>
-                                                <i class="fa fa-h-square" aria-hidden="true"></i> @efectores.Efector.nombre
+                                                <i class="fa fa-h-square" aria-hidden="true" style="max-width:16px;"></i> @efectores.Efector.nombre
                                                 <br />
-                                                <i class="fa fa-map-marker" aria-hidden="true"></i> @efectores.Domicilio
+                                                <i class="fa fa-map-marker" aria-hidden="true" style="max-width:16px;"></i> @efectores.Domicilio
                                             </div>
                                         </button>
                                     </h2>
@@ -58,11 +62,11 @@
                                                 foreach (var grupo in turnosPorFecha)
                                                 {
                                                     <div>
-                                                        <strong>@grupo.Key.ToString("dd/MM/yyyy") (@grupo.Count() disponibles)</strong>
+                                                        <strong>@grupo.Key.ToString("dd/MM/yyyy") (@bloque.restantesMobile disponibles)</strong>
                                                         <div>
                                                             @foreach (var turno in grupo)
                                                             {
-                                                                <button class="btn btn-info" style="margin:3px;" title="Seleccionar"><i class="fa fa-calendar" aria-hidden="true"></i> @turno.horaInicio.ToString("HH:mm") </button>
+                                                                <button class="btn btn-info" style="margin:3px;" title="Seleccionar" @onclick="() => ShowModalConfirmar(grupo.Key, turno.horaInicio.AddHours(-3), tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, turno._id, bloque._id)"><i class="fa fa-calendar" aria-hidden="true" style="max-width:16px;"></i> @turno.horaInicio.AddHours(-3).ToString("HH:mm") </button>
                                                             }
                                                         </div>
                                                     </div>
@@ -101,56 +105,107 @@ else
     private Organizacion organizacion = new Organizacion();
     private Dictionary<string, string> _domiciliosOrganizaciones = new();
 
-    protected override async Task OnInitializedAsync()
+    [CascadingParameter] IModalService Modal { get; set; } = default!;
+
+    private async Task ShowModalConfirmar(DateTime Fecha, DateTime Hora, string TipoPrestacion, string Efector, string EfectorDomicilio, string IdTipoPrestacion, string IdTurno, string IdBloque)
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
+        var options = new ModalOptions()
         {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            Size = ModalSize.Automatic,
+            Position = ModalPosition.TopCenter,
+            HideCloseButton = true,
+            HideHeader = true
+        };
+
+        string Paciente = _unPaciente.nombre + " " + _unPaciente.apellido;
+
+        var parameters = new ModalParameters()
+        .Add(nameof(TurnoNuevoConfirmar.Paciente), Paciente)
+        .Add(nameof(TurnoNuevoConfirmar.FechaHoraTurno), Fecha.ToString("dd/MM/yyyy") + " " + Hora.ToString("HH:mm"))
+        .Add(nameof(TurnoNuevoConfirmar.TipoPrestacion), TipoPrestacion)
+        .Add(nameof(TurnoNuevoConfirmar.EfectorNombre), Efector)
+        .Add(nameof(TurnoNuevoConfirmar.EfectorDomicilio), EfectorDomicilio)
+        .Add(nameof(TurnoNuevoConfirmar.IdTurno), IdTurno)
+        .Add(nameof(TurnoNuevoConfirmar.IdBloque), IdBloque)
+        .Add(nameof(TurnoNuevoConfirmar.IdAgenda), ObtenerAgendaPorIdBloque(IdBloque)._id)
+        .Add(nameof(TurnoNuevoConfirmar._unTipoPrestacion), ObtenerTipoPrestacionesDisponibles(IdTipoPrestacion));
+
+        Modal.Show<TurnoNuevoConfirmar>(parameters, options);
+    }
+
+    protected override async Task OnAuthenticatedInitializedAsync()
+    {
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
+
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(pacienteId))
+            return;
+
+        _spinnerService.Show();
+
+        try
+        {
+
+
+            // Obtengo el paciente
+            _unPacienteService = new PacienteService(Configuration);
+            _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+
+            // Verifico que domicilio utilizar para referencia a las organizaciones
+            if (_unPaciente != null)
             {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
-        }
-
-        // Obtengo el paciente
-        _unPacienteService = new PacienteService(Configuration);
-        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(GlobalServices.Usuario.token, GlobalServices.Usuario.pacientes[0].id);
-
-        // Verifico que domicilio utilizar para referencia a las organizaciones
-        if (_unPaciente != null)
-        {
-            _direccionGeoreferencia = _unPaciente.direccion[1] != null ? _unPaciente.direccion[1] : _unPaciente.direccion[0];
-        }
-        if (_direccionGeoreferencia == null) return;
-
-        _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
-        string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
-        _userLocation = await _unPacienteService.ObtenerGeoreferenciaPacienteAsync(direccion);
-
-        if (_misTurnosService != null && GlobalServices.Usuario?.token != null)
-        {
-            _spinnerService.Show();
-            lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(GlobalServices.Usuario.token, GlobalServices.Usuario.pacientes[0].id, _userLocation);
-
-            // Obtener todos los IDs de organizaciones únicos
-            var orgIds = lstAgendas
-                .SelectMany(e => e.agendas)
-                .Select(a => a.organizacion._id)
-                .Distinct()
-                .ToList();
-
-            // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
-            _organizacionService = new OrganizacionService(Configuration, httpClientFactory);
-            foreach (var orgId in orgIds)
-            {
-                var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(GlobalServices.Usuario.token, orgId);
-                if (organizacion != null && !_domiciliosOrganizaciones.ContainsKey(orgId))
+                if (_unPaciente?.direccion?.Count() > 1)
                 {
-                    // Asume que organizacion.direccion?.valor es el domicilio
-                    _domiciliosOrganizaciones[orgId] = organizacion.direccion?.valor ?? "";
+                    _direccionGeoreferencia = _unPaciente?.direccion[1];
+                }
+                else
+                {
+                    if (_unPaciente?.direccion?.Count() == 1) _direccionGeoreferencia = _unPaciente?.direccion[0];
                 }
             }
+            if (_direccionGeoreferencia == null) return;
+
+            _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
+            if (_direccionGeoreferencia.valor == null || _direccionGeoreferencia.ubicacion.localidad == null || _direccionGeoreferencia.ubicacion.provincia == null)
+            {
+                return;
+            }
+            string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
+            _userLocation = await _unPacienteService.ObtenerGeoreferenciaPacienteAsync(direccion);
+
+            if (_misTurnosService != null && _userLocation != null)
+            {
+
+                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(token, pacienteId, _userLocation);
+
+                // Obtener todos los IDs de organizaciones únicos
+                var orgIds = lstAgendas
+                    .SelectMany(e => e.agendas)
+                    .Select(a => a.organizacion._id)
+                    .Distinct()
+                    .ToList();
+
+                // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
+                _organizacionService = new OrganizacionService(Configuration, httpClientFactory);
+                foreach (var orgId in orgIds)
+                {
+                    var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(token, orgId);
+                    if (organizacion != null && !_domiciliosOrganizaciones.ContainsKey(orgId))
+                    {
+                        // Asume que organizacion.direccion?.valor es el domicilio
+                        _domiciliosOrganizaciones[orgId] = organizacion.direccion?.valor ?? "";
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
             _spinnerService.Hide();
         }
     }
@@ -166,6 +221,25 @@ else
         .Distinct()
         .OrderBy(t => t)
         ?? Enumerable.Empty<(string, string)>();
+    }
+
+    private TipoPrestacion? ObtenerTipoPrestacionesDisponibles(string id)
+    {
+        return lstAgendas?
+            .SelectMany(e => e.agendas)
+            .Where(a => a.bloques != null && a.bloques.Count > 0 && a.bloques.Any(b => b.restantesMobile > 0))
+            .SelectMany(a => a.tipoPrestaciones ?? new List<TipoPrestacion>())
+            .FirstOrDefault(tp => tp._id == id);
+    }
+
+    private Agenda? ObtenerAgendaPorIdBloque(string idBloque)
+    {
+        return lstAgendas?
+            .SelectMany(org => org.agendas ?? new List<Agenda>())
+            .FirstOrDefault(agenda =>
+                agenda.bloques != null &&
+                agenda.bloques.Any(bloque => bloque._id == idBloque)
+            );
     }
 
     private IEnumerable<(AgendaOrganizacion Efector, string Domicilio)> ObtenerEfectores(string _idTipoPrestacion)

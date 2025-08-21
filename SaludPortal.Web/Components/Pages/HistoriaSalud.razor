@@ -2,73 +2,87 @@
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Nav
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
+@using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
 @using AndesServices.Entities.ViewModels
 @using AndesServices.Entities
-@inject BlazorSpinner.SpinnerService _spinnerService
 
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@inject BlazorSpinner.SpinnerService _spinnerService
 @inject AndesServices.Entities.ViewModels.VMHistoriaSalud Model
+@inject IJSRuntime JSRuntime
+@inherits AuthenticatedComponentBase
 
 <h1>Historia de Salud</h1>
-<br />
-<div class="form-control">
-    <p>
-        Categorias:
-        <InputSelect id="categorias" @bind-Value="Model.lstCategoriasHistoriaSalud" aria-label="Seleccione una categoria">
-            <option value="">(Seleccione una categoria)</option>
-            @if (Model.lstCategoriasHistoriaSalud != null)
-            {
-                @foreach (var categoria in Model.lstCategoriasHistoriaSalud)
-                {
-                    <option value="@categoria._id">@categoria.Titulo</option>
-                }
-            }
-        </InputSelect>
-    </p>
-    <p><button class="btn btn-verde" @onclick="BuscarHistoriaSalud">Buscar</button></p>
-    </div>
+<hr />
+<h2>Categorias</h2>
+
+@if (Model.lstCategoriasHistoriaSalud != null)
+{
+    @foreach (var categoria in Model.lstCategoriasHistoriaSalud)
+    {
+        <button class="btn btn-azul btn-icon-right" style="width:90%" @onclick="@(() => IrACategoria(categoria.ExpresionSnomed, categoria.Titulo))">
+            <span>@categoria.Titulo</span>
+            <i class="fa fa-chevron-right" aria-hidden="true"></i>
+        </button>
+        <br />
+    }
+}
 @code {
     private VMHistoriaSalud vmHistoriaSalud = new VMHistoriaSalud();
     private List<AndesServices.Entities.CategoriaHistoriaSalud> lstCategorias = new List<AndesServices.Entities.CategoriaHistoriaSalud>();
     private MiHistoriaSaludService? _miHistoriaSaludService;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAuthenticatedInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
-        {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-            {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
-        }
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
+
         _miHistoriaSaludService = new MiHistoriaSaludService(Configuration);
         _spinnerService.Show();
-        Model.lstCategoriasHistoriaSalud = await _miHistoriaSaludService.ObtenerCategoriaHistoriaSaludAsync(GlobalServices.Usuario.token);
+        Model.lstCategoriasHistoriaSalud = await _miHistoriaSaludService.ObtenerCategoriaHistoriaSaludAsync(BackendToken);
         _spinnerService.Hide();
     }
 
-    protected async Task BuscarHistoriaSalud()
+    protected async Task BuscarHistoriaSalud(string idTipoPrestacion)
     {
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
 
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
-        {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-            {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
-        }
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(pacienteId))
+            return;
 
-        // _farmaciasTurnoService = new FarmaciasTurnoService(Configuration);
+        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration);
         _spinnerService.Show();
-        // Model.LstFarmaciasTurno = await _farmaciasTurnoService.ObtenerFarmaciasTurnoAsync(Model.LocalidadId, Model.FechaDesde, Model.FechaHasta);
+        Model.lstPrestacionesHistoriaSalud = await _miHistoriaSaludService.ObtenerPrestacionesAsync(token, idTipoPrestacion, pacienteId);
         _spinnerService.Hide();
     }
 
+    private async void IrACategoria(string? expresionSnomed, string? titulo)
+    {
+        if (string.IsNullOrWhiteSpace(expresionSnomed))
+            return;
+
+        var exprEncoded = Uri.EscapeDataString(expresionSnomed);
+        var tituloEncoded = Uri.EscapeDataString(titulo ?? string.Empty);
+
+        var cfg = new ConexionServicios();
+        Configuration.GetSection("urlServicios").Bind(cfg);
+
+        if (expresionSnomed == "103695000" && !cfg.usarProd)
+        {
+            await JSRuntime.InvokeVoidAsync("open", Nav.BaseUri + "docs/Certificado médico OLAVE.pdf", "_blank");
+            // Nav.NavigateTo($"/docs/Certificado médico OLAVE.pdf",true);
+            // return;
+        }
+        else
+        {
+            Nav.NavigateTo($"/historiasalud/categoria/{exprEncoded}?titulo={tituloEncoded}");
+        }
+    }
 }

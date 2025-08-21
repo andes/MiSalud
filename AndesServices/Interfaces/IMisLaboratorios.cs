@@ -12,6 +12,6 @@ namespace AndesServices.Interfaces
         Task<List<MisLaboratorios>> ObtenerMisLaboratoriosAsync(string token, string documento);
         Task<MisLaboratorios> ObtenerLaboratorioPorIdAsync(string token, string idProtocolo);
         Task<Byte[]> DescargarLaboratorioPorIdAsync(string token, string idProtocolo, string documento);
-        
+        Task<List<LaboratoriosLachybs>> ObtenerMisLaboratoriosLACHYBSAsync(string usuario, string clave, string documento);
     }
 }

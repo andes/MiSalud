@@ -1,0 +1,43 @@
+﻿.home-banner {
+    height: calc(100dvh - var(--top-row --btn-homeprivacidad));
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+    .home-banner img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
+        display: block;
+        will-change: filter;
+    }
+
+
+.btn-homeprivacidad {
+    min-width: 260px;
+    background: #ffffff;
+    border: 1px solid #e2e8ef;
+    border-radius: 14px;
+    padding: 1.25rem 1rem 1.25rem 1.25rem;
+    box-shadow: 0 4px 10px -4px rgba(0,0,0,.08), 0 2px 4px -2px rgba(0,0,0,.06);
+    transition: box-shadow .2s ease, transform .2s ease;
+    align-items: center;
+}
+
+    .btn-homeprivacidad:hover {
+        box-shadow: 0 6px 18px -6px rgba(0,0,0,.14);
+        transform: translateY(-3px);
+    }
+/* Modo cover - llena el alto y ancho recortando lo que sobre */
+/*.home-banner.cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
+        display: block;
+    }*/

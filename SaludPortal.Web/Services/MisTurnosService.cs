@@ -51,5 +51,24 @@ namespace SaludPortal.Web.Services
             }
             return null;
         }
+        public async Task<bool> RegistrarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("Token no proporcionado.");
+                return false;
+            }
+            try
+            {
+                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
+                return await misTurnosService.RegistrarTurnoAsync(token, idTurno, idBloque, idAgenda, paciente, tipoPrestacion);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Se produjo un error al registrar el turno.");
+                Console.WriteLine(exception.Message);
+                return false;
+            }
+        }
     }
 }

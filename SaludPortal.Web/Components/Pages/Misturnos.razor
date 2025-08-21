@@ -2,19 +2,20 @@
 
 
 @using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Nav
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
-
+@using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
 @using System.Security.Claims
 @using AndesServices.Entities
-@inject BlazorSpinner.SpinnerService _spinnerService
 
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@inject IHttpClientFactory httpClientFactory
+@inject BlazorSpinner.SpinnerService _spinnerService
 @* @rendermode InteractiveServer *@
+@inherits AuthenticatedComponentBase
 
 <h1>Mis turnos</h1>
+<hr />
 <br />
 @if (lstMisTurnos != null)
 {
@@ -29,25 +30,21 @@
                 <div class="form-control" style="box-shadow: 2px 2px 4px #000000;">
                     @if (misTurnos.tipoPrestacion != null)
                     {
-                        @if (misTurnos.tipoPrestacion.term != null)
-                        {
-                            <p><strong>@misTurnos.tipoPrestacion.term</strong></p>
-                        }
-
-                        <p><strong>Fecha turno: </strong>@misTurnos.horaInicio.ToShortTimeString()</p>
-
-                        @* @if (misTurnos.efector != null)
-                    {
-                        <p><strong>Lugar de vacunación: </strong>@misTurnos.efector</p>
-                    }
-                    @if (misTurnos.dosis != null)
-                    {
-                        <p><strong>Dosis: </strong>@misTurnos.dosis</p>
-                    }
-                    @if (misTurnos.fechaAplicacion != null)
-                    {
-                        <p><strong>Fecha de aplicación: </strong>@DateTime.Parse(@vacunacion.fechaAplicacion.Substring(0, 10)).ToShortDateString()</p>
-                    } *@
+                        <div class="p-lg-10 flex-fill flex-grow-1">
+                            <h4>
+                                <strong>Fecha: </strong>@misTurnos.horaInicio.ToString("dd/MM/yyyy") @misTurnos.horaInicio.AddHours(-3).ToShortTimeString()
+                            </h4>
+                            @if (misTurnos.tipoPrestacion.term != null)
+                            {
+                                <div>
+                                    <strong>Prestación: </strong>
+                                    @misTurnos.tipoPrestacion.term
+                                </div>
+                            }
+                            <div>
+                                <strong>Lugar: </strong>@misTurnos.organizacion.nombre
+                            </div>
+                        </div>
                     }
                 </div>
             }
@@ -68,7 +65,7 @@
 
     <a href="/turnosNuevo" class="btn btn-verde">SOLICITAR TURNO</a>
     <a href="/turnosHistorial" class="btn btn-celeste">HISTORIAL DE TURNOS</a>
-    <a href="/misturnos" class="btn btn-naranja" title="Próximamente">TELECONSULTA</a>
+    @* <a href="/misturnos" class="btn btn-naranja" title="Próximamente">TELECONSULTA</a> *@
 }
 
 
@@ -80,24 +77,19 @@
     private Paciente? _unPaciente = new Paciente();
     private Direccion _direccionGeoreferencia = new Direccion();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAuthenticatedInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
-        {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-            {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
-        }
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
+
         _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
 
-        if (_misTurnosService != null && GlobalServices.Usuario?.token != null)
+        if (_misTurnosService != null)
         {
             _spinnerService.Show();
             // Obtengo los turnos
-            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(GlobalServices.Usuario.token);
+            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
             _spinnerService.Hide();
         }
     }

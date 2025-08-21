@@ -1,0 +1,119 @@
+﻿.close {
+    position: absolute;
+    top: .6rem;
+    right: .6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    color: #345;
+    background: #f2f6f9;
+    border: 1px solid #d5e0e8;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease, box-shadow .18s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,.08);
+}
+
+    .close:hover {
+        background: #e3eef5;
+        color: #103850;
+    }
+
+    .close:active {
+        background: #d6e4ed;
+        transform: scale(.94);
+    }
+
+    .close:focus {
+        outline: 3px solid #0d87c9;
+        outline-offset: 2px;
+    }                   
+
+.privacidad-seccion {
+    max-width: 1200px;
+    margin: 2.5rem auto 3rem;
+    padding: 0 1rem;
+}
+
+.privacidad-titulo {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin: 0 0 1.25rem;
+    color: #1f3b50;
+}
+
+.privacidad-subtitulo {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin: 0 0 1.25rem;
+    color: #1f3b50;
+}
+
+.privacidad-contenedor {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.privacidad-caja {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 260px;
+    background: #ffffff;
+    border: 1px solid #e2e8ef;
+    border-radius: 14px;
+    padding: 1rem 1rem 1rem 1rem;
+    box-shadow: 0 4px 10px -4px rgba(0,0,0,.08), 0 2px 4px -2px rgba(0,0,0,.06);
+    transition: box-shadow .2s ease, transform .2s ease;
+    /*display: flex;*/
+    align-items: center;
+}
+
+    .privacidad-caja:hover {
+        box-shadow: 0 6px 18px -6px rgba(0,0,0,.14);
+        transform: translateY(-3px);
+    }
+
+    .privacidad-caja p {
+        margin-left: 10px;
+        font-size: .95rem;
+        line-height: 1rem;
+        color: #274458;
+        font-weight: 500;
+    }
+
+.privacidad-titulonota {
+    /*position: absolute;*/
+    margin:3px;
+    /*top: 50%;*/
+    /*transform: translateY(-50%);*/
+    /*width: 2.2rem;
+    height: 2.2rem;*/
+    padding:5px;
+    background: linear-gradient(135deg,#0d87c9,#38b2e6);
+    color: #fff;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    /*align-items: flex-start;
+    justify-content: center;*/
+    /*box-shadow: 0 2px 6px rgba(13,135,201,.4);*/
+}
+
+@media (max-width: 780px) {
+    .privacidad-contenedor {
+        flex-direction: column;
+    }
+
+    /*.privacidad-caja {
+        padding-left: 3.1rem;
+    }*/
+}

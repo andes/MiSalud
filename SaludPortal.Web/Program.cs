@@ -1,13 +1,11 @@
-using AndesServices.Entities;
+﻿using AndesServices.Entities;
 using AndesServices.Entities.ViewModels;
+using AndesServices.Interfaces;
 using Blazored.Modal;
 using BlazorSpinner;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
-using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
-using Microsoft.Extensions.Configuration;
 using SaludPortal.Web;
 using SaludPortal.Web.Components;
 using SaludPortal.Web.Services;
@@ -23,34 +21,71 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddOutputCache();
+builder.Services.AddCascadingAuthenticationState();
 
-builder.Services.AddAuthorizationCore();
-builder.Services.AddBlazoredModal();
-builder.Services.AddScoped<SpinnerService>();
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.CheckConsentNeeded = context => false;
+    options.Secure = CookieSecurePolicy.Always;
+});
 
-builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
-builder.Services.AddSingleton<GlobalServices>();
-builder.Services.AddSingleton<VMFarmaciasTurno>();
-builder.Services.AddScoped<VMMisLaboratorios>();
-builder.Services.AddScoped<VMHistoriaSalud>();
-
-builder.Services.AddHttpClient();
-
+//builder.Services.AddAuthenticationCore();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options => {
-        options.LoginPath = "/login";
-        options.LogoutPath = "/logout";
+    .AddCookie(o =>
+    {
+        o.Cookie.Name = SaludConstantes.CookieName;
+        o.LoginPath = "/login";
+        o.AccessDeniedPath = "/login";
+        o.SlidingExpiration = true;
+        o.ExpireTimeSpan = TimeSpan.FromHours(2);
     });
 
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtection-Keys"))
-    .SetApplicationName("SaludPortal");
+//builder.Services.AddDataProtection()
+//    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtection-Keys"))
+//    .SetApplicationName("SaludPortal");
 
-builder.Services.AddServerSideBlazor().AddCircuitOptions(o =>
+builder.Services.AddBlazoredModal();
+builder.Services.AddScoped<SpinnerService>();
+builder.Services.AddScoped<UserContext>();
+builder.Services.AddScoped<VMFarmaciasTurno>();
+builder.Services.AddScoped<VMMisLaboratorios>();
+builder.Services.AddScoped<VMHistoriaSalud>();
+builder.Services.AddSingleton<MessageService>();
+builder.Services.AddTransient<IEmailService, SmtpEmailService>();
+
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? builder.Configuration["BaseUrl"] ?? "https://localhost:7046/")});
+builder.Services.AddTransient<IMisLaboratorios, AndesServices.Services.MisLaboratoriosService>();
+builder.Services.AddTransient<SaludPortal.Web.Services.MisLaboratoriosService>();
+builder.Services.AddHttpClient("API", client =>
 {
-    o.DetailedErrors = true;
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? builder.Configuration["BaseUrl"] ?? "https://localhost:7046/");
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 });
+
+builder.Services.AddHttpClient("LACHYBS_NOREDIRECT", client =>
+{}).ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+{
+    AllowAutoRedirect = false
+});
+
+builder.Services.AddScoped(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var baseUrl = config["ApiBaseUrl"] ?? config["BaseUrl"] ?? "https://localhost:7046/";
+    if (!baseUrl.EndsWith("/")) baseUrl += "/";
+    return new HttpClient { BaseAddress = new Uri(baseUrl) };
+});
+builder.Services.AddSession();
+
+builder.Services.AddControllers();
+
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -61,18 +96,34 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseStaticFiles("/Files");
-
 app.UseHttpsRedirection();
+app.UseStaticFiles("/Files");
+app.UseCookiePolicy();
+app.UseRouting();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseSession();
+app.MapControllers();
 app.UseAntiforgery();
-
-app.UseOutputCache();
-
+//app.UseOutputCache();
 app.MapStaticAssets();
+app.MapRazorPages();
 
-app.MapDefaultEndpoints();
-
+//var hubPath = builder.Configuration["Blazor:ServerHubPath"] ?? "/_blazor";
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+//app.MapRazorComponents<App>()
+//   .AddInteractiveServerRenderMode(o =>
+//   {
+//       o.Path = hubPath; // Nueva ruta del hub SignalR
+//   });
+
+// En Program.cs (en vez de AddRazorComponents/AddInteractiveServerComponents)
+//builder.Services.AddServerSideBlazor();
+
+//app.MapBlazorHub("misaludtest.andes.gob.ar/ws");
+//app.MapFallbackToPage("/_Host");
+
 
 app.Run();

@@ -189,6 +189,8 @@
         public string conceptId { get; set; }
         public string term { get; set; }
         public List<object> multiprestacion { get; set; }
+        public string? nombre { get; set; }
+        public string? id { get; set; }
     }
 
     public class UsuarioDacion

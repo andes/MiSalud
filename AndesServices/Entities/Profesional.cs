@@ -1,4 +1,6 @@
-﻿namespace AndesServices.Entities
+﻿using System.Text.Json.Serialization;
+
+namespace AndesServices.Entities
 {
     public class Profesional
     {

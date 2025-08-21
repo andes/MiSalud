@@ -1,26 +1,138 @@
 ﻿@page "/user/login"
+@page "/login"
+@layout LoginLayout
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+
+
+@using SaludPortal.Web.Models.AccountViewModels
 @inject NavigationManager Nav
-@using SaludPortal.Web.Components.Layout
+@inject CustomAuthenticationStateProvider AuthProvider
+@inject ILogger<LogIn> Logger
+@inject IJSRuntime JS
 
-@attribute [Authorize]
 
-<UserMenu/>
+<PageTitle>Ingresar</PageTitle>
+<div class="container">
+    <div class="d-flex justify-content-center h-100">
+        <div class="card">
+            <div class="card-header">
+                <h3>Iniciar sesión</h3>
+            </div>
+            <div class="card-body">
+                <EditForm Model="_model" OnValidSubmit="DoLogin" class="login-form">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="badge bg-danger"  />
+                    <div class="input-group form-group">
+                        <div class="input-group-prepend" style="margin-bottom:0.6px;">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        </div>
+                        <input id="txtUsuario" @bind="_model.Email" type="text" class="form-control" placeholder="usuario">
+                    </div>
+                    <div class="input-group form-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                        </div>
+                        <input id="txtPassword" @bind="_model.Password" type="password" class="form-control" placeholder="contraseña">
+                    </div>
+                    <div class="row align-items-center remember">
+                        <input @bind="_model.RememberMe" type="checkbox">Recordarme
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label">
+                            <label id="Error" class="badge bg-danger" style="max-width:250px;white-space:unset;">@_error</label>
+                        </div>
+                        <input type="submit" value="@(_busy ? "Iniciando..." : "Iniciar sesión")" class="btn float-right login_btn" disabled="@_busy">
+                    </div>
+                </EditForm>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-center links">
+                    <span style="color:#fff;">No tenés cuenta?</span><a style="cursor:pointer;text-decoration:underline;" @onclick="Register"> Crear cuenta</a>
+                </div>
+                <div class="d-flex justify-content-center links">
+                    <a href="/olvidocontrasenia">Olvidaste tu contraseña?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
-    [SupplyParameterFromQuery]
+    private readonly LoginViewModel _model = new();
+    private string? _error;
+    private bool _busy;
+
+    [Parameter, SupplyParameterFromQuery]
     public string? ReturnUrl { get; set; }
 
-    [CascadingParameter]
-    public HttpContext? HttpContext { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private async Task DoLogin()
     {
-        var returnUrl = ReturnUrl ?? "/";
-        var url = new Uri(returnUrl, UriKind.RelativeOrAbsolute);
-        Nav.NavigateTo(url.IsAbsoluteUri ? "/" : returnUrl);
-        await base.OnInitializedAsync();
+        _busy = true; _error = null;
+        try
+        {
+            var result = await JS.InvokeAsync<LoginResult>("authApi.login", new
+            {
+                Email = _model.Email,
+                Password = _model.Password,
+                RememberMe = _model.RememberMe
+            });
+
+            if (result.Ok)
+            {
+                Nav.NavigateTo(ReturnUrl ?? "/home", forceLoad: true);
+            }
+            else
+            {
+                _error = ExtractMessage(result.Data) ?? "Credenciales inválidas";
+                // throw new Exception(_error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally { _busy = false; }
+    }
+    private class LoginResult
+    {
+        public bool Ok { get; set; }
+        public int Status { get; set; }
+        public dynamic? Data { get; set; }
     }
 
-    public static string Url(NavigationManager nav)
-        => $"user/login?returnUrl={Uri.EscapeDataString(nav.ToBaseRelativePath(nav.Uri))}";
+    private static string? ExtractMessage(System.Text.Json.JsonElement data)
+    {
+        if (data.ValueKind == System.Text.Json.JsonValueKind.Object &&
+            data.TryGetProperty("message", out var msgProp))
+            return msgProp.GetString();
+
+        if (data.ValueKind == System.Text.Json.JsonValueKind.String)
+        {
+            var raw = data.GetString();
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+
+            if (raw.TrimStart().StartsWith("{"))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(raw);
+                    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                        doc.RootElement.TryGetProperty("message", out var inner))
+                        return inner.GetString();
+                }
+                catch { }
+            }
+            return raw;
+        }
+
+        return null;
+    }
+
+    private async Task Register()
+    {
+        Nav.NavigateTo("/registerqr", true);
+    }
 }
+<script src="../js/auth.js"></script>

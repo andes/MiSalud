@@ -1,92 +1,117 @@
 ﻿using AndesServices.Entities;
 using AndesServices.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
-using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace SaludPortal.Web.Services
 {
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private const string AuthKey = "authUser";
-        private const string AuthToken = "authToken";
-        private readonly IConfiguration _configuration;
         private readonly ILogger<LoginService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private ClaimsPrincipal _cachedUser = new(new ClaimsIdentity());
+        private readonly IConfiguration? _configuration;
 
-        public CustomAuthenticationStateProvider(IConfiguration configuration, ILogger<LoginService> logger)
+        public CustomAuthenticationStateProvider(ILogger<LoginService> logger
+            , IHttpContextAccessor httpContextAccessor
+            , IConfiguration? configuration)
         {
-            _configuration = configuration;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
         }
-        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
-        {
-            // Devuelve el estado de autenticación actual.    
-            //var username = await _localStorage.GetItemAsStringAsync(AuthKey);
-            string username = "";
-            if (GlobalServices.Usuario != null && GlobalServices.Usuario.email != null)
-                username = GlobalServices.Usuario.email;
 
-            ClaimsIdentity identity;
-            if (!string.IsNullOrWhiteSpace(username))
+        //public async Task<bool> Login(string username, string password, bool rememberMe = false)
+        //{
+        //    try
+        //    {
+        //        var http = _httpContextAccessor.HttpContext;
+        //        if (http == null)
+        //        {
+        //            _logger.LogWarning("HttpContext null al intentar login. ¿Componente no interactivo o llamado en background?");
+        //            return false;
+        //        }
+
+        //        LoginService loginService = new LoginService(_configuration, _logger);
+        //        User? usuario = await loginService.Login(username, password);
+
+        //        if (usuario == null || string.IsNullOrEmpty(usuario.token))
+        //        {
+        //            _logger.LogWarning("Login fallido para {User}", username);
+        //            return false;
+        //        }
+
+        //        var claims = BuildClaims(username, usuario);
+        //        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        //        var principal = new ClaimsPrincipal(claimsIdentity);
+
+        //        var authProps = new AuthenticationProperties
+        //        {
+        //            IsPersistent = rememberMe,
+        //            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2),
+        //            AllowRefresh = true
+        //        };
+
+        //        await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
+        //        _cachedUser = principal;
+        //        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+
+        //        _logger.LogInformation("Login correcto para {User}", username);
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception("Usuario o contraseña inválido");
+        //    }
+        //}
+
+        public async Task Logout()
+        {
+            var http = _httpContextAccessor.HttpContext;
+            if (http == null)
             {
-                identity = new ClaimsIdentity(new[]
-                {
-                          new Claim(ClaimTypes.Name, username)
-                      }, "saludAuth");
+                _logger.LogWarning("HttpContext null en Logout");
             }
             else
             {
-                identity = new ClaimsIdentity();
+                await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                http.Response.Cookies.Delete(SaludConstantes.CookieName);
             }
-
-            var user = new ClaimsPrincipal(identity);
-            return new AuthenticationState(user);
+            _cachedUser = new ClaimsPrincipal(new ClaimsIdentity());
+            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         }
-
-        public async Task<bool> Login(string user, string password, Ref<string> mensaje)
+        public override Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            LoginService loginService = new LoginService(_configuration, _logger);
-            User? usuario = await loginService.Login(user, password, mensaje);
-
-            if (usuario != null && !string.IsNullOrEmpty(usuario.token))
+            try
             {
-                await MarkUserAsAuthenticated(usuario);
-                return true;
+                var http = _httpContextAccessor.HttpContext;
+                var user = http?.User ?? new ClaimsPrincipal(new ClaimsIdentity());
+
+                _cachedUser = user.Identity?.IsAuthenticated == true
+                    ? user
+                    : new ClaimsPrincipal(new ClaimsIdentity());
+
+                return Task.FromResult(new AuthenticationState(_cachedUser));
+
             }
-            else
+            catch (Exception ex)
             {
-                await MarkUserAsLoggedOut();
-                return false;
+                return Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
             }
         }
-        public async Task MarkUserAsAuthenticated(User usuario)
-        {
-            //await _localStorage.SetItemAsStringAsync(AuthKey, username);
-            //await _localStorage.SetItemAsStringAsync(AuthToken, token);
+        public void ForceRefresh() => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
 
-            //await _localStorage.SetItemAsStringAsync(AuthToken, usuario.token);
-            //await _localStorage.SetItemAsStringAsync(AuthKey, usuario.email);
-
-            GlobalServices.Usuario = usuario;
-
-            //var name = await _localStorage.GetItemAsync<string>(AuthKey);
-            var identity = new ClaimsIdentity(new[]
+        private static IEnumerable<Claim> BuildClaims(string username, User usuario) =>
+            new List<Claim>
             {
-                      new Claim(ClaimTypes.Name, usuario.email)
-                  }, "saludAuth");
-
-            var user = new ClaimsPrincipal(identity);
-
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
-        }
-
-        public async Task MarkUserAsLoggedOut()
-        {
-            User usuarioVacio = new User();
-            GlobalServices.Usuario = usuarioVacio;
-
-            var user = new ClaimsPrincipal(new ClaimsIdentity());
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
-        }
+                new Claim(ClaimTypes.Name, username),
+                new Claim("PacienteId", usuario.pacientes?.FirstOrDefault()?.id ?? string.Empty),
+                new Claim("Documento", usuario.documento ?? string.Empty),
+                new Claim("TokenBackend", usuario.token ?? string.Empty) // opcional: renombrado para no confundir con auth interno
+            };
     }
+
 }

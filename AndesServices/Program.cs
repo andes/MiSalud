@@ -24,6 +24,8 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddAuthorization();
+
 builder.Services.Configure<AndesServices.Entities.ConexionServicios>(
     builder.Configuration.GetSection("urlServicios"));
 
@@ -38,7 +40,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();

@@ -54,43 +54,35 @@
     {
         public string? dosis { get; set; }
         public Intervalo intervalo { get; set; }
-        public string? dias { get; set; }
+        public int? dias { get; set; }
         public string? notaMedica { get; set; }
     }
 
     public class Intervalo
     {
-        public string _id { get; set; }
-        public string key { get; set; }
-        public string nombre { get; set; }
-        public string source { get; set; }
-        public string type { get; set; }
-        public string id { get; set; }
-    }
-
-    public class Concepto
-    {
-        public string conceptId { get; set; }
-        public string term { get; set; }
-        public string fsn { get; set; }
-        public string semanticTag { get; set; }
+        public string? _id { get; set; }
+        public string? key { get; set; }
+        public string? nombre { get; set; }
+        public string? source { get; set; }
+        public string? type { get; set; }
+        public string? id { get; set; }
     }
 
     public class Estado
     {
-        public string tipo { get; set; }
-        public string _id { get; set; }
+        public string? tipo { get; set; }
+        public string? _id { get; set; }
         public DateTime createdAt { get; set; }
         public CreatedBy createdBy { get; set; }
-        public string id { get; set; }
+        public string? id { get; set; }
     }
 
     public class CreatedBy
     {
-        public string id { get; set; }
-        public string nombreCompleto { get; set; }
-        public string nombre { get; set; }
-        public string apellido { get; set; }
+        public string? id { get; set; }
+        public string? nombreCompleto { get; set; }
+        public string? nombre { get; set; }
+        public string? apellido { get; set; }
         public long? username { get; set; }
         public long? documento { get; set; }
         public Organizacion organizacion { get; set; }

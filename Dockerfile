@@ -17,4 +17,4 @@ COPY --from=build /app/publish .
 
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "SaludPortal.Web.dll"]t
+ENTRYPOINT ["dotnet", "SaludPortal.Web.dll"]

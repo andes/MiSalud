@@ -24,5 +24,20 @@ namespace SaludPortal.Web.Services
             }
             return null;
         }
+
+        public async Task<List<PrestacionHistoriaSalud>> ObtenerPrestacionesAsync(string token, string tipoPrestaciones, string idPaciente, string estado = "validada")
+        {
+            try
+            {
+                AndesServices.Services.HistoriaSaludService prestacionesHistoriaSalud = new AndesServices.Services.HistoriaSaludService(_configuration);
+                return await prestacionesHistoriaSalud.ObtenerPrestacionesAsync(token, tipoPrestaciones, idPaciente, estado);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Se produjo un error al obtener las categorias.");
+                Console.WriteLine(exception.Message);
+            }
+            return null;
+        }
     }
 }

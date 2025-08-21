@@ -64,8 +64,8 @@ namespace AndesServices.Services
             _configuration.GetSection("urlServicios").Bind(conexionServicios);
 
             string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/georeferencia/georeferenciar"
-                : conexionServicios.UrlProyectoServiciosDemo + "/georeferencia/georeferenciar";
+                ? conexionServicios.UrlProyectoServiciosProd + "/modules/georeferencia/georeferenciar"
+                : conexionServicios.UrlProyectoServiciosDemo + "/modules/georeferencia/georeferenciar";
 
             try
             {

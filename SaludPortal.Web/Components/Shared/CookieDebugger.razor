@@ -1,0 +1,52 @@
+@inject IJSRuntime JSRuntime
+@inject ILogger<CookieDebugger> Logger
+
+@if (showDebugInfo)
+{
+    <div class="debug-panel">
+        <h4>Cookie Debug Info</h4>
+        <pre>@debugInfo</pre>
+    </div>
+}
+
+@code {
+    private bool showDebugInfo = true;
+    private string debugInfo = "Checking cookies...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckCookies();
+    }
+
+    private async Task CheckCookies()
+    {
+        try
+        {
+            var cookies = await JSRuntime.InvokeAsync<IDictionary<string, string>>("cookieMonitor.checkCookies");
+            debugInfo = $"Cookies encontradas:\n{string.Join("\n", cookies.Select(c => $"{c.Key}: {c.Value}"))}";
+            
+            var authCookie = await JSRuntime.InvokeAsync<string>("cookieMonitor.getCookie", SaludConstantes.CookieName);
+            debugInfo += $"\n\nAuth Cookie: {(authCookie != null ? "Present" : "Not found")}";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking cookies");
+            debugInfo = $"Error checking cookies: {ex.Message}";
+        }
+    }
+}
+
+<style>
+    .debug-panel {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        background: rgba(0,0,0,0.8);
+        color: #fff;
+        padding: 10px;
+        max-width: 400px;
+        max-height: 300px;
+        overflow: auto;
+        z-index: 9999;
+    }
+</style>

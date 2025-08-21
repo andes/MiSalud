@@ -1,4 +1,7 @@
-﻿namespace AndesServices.Entities
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace AndesServices.Entities
 {
     public class Paciente
     {

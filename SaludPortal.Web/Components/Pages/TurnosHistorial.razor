@@ -2,22 +2,22 @@
 
 
 @using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Nav
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
+@using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
 @using System.Security.Claims
 @using AndesServices.Entities
-@* @using Blazored.Modal *@
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@inject IHttpClientFactory httpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
 
-@* @rendermode InteractiveServer *@
+@inherits AuthenticatedComponentBase
 
 <style>
     .asistencia {
-        border: solid 2px green;
-        color: green;
+        border: solid 2px #06bc06;
+        color: #06bc06;
         border-radius: 20px;
         padding: 5px 10px;
         max-width: 200px;
@@ -26,8 +26,8 @@
     }
 
     .inasistencia {
-        border: solid 2px #333;
-        color: #333;
+        border: solid 2px #ccc;
+        color: #ccc;
         border-radius: 20px;
         padding: 5px 10px;
         max-width: 200px;
@@ -40,11 +40,12 @@
     }
 
         .turno:hover {
-            background-color: ghostwhite;
+            background-color: #035676;
         }
 </style>
 
 <h1>Mis turnos: Historial</h1>
+<hr />
 <br />
 @if (lstMisTurnos != null)
 {
@@ -85,7 +86,7 @@
                                     <p><strong>@numerar </strong></p>
                                 }
 
-                                <p><strong>Fecha turno: </strong>@miTurno.horaInicio.ToString("dd/MM/yyyy") @miTurno.horaInicio.ToString("HH:mm")</p>
+                                <p><strong>Fecha turno: </strong>@miTurno.horaInicio.ToString("dd/MM/yyyy") @miTurno.horaInicio.AddHours(-3).ToString("HH:mm")</p>
 
                                 @if (miTurno.asistencia != null)
                                 {
@@ -157,10 +158,10 @@
     private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
     private MisTurnosService? _misTurnosService;
     private int numerar = 0;
-    private string fechaHoraAtencion = "";
-    private string Paciente = "";
-    private string DatosConsulta = "";
-    private string LugarAtencion = "";
+    // private string fechaHoraAtencion = "";
+    // private string Paciente = "";
+    // private string DatosConsulta = "";
+    // private string LugarAtencion = "";
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
@@ -183,24 +184,19 @@
 
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAuthenticatedInitializedAsync()
     {
         numerar = 0;
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated != true)
-        {
-            if (AuthenticationStateProvider is CustomAuthenticationStateProvider customAuthProvider)
-            {
-                await customAuthProvider.MarkUserAsLoggedOut();
-                Nav.NavigateTo("/");
-            }
-        }
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
+
         _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
 
-        if (_misTurnosService != null && GlobalServices.Usuario?.token != null)
+        if (_misTurnosService != null)
         {
             _spinnerService.Show();
-            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(GlobalServices.Usuario.token);
+            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
             _spinnerService.Hide();
         }
     }

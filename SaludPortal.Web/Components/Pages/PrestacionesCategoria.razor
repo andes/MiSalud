@@ -1,0 +1,173 @@
+@page "/historiasalud/categoria/{expresionSnomed}"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Services
+@using AndesServices.Entities.ViewModels
+@using AndesServices.Entities
+@using System.Text.Json
+
+@inject IConfiguration Configuration
+@inject BlazorSpinner.SpinnerService _spinnerService
+@inject NavigationManager NavigationManager
+
+@inherits AuthenticatedComponentBase
+
+<h1>@TituloMostrar</h1>
+<hr />
+
+@if (cargando)
+{
+    <p>Cargando...</p>
+}
+else if (error != null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+else if (prestaciones == null || prestaciones.Count == 0)
+{
+    <p>No se encontraron prestaciones.</p>
+}
+else
+{
+    @foreach (var p in prestaciones.OrderByDescending(p => p.solicitud?.fecha))
+    {
+        <div class="form-control">
+            @* <div>
+                    @if (p.solicitud?.fecha != null)
+                    {
+                        fecha = DateTime.Parse(p.solicitud.fecha.Value.ToString()).ToString("dd/MM/yyyy");
+                    }
+                    else
+                    {
+                        fecha = "No disponible";
+                    }
+                    <strong>Fecha: </strong>
+                    @fecha
+                    <br />
+                </div> *@
+            <div>
+                <strong>@(p.solicitud?.tipoPrestacion?.term ?? "Prestación")</strong><br />
+            </div>
+            <div>
+                <strong><Icon Name="hospital" Size="16" Fill="#fff" class="text-secondary me-1" AriaLabel="Institución" /></strong>@(p.solicitud?.organizacion?.nombre ?? "Organización")<br />
+            </div>
+            <div>
+                <strong>Profesional: </strong>
+                @(p.solicitud?.profesional?.nombre ?? "Sin datos") @(p.solicitud?.profesional?.apellido ?? "Sin datos")
+            </div>
+            <div>
+                <strong>Documento: </strong> @(p.solicitud?.profesional?.documento ?? "Sin datos")<br />
+            </div>
+            <div>
+                @if (p.solicitud?.registros != null && p.solicitud?.registros.Count() > 0)
+                {
+                    foreach (var registro in p.solicitud?.registros ?? Enumerable.Empty<Registro>())
+                    @* @foreach (var registro in p.solicitud.registros!) *@
+                    {
+                        if (registro.valor is { } ve && ve.ValueKind == JsonValueKind.Object)
+                        {
+                            if (ve.TryGetProperty("solicitudPrestacion", out _))
+                            {
+                                var sol = ve.Deserialize<WrapperSolicitudPrestacion>();
+
+                                <div>
+                                    <div>
+                                        <strong> Solicitud: </strong> @sol.solicitudPrestacion?.prestacionSolicitada?.term
+                                    </div>
+                                    <div>
+                                        <strong>Motivo: </strong> @sol.solicitudPrestacion?.motivo
+                                    </div>
+                                    <div>
+                                        <strong>Indicaciones: </strong> @sol.solicitudPrestacion?.indicaciones
+                                    </div>
+                                </div>
+                            }
+                            @* else if (ve.TryGetProperty("solicitudPrestacion", out _))
+                            {
+                                var sol = ve.Deserialize<WrapperSolicitudPrestacion>();
+                            } *@
+                        }
+
+                    }
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public string? expresionSnomed { get; set; }
+
+    private string? titulo;
+    private List<PrestacionHistoriaSalud>? prestaciones;
+    private MiHistoriaSaludService? _miHistoriaSaludService;
+    private bool cargando;
+    private string? error;
+    private string TituloMostrar => string.IsNullOrWhiteSpace(titulo) ? expresionSnomed ?? "" : titulo!;
+    private string fecha;
+
+    protected override async Task OnAuthenticatedInitializedAsync()
+    {
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
+
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(pacienteId))
+            return;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (!string.IsNullOrEmpty(uri.Query))
+        {
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            if (query.TryGetValue("titulo", out var v))
+            {
+                titulo = Uri.UnescapeDataString(v.ToString());
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(expresionSnomed))
+        {
+            error = "Expresión inválida.";
+            return;
+        }
+
+        var token = BackendToken;
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(pacienteId))
+        {
+            error = "No hay contexto de autenticación.";
+            return;
+        }
+
+        cargando = true;
+        error = null;
+        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration);
+        _spinnerService.Show();
+        try
+        {
+            prestaciones = await _miHistoriaSaludService.ObtenerPrestacionesAsync(token, expresionSnomed, pacienteId);
+        }
+        catch (Exception ex)
+        {
+            error = "Error obteniendo prestaciones: " + ex.Message;
+        }
+        finally
+        {
+            _spinnerService.Hide();
+            cargando = false;
+        }
+    }
+
+    private void Volver()
+    {
+        NavigationManager.NavigateTo("/historiasalud");
+    }
+}

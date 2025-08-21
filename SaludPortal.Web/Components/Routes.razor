@@ -1,4 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Rendering
+@using SaludPortal.Web.Components.Pages.User
 
 @* <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
@@ -11,7 +13,19 @@
     <CascadingBlazoredModal>
         <Router AppAssembly="typeof(Program).Assembly">
             <Found Context="routeData">
-                <AuthorizeView>
+                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                    <NotAuthorized>
+                        <AuthenticationStateView />
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <LayoutView Layout="typeof(Layout.LoginLayout)">
+                    <p>Página no encontrada.</p>
+                </LayoutView>
+            </NotFound>
+            @* <AuthorizeView>
                     <Authorized>
                         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
                     </Authorized>
@@ -24,12 +38,51 @@
             </Found>
             <NotFound>
                 <CascadingAuthenticationState>
-                    @* <LayoutView Layout="typeof(Layout.LoginLayout)"> *@
                     <p>Página no encontrada....</p>
-                    @* </LayoutView> *@
                 </CascadingAuthenticationState>
-            </NotFound>
+            </NotFound> *@
         </Router>
-        @* <RedirectToLogin /> *@
     </CascadingBlazoredModal>
 </CascadingAuthenticationState>
+@code {
+    private class AuthenticationStateView : ComponentBase
+    {
+        [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+        [Inject] private NavigationManager Nav { get; set; } = default!;
+
+        protected override async Task OnInitializedAsync()
+        {
+            if (AuthStateTask is null)
+                return;
+
+            var state = await AuthStateTask;
+            if (state.User.Identity?.IsAuthenticated != true)
+            {
+                var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+                Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(string.IsNullOrWhiteSpace(returnUrl) ? "/home" : "/" + returnUrl)}", true);
+            }
+        }
+        protected override void BuildRenderTree(RenderTreeBuilder builder)
+        {
+            // Si se llega a renderizar aquí y el usuario está autenticado,
+            // significa que está autenticado pero no autorizado (policy/roles futuros).
+            builder.OpenElement(0, "p");
+            builder.AddContent(1, "No autorizado.");
+            builder.CloseElement();
+        }
+    }
+}
+@* <CascadingAuthenticationState>
+    <CascadingBlazoredModal>
+        <Router AppAssembly="typeof(Program).Assembly">
+            <Found Context="routeData">
+                <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+            </Found>
+            <NotFound>
+                <LayoutView Layout="typeof(Layout.LoginLayout)">
+                    <p>Página no encontrada....</p>
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </CascadingBlazoredModal>
+</CascadingAuthenticationState> *@

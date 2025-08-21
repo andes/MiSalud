@@ -1,54 +1,93 @@
 ﻿using AndesServices.Entities;
+using AndesServices.Services;
+using Newtonsoft.Json.Linq;
 
 namespace SaludPortal.Web.Services
 {
+    using CoreMisLabsService = AndesServices.Services.MisLaboratoriosService;
     public class MisLaboratoriosService
     {
         private readonly IConfiguration _configuration;
-        public MisLaboratoriosService(IConfiguration? configuration)
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<CoreMisLabsService> _coreLogger;
+
+        public MisLaboratoriosService(
+            IConfiguration configuration,
+            IHttpClientFactory httpClientFactory,
+            ILogger<CoreMisLabsService> coreLogger)
         {
             _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
+            _coreLogger = coreLogger;
         }
+
+        private CoreMisLabsService CreateCoreService()
+            => new CoreMisLabsService(_configuration, _httpClientFactory, _coreLogger);
 
         public async Task<List<MisLaboratorios>> ObtenerMisLaboratoriosAsync(string token, string pacienteId, string fechaDde, string fechaHta)
         {
-            if (string.IsNullOrEmpty(token))
+            if (string.IsNullOrWhiteSpace(token))
             {
-                Console.WriteLine("Token no proporcionado.");
+                _coreLogger.LogWarning("Token no proporcionado.");
                 return null;
             }
+
             try
             {
-                AndesServices.Services.MisLaboratoriosService misLaboratoriosService = new AndesServices.Services.MisLaboratoriosService(_configuration);
-                return await misLaboratoriosService.ObtenerMisLaboratoriosAsync(token, pacienteId, fechaDde, fechaHta);
+                return await CreateCoreService()
+                    .ObtenerMisLaboratoriosAsync(token, pacienteId, fechaDde, fechaHta);
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Console.WriteLine("Se produjo un error al obtener los laboratorios.");
-                Console.WriteLine(exception.Message);
+                _coreLogger.LogError(ex, "Error obteniendo laboratorios paciente {PacienteId}", pacienteId);
+                return null;
             }
-            return null;
+        }
+        public async Task<byte[]> DescargarLaboratorio(string token, string idProtocolo, string documento)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                _coreLogger.LogWarning("Token no proporcionado (descarga).");
+                return null;
+            }
+
+            try
+            {
+                return await CreateCoreService()
+                    .DescargarLaboratorioPorIdAsync(token, idProtocolo, documento);
+            }
+            catch (Exception ex)
+            {
+                _coreLogger.LogError(ex, "Error descargando laboratorio {IdProtocolo}", idProtocolo);
+                return null;
+            }
         }
 
-        public async Task<byte[]> descargarLaboratorio(string token, string idProtocolo, string documento)
+        public async Task<List<LaboratoriosLachybs>> ObtenerMisLaboratoriosLACHYBSAsync(string usuario, string clave, string documento)
         {
-            byte[] unByte = null;
-            if (string.IsNullOrEmpty(token))
-            {
-                Console.WriteLine("Token no proporcionado.");
-                return await Task.FromResult(unByte);
-            }
             try
             {
-                AndesServices.Services.MisLaboratoriosService misLaboratoriosService = new AndesServices.Services.MisLaboratoriosService(_configuration);
-                return await misLaboratoriosService.DescargarLaboratorioPorIdAsync(token, idProtocolo, documento);
+                return await CreateCoreService()
+                    .ObtenerMisLaboratoriosLACHYBSAsync(usuario, clave, documento);
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                Console.WriteLine("Se produjo un error al obtener el archivo.");
-                Console.WriteLine(exception.Message);
+                _coreLogger.LogError(ex, "Error obteniendo LACHYBS dni {Documento}", documento);
+                return null;
             }
-            return await Task.FromResult(unByte);
+        }
+        public async Task<string> DescargarLaboratorioLACHyBSPorIdAsync(string usuario, string clave,string idProtocolo)
+        {
+            try
+            {
+                return await CreateCoreService()
+                    .DescargarLaboratorioLACHyBSPorIdAsync(usuario, clave, idProtocolo);
+            }
+            catch (Exception ex)
+            {
+                _coreLogger.LogError(ex, "Error obteniendo LACHYBS dni {idProtocolo}", idProtocolo);
+                return null;
+            }
         }
     }
 }

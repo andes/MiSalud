@@ -1,5 +1,7 @@
 ﻿using AndesServices.Entities;
 using AndesServices.Interfaces;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Net.Http;
@@ -30,7 +32,7 @@ namespace AndesServices.Services
 
         }
 
-        public async Task<List<MisTurnos>> ObtenerMisTurnosAsync(string token, string? documento= "")
+        public async Task<List<MisTurnos>> ObtenerMisTurnosAsync(string token, string? documento = "")
         {
             var conexionServicios = new ConexionServicios();
             _configuration.GetSection("urlServicios").Bind(conexionServicios);
@@ -74,9 +76,60 @@ namespace AndesServices.Services
             throw new NotImplementedException();
         }
 
-        public Task<bool> RegistrarTurnoAsync(string token, string documento, string motivoConsulta, string profesional, string tipoPrestacion, DateTime fechaHoraDacion, string organizacionId)
+        public async Task<bool> RegistrarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion)
         {
-            throw new NotImplementedException();
+            var conexionServicios = new ConexionServicios();
+            _configuration.GetSection("urlServicios").Bind(conexionServicios);
+
+            string url = conexionServicios.usarProd
+                ? conexionServicios.UrlProyectoServiciosProd + "/modules/turnos"
+                : conexionServicios.UrlProyectoServiciosDemo + "/modules/turnos";
+
+            url += $"/turno/{idTurno}/bloque/{idBloque}/agenda/{idAgenda}";
+            try
+            {
+                using (HttpClient client = _httpClientFactory.CreateClient())
+                {
+                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                    string tipoTurno = "mobile";
+                    string emitidoPor = "misalud";
+                    string nota = "Turno pedido desde portal mi salud";
+                    string motivoConsulta = "";
+
+                    var request = new HttpRequestMessage
+                    {
+                        Method = HttpMethod.Patch,
+                        RequestUri = new Uri(url),
+                        Content = new StringContent(JsonConvert.SerializeObject(new
+                        {
+                            idAgenda,
+                            idBloque,
+                            idTurno,
+                            paciente,
+                            tipoPrestacion,
+                            tipoTurno,
+                            emitidoPor,
+                            nota,
+                            motivoConsulta
+                        }), System.Text.Encoding.UTF8, "application/json")
+                    };
+
+                    using (HttpResponseMessage res = await client.SendAsync(request))
+                    {
+                        if (res.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine("Turno confirmado.");
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Error al registrar el turno: {exception.Message}");
+            }
+            return false; // Ensure a boolean is returned in case of failure
         }
 
         public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string token, string idPaciente, userLocation userLocation)
@@ -101,7 +154,7 @@ namespace AndesServices.Services
                         Content = new StringContent(JsonConvert.SerializeObject(new { idPaciente, userLocation }), System.Text.Encoding.UTF8, "application/json")
                     };
 
-                    
+
                     using (HttpResponseMessage res = await client.SendAsync(request))
                     {
                         if (res.IsSuccessStatusCode)

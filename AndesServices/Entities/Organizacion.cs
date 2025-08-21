@@ -1,4 +1,6 @@
-﻿namespace AndesServices.Entities
+﻿using System.Text.Json.Serialization;
+
+namespace AndesServices.Entities
 {
     public class Organizacion
     {
@@ -16,10 +18,10 @@
         public bool integracionActiva { get; set; }
         public DateTime? fechaAlta { get; set; }
         public DateTime? fechaBaja { get; set; }
-        public List<MapaSector> mapaSectores { get; set; } = new();
-        public List<UnidadOrganizativa> unidadesOrganizativas { get; set; } = new();
-        public List<object> ofertaPrestacional { get; set; } = new();
-        public List<object> trasladosEspeciales { get; set; } = new();
+        public List<MapaSector>? mapaSectores { get; set; } = new();
+        public List<UnidadOrganizativa>? unidadesOrganizativas { get; set; } = new();
+        public List<object>? ofertaPrestacional { get; set; } = new();
+        public List<object>? trasladosEspeciales { get; set; } = new();
         public string? id { get; set; }
         public PrefijosLab? prefijosLab { get; set; }
         public string? prefijo { get; set; }
@@ -27,9 +29,9 @@
         public bool aceptaDerivacion { get; set; }
         public Configuraciones? configuraciones { get; set; }
         public string? servicioEmail { get; set; }
-        public List<Email> emails { get; set; }
-        public List<Servicio> servicios { get; set; }
-        public List<Edificio> edificio { get; set; }
+        public List<Email>? emails { get; set; }
+        public List<Servicio>? servicios { get; set; }
+        public List<Edificio>? edificio { get; set; }
     }
 
     public class Codigo
@@ -41,4 +43,5 @@
         public string? id { get; set; }
         public string? sips { get; set; }
     }
+
 }
