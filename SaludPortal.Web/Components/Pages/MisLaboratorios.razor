@@ -1,6 +1,7 @@
 ﻿@page "/mislaboratorios"
 
 @rendermode InteractiveServer
+@using AndesServices.Entities
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
@@ -8,6 +9,8 @@
 @using System.Security.Claims
 @using System.Text
 
+
+@inject SaludConfiguracion SaludConfiguracion
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IConfiguration Configuration
 @inject IHttpClientFactory HttpClientFactory
@@ -40,16 +43,16 @@
 
     <p><button class="btn btn-verde" @onclick="BuscarLaboratorios">Buscar</button></p> 
 </div>*@
-@if (Model.LstMisLaboratorios != null)
+@if (Model.LstMisLaboratorios != null && _visibleLabs != null)
 {
-    @foreach (var misLaboratorios in Model.LstMisLaboratorios.OrderByDescending(l => l.fecha))
+    @foreach (var misLaboratorios in _visibleLabs)
     {
         @if (misLaboratorios != null)
         {
             <div class="form-control laboratorios">
                 @if (misLaboratorios.Laboratorio != null)
                 {
-                    <div class="d-flex justify-content-between" @onclick="@(() => DownloadLaboratorio(misLaboratorios.idProtocolo.ToString()))" title="Descargar" tabindex="0">
+                    <div class="d-flex justify-content-between" @onclick="@(() => DownloadLaboratorio(misLaboratorios.idProtocolo.ToString(), misLaboratorios.Laboratorio))" title="Descargar" tabindex="0">
                         <div>
                             <p><strong>@DateTime.Parse(@misLaboratorios.fecha).ToString("dd/MM/yyyy")</strong></p>
                             <p><strong>Informe De Laboratorio</strong></p>
@@ -68,13 +71,20 @@
         }
     }
     <div id="pdffile"></div>
+
+    <div id="load-more-sentinel" style="height: 1px;"></div>
+
+    @if (_isLoadingMore && Model.LstMisLaboratorios != null && _loadedCount < Model.LstMisLaboratorios.Count)
+    {
+        <div class="text-center text-secondary my-2" aria-live="polite">Cargando…</div>
+    }
 }
 else
 {
     <label>No existen datos para mostrar</label>
 }
 @* <h2>Instituciones privadas</h2> *@
-@if (Model.LstLaboratoriosLachybs != null)
+@* @if (Model.LstLaboratoriosLachybs != null)
 {
     @foreach (var misLaboratorios in Model.LstLaboratoriosLachybs)
     {
@@ -83,13 +93,13 @@ else
             <div class="form-control laboratorios">
                 <div class="d-flex justify-content-between" @onclick="@(() => DownloadLaboratorioLACHyBS(misLaboratorios.protocolo_id.ToString()))" title="Descargar" tabindex="0">
                     <div>
-                        @* <p><strong>@DateTime.Parse(@misLaboratorios.fecha).ToString("dd/MM/yyyy")</strong></p> *@
+                        <p><strong>@DateTime.Parse(@misLaboratorios.fecha).ToString("dd/MM/yyyy")</strong></p>
                         <p><strong>Informe De Laboratorio</strong></p>
                         <p>
                             <Icon Name="hospital" Size="16" Fill="#fff" class="text-secondary me-1" AriaLabel="Institución" />
-                            Clínica Raña
+                            CLÍNICA RAÑA
                         </p>
-                        <strong>Protocolo: </strong>@misLaboratorios.protocolo
+                        <strong>Solicitante: </strong>@misLaboratorios.solicitante_apellido.ToUpper() @misLaboratorios.solicitante_nombre.ToUpper()
                     </div>
                     <div class="align-content-center">
                         <Icon Name="cloud-download" Size="32" Fill="#fff" class="text-secondary me-1" AriaLabel="Descargar" />
@@ -102,8 +112,8 @@ else
 }
 else
 {
-    @* <label>No existen datos para mostrar</label> *@
-}
+    <label>No existen datos para mostrar</label>
+} *@
 
 <script type="text/javascript">
 
@@ -118,13 +128,44 @@ else
     a.click();
     }
 
-    // function BlazorDownloadFile(filename, contentType, content) {
+    window.InfiniteScroll = {
+        observer: null,
+        observe: function (elementId, dotnetRef, callback) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
 
-    // // window.open(content);
-    // const pdfData = "data:application/pdf;base64," + content;
-    // var archivo = document.getElementById("pdffile");
-    // archivo.innerHTML = content;
-    // }
+            if (this.observer) {
+                this.observer.disconnect();
+                this.observer = null;
+            }
+
+            const options = { root: null, rootMargin: '0px', threshold: 0.1 };
+            let ticking = false;
+
+            this.observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (ticking) return;
+                        ticking = true;
+                        setTimeout(() => {
+                            dotnetRef.invokeMethodAsync(callback).catch(() => { });
+                            ticking = false;
+                        }, 100);
+                    }
+                });
+            }, options);
+
+            this.observer.observe(el);
+        },
+        unobserve: function (elementId) {
+            if (this.observer) {
+                const el = document.getElementById(elementId);
+                if (el) this.observer.unobserve(el);
+                this.observer.disconnect();
+                this.observer = null;
+            }
+        }
+    };
 </script>
 
 @code {
@@ -132,6 +173,14 @@ else
     private Byte[] archivoDescargar = null;
     private string idProtocolo = "";
     private string archivoDescargarLACHyBS = "";
+
+    // Estado de paginación en cliente (infinite scroll)
+    private List<AndesServices.Entities.MisLaboratorios> _visibleLabs = new();
+    private int _pageSize = 20;
+    private int _loadedCount = 0;
+    private bool _isLoadingMore = false;
+    private DotNetObjectReference<MisLaboratorios>? _dotNetRef;
+    private bool _observerAttached = false;
 
     protected async Task BuscarLaboratorios()
     {
@@ -167,33 +216,187 @@ else
         if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(pacienteId) || string.IsNullOrEmpty(documento))
             return;
 
-        // Model.FechaDesde = DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd");
-        // Model.FechaHasta = DateTime.Now.ToString("yyyy-MM-dd");
+        string fechaDesde = DateTime.Now.AddYears(SaludConfiguracion.fechaDesde * (-1)).ToString("yyyyMMdd");
+
         _misLaboratoriosService = new MisLaboratoriosService(Configuration, HttpClientFactory, Logger);
 
         if (_misLaboratoriosService != null)
         {
             _spinnerService.Show();
-            Model.LstMisLaboratorios = await _misLaboratoriosService.ObtenerMisLaboratoriosAsync(token, pacienteId, "20200101", DateTime.Now.ToString("yyyyMMdd"));
-            Model.LstLaboratoriosLachybs = await _misLaboratoriosService.ObtenerMisLaboratoriosLACHYBSAsync("xroad", "sol2025", documento);
+            Model.LstMisLaboratorios = await _misLaboratoriosService.ObtenerMisLaboratoriosAsync(token, pacienteId, fechaDesde, DateTime.Now.ToString("yyyyMMdd"));
+
+            var cfg = new ConexionServicios();
+            Configuration.GetSection("urlServicios").Bind(cfg);
+
+            if (!cfg.usarProd)
+            {
+                Model.LstLaboratoriosLachybs = await _misLaboratoriosService.ObtenerMisLaboratoriosLACHYBSAsync("xroad", "sol2025", documento);
+
+                if (Model.LstLaboratoriosLachybs.Count() > 0)
+                {
+                    foreach (var item in Model.LstLaboratoriosLachybs)
+                    {
+                        AndesServices.Entities.MisLaboratorios unLaboratorio = new AndesServices.Entities.MisLaboratorios();
+                        unLaboratorio.Laboratorio = "CLÍNICA RAÑA";
+                        unLaboratorio.medicoSolicitante = item.solicitante_apellido + " " + item.solicitante_nombre;
+                        unLaboratorio.fecha = item.fecha;
+                        unLaboratorio.idProtocolo = item.protocolo_id;
+
+                        Model.LstMisLaboratorios.Add(unLaboratorio);
+                    }
+                }
+            }
             _spinnerService.Hide();
+
+            await ResetAndInitVisibleAsync();
         }
     }
 
-    async Task DownloadLaboratorio(string idProtocolo)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await EnsureObserverAsync();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnLoadMore()
+    {
+        await LoadMoreAsync();
+    }
+
+    private async Task ResetAndInitVisibleAsync()
+    {
+        // Tamaño de página configurable
+        _pageSize = SaludConfiguracion.misLaboratoriosPageSize > 0 ? SaludConfiguracion.misLaboratoriosPageSize : 20;
+
+        // Ordenamos una sola vez para no ordenar en cada render
+        if (Model.LstMisLaboratorios != null)
+        {
+            // Si 'fecha' viene en formato yyyyMMdd, ordenar por string mantiene orden correcto.
+            // Si prefieres ordenar por DateTime, descomenta la línea de abajo y comenta la actual.
+            // Model.LstMisLaboratorios = Model.LstMisLaboratorios.OrderByDescending(l => DateTime.Parse(l.fecha)).ToList();
+            Model.LstMisLaboratorios = Model.LstMisLaboratorios.OrderByDescending(l => l.fecha).ToList();
+        }
+
+        _visibleLabs.Clear();
+        _loadedCount = 0;
+
+        await LoadMoreAsync(reset: true);
+        await EnsureObserverAsync();
+        StateHasChanged();
+    }
+
+    private async Task EnsureObserverAsync()
+    {
+        if (!_observerAttached && Model.LstMisLaboratorios != null && _loadedCount < Model.LstMisLaboratorios.Count && _dotNetRef is not null)
+        {
+            await JSRuntime.InvokeVoidAsync("InfiniteScroll.observe", "load-more-sentinel", _dotNetRef, "OnLoadMore");
+            _observerAttached = true;
+        }
+        else if (Model.LstMisLaboratorios != null && _loadedCount >= Model.LstMisLaboratorios.Count)
+        {
+            await JSRuntime.InvokeVoidAsync("InfiniteScroll.unobserve", "load-more-sentinel");
+            _observerAttached = false;
+        }
+    }
+
+    private async Task LoadMoreAsync(bool reset = false)
+    {
+        if (Model.LstMisLaboratorios == null) return;
+        if (_isLoadingMore) return;
+
+        _isLoadingMore = true;
+        try
+        {
+            var total = Model.LstMisLaboratorios.Count;
+            var remaining = total - _loadedCount;
+
+            // Si ya no queda nada, desactivar el observer y salir
+            if (remaining <= 0)
+            {
+                if (_observerAttached)
+                {
+                    try
+                    {
+                        await JSRuntime.InvokeVoidAsync("InfiniteScroll.unobserve", "load-more-sentinel");
+                    }
+                    catch { /* ignorar errores de JS */ }
+                    _observerAttached = false;
+                }
+                return;
+            }
+
+            var toTake = Math.Min(_pageSize, remaining);
+            if (toTake > 0)
+            {
+                _visibleLabs.AddRange(Model.LstMisLaboratorios.Skip(_loadedCount).Take(toTake));
+                _loadedCount += toTake;
+            }
+
+            if (_loadedCount >= total && _observerAttached)
+            {
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("InfiniteScroll.unobserve", "load-more-sentinel");
+                }
+                catch { /* ignorar errores de JS */ }
+                _observerAttached = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Error en LoadMoreAsync");
+        }
+        finally
+        {
+            _isLoadingMore = false;
+            StateHasChanged(); // asegura refresco del UI aunque no se hayan agregado ítems
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("InfiniteScroll.unobserve", "load-more-sentinel");
+        }
+        catch { /* ignore if JS not available */ }
+        _dotNetRef?.Dispose();
+    }
+
+    async Task DownloadLaboratorio(string idProtocolo, string laboratorio)
     {
         _spinnerService.Show();
         _misLaboratoriosService = new MisLaboratoriosService(Configuration, HttpClientFactory, Logger);
-        archivoDescargar = await _misLaboratoriosService.DescargarLaboratorio(BackendToken, idProtocolo, Documento);
-        if (archivoDescargar == null || archivoDescargar.Length == 0)
+        if (laboratorio == "CLÍNICA RAÑA")
         {
-            _spinnerService.Hide();
-            await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
-            return;
-        }
+            archivoDescargarLACHyBS = await _misLaboratoriosService.DescargarLaboratorioLACHyBSPorIdAsync("xroad", "sol2025", idProtocolo);
+            if (archivoDescargarLACHyBS == null || archivoDescargarLACHyBS.Length == 0)
+            {
+                _spinnerService.Hide();
+                await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
+                return;
+            }
 
-        string base64Pdf = Convert.ToBase64String(archivoDescargar);
-        await JSRuntime.InvokeVoidAsync("openPdfLab", base64Pdf);
+            if (!string.IsNullOrEmpty(archivoDescargarLACHyBS))
+                await JSRuntime.InvokeVoidAsync("open", archivoDescargarLACHyBS, "_blank");
+        }
+        else
+        {
+            archivoDescargar = await _misLaboratoriosService.DescargarLaboratorio(BackendToken, idProtocolo, Documento);
+            if (archivoDescargar == null || archivoDescargar.Length == 0)
+            {
+                _spinnerService.Hide();
+                await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
+                return;
+            }
+
+            string base64Pdf = Convert.ToBase64String(archivoDescargar);
+            await JSRuntime.InvokeVoidAsync("openPdfLab", base64Pdf);
+        }
         _spinnerService.Hide();
     }
 
@@ -211,10 +414,7 @@ else
 
         if (!string.IsNullOrEmpty(archivoDescargarLACHyBS))
             await JSRuntime.InvokeVoidAsync("open", archivoDescargarLACHyBS, "_blank");
-            // Nav.NavigateTo(archivoDescargarLACHyBS, true);
 
-        // string base64Pdf = Convert.ToBase64String(archivoDescargar);
-        // await JSRuntime.InvokeVoidAsync("openPdfLab", base64Pdf);
         _spinnerService.Hide();
     }
 }

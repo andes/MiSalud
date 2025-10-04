@@ -1,4 +1,4 @@
-@page "/historiasalud/categoria/{expresionSnomed}"
+锘緻page "/historiasalud/categoria/{expresionSnomed}/"
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
@@ -10,11 +10,26 @@
 @using AndesServices.Entities
 @using System.Text.Json
 
+@inject IHttpClientFactory HttpClientFactory
+@inject ILogger<AndesServices.Services.HistoriaSaludService> Logger
 @inject IConfiguration Configuration
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject NavigationManager NavigationManager
-
+@inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
+
+<style>
+    .prestaciones p {
+        margin: 0px;
+    }
+
+    .prestaciones {
+        cursor: pointer;
+        box-shadow: 2px 2px 4px #000000;
+        margin-bottom: 5px;
+    }
+</style>
+
 
 <h1>@TituloMostrar</h1>
 <hr />
@@ -33,71 +48,90 @@ else if (prestaciones == null || prestaciones.Count == 0)
 }
 else
 {
-    @foreach (var p in prestaciones.OrderByDescending(p => p.solicitud?.fecha))
+    @foreach (var p in prestaciones.OrderByDescending(p => p.ejecucion?.fecha))
     {
-        <div class="form-control">
-            @* <div>
-                    @if (p.solicitud?.fecha != null)
-                    {
-                        fecha = DateTime.Parse(p.solicitud.fecha.Value.ToString()).ToString("dd/MM/yyyy");
-                    }
-                    else
-                    {
-                        fecha = "No disponible";
-                    }
-                    <strong>Fecha: </strong>
-                    @fecha
-                    <br />
-                </div> *@
-            <div>
-                <strong>@(p.solicitud?.tipoPrestacion?.term ?? "Prestaci髇")</strong><br />
-            </div>
-            <div>
-                <strong><Icon Name="hospital" Size="16" Fill="#fff" class="text-secondary me-1" AriaLabel="Instituci髇" /></strong>@(p.solicitud?.organizacion?.nombre ?? "Organizaci髇")<br />
-            </div>
-            <div>
-                <strong>Profesional: </strong>
-                @(p.solicitud?.profesional?.nombre ?? "Sin datos") @(p.solicitud?.profesional?.apellido ?? "Sin datos")
-            </div>
-            <div>
-                <strong>Documento: </strong> @(p.solicitud?.profesional?.documento ?? "Sin datos")<br />
-            </div>
-            <div>
-                @if (p.solicitud?.registros != null && p.solicitud?.registros.Count() > 0)
-                {
-                    foreach (var registro in p.solicitud?.registros ?? Enumerable.Empty<Registro>())
-                    @* @foreach (var registro in p.solicitud.registros!) *@
-                    {
-                        if (registro.valor is { } ve && ve.ValueKind == JsonValueKind.Object)
-                        {
-                            if (ve.TryGetProperty("solicitudPrestacion", out _))
-                            {
-                                var sol = ve.Deserialize<WrapperSolicitudPrestacion>();
+        string archivo = "";
+        if (p.paciente.adjuntos != null && p.paciente.adjuntos[0] != null && p.paciente.adjuntos[0] != "")
+        {
+            archivo = p.paciente.adjuntos[0];
+            archivo = p.paciente.adjuntos[0]?.Substring(p.paciente.adjuntos[0].LastIndexOf('/') + 1, p.paciente.adjuntos[0].LastIndexOf('.') - p.paciente.adjuntos[0].LastIndexOf('/') - 1);
+        }
 
-                                <div>
+        <div class="form-control d-flex justify-content-between prestaciones" title="Descargar">
+            <div @onclick="@(() => DownloadPrestacion(archivo))" tabindex="0">
+                <div>
+                    <strong>@(p.solicitud?.tipoPrestacion?.term ?? "Prestaci贸n")</strong><br />
+                </div>
+                <div>
+                    <strong><Icon Name="hospital" Size="16" Fill="#fff" class="text-secondary me-1" AriaLabel="Instituci贸n" /></strong>@(p.solicitud?.organizacion?.nombre ?? "Organizaci贸n")<br />
+                </div>
+                <div>
+                    <strong>Fecha: </strong>
+                    @(p.ejecucion?.fecha?.ToString("dd/MM/yyyy") + " " + p.ejecucion?.fecha?.AddHours(-3).ToString("HH:mm"))
+                </div>
+                <div>
+                    <strong>Profesional: </strong>
+                    @(p.solicitud?.profesional?.nombre ?? "Sin datos") @(p.solicitud?.profesional?.apellido ?? "Sin datos")
+                </div>
+                <div>
+                    <strong>Documento: </strong> @(p.solicitud?.profesional?.documento ?? "Sin datos")<br />
+                </div>
+                <div>
+                    @if (p.solicitud?.registros != null && p.solicitud?.registros.Count() > 0)
+                    {
+                        foreach (var registro in p.solicitud?.registros ?? Enumerable.Empty<Registro>())
+                        @* @foreach (var registro in p.solicitud.registros!) *@
+                        {
+                            if (registro.valor is { } ve && ve.ValueKind == JsonValueKind.Object)
+                            {
+                                if (ve.TryGetProperty("solicitudPrestacion", out _))
+                                {
+                                    var sol = ve.Deserialize<WrapperSolicitudPrestacion>();
+
                                     <div>
-                                        <strong> Solicitud: </strong> @sol.solicitudPrestacion?.prestacionSolicitada?.term
+                                        <div>
+                                            <strong> Solicitud: </strong> @sol.solicitudPrestacion?.prestacionSolicitada?.term
+                                        </div>
+                                        <div>
+                                            <strong>Motivo: </strong> @sol.solicitudPrestacion?.motivo
+                                        </div>
+                                        <div>
+                                            <strong>Indicaciones: </strong> @sol.solicitudPrestacion?.indicaciones
+                                        </div>
                                     </div>
-                                    <div>
-                                        <strong>Motivo: </strong> @sol.solicitudPrestacion?.motivo
-                                    </div>
-                                    <div>
-                                        <strong>Indicaciones: </strong> @sol.solicitudPrestacion?.indicaciones
-                                    </div>
-                                </div>
-                            }
-                            @* else if (ve.TryGetProperty("solicitudPrestacion", out _))
+                                }
+                                @* else if (ve.TryGetProperty("solicitudPrestacion", out _))
                             {
                                 var sol = ve.Deserialize<WrapperSolicitudPrestacion>();
                             } *@
-                        }
+                            }
 
+                        }
                     }
-                }
+                </div>
             </div>
+            @if (esCda)
+            {
+                <div class="align-content-center">
+                    <Icon Name="cloud-download" Size="32" Fill="#fff" class="text-secondary me-1" AriaLabel="Descargar" />
+                </div>
+            }
         </div>
     }
 }
+<script type="text/javascript">
+
+    function openPdf(archivo, categoria) {
+    const pdfData = "data:application/pdf;base64," + archivo;
+
+    const a = document.createElement("a");
+    document.body.appendChild(a);
+    a.href = pdfData;
+    a.download = "prestacion_" + categoria + ".pdf";
+    a.target = "_self";
+    a.click();
+    }
+</script>
 
 @code {
     [Parameter] public string? expresionSnomed { get; set; }
@@ -109,6 +143,9 @@ else
     private string? error;
     private string TituloMostrar => string.IsNullOrWhiteSpace(titulo) ? expresionSnomed ?? "" : titulo!;
     private string fecha;
+    private Byte[] archivoDescargar = null;
+
+    private bool esCda => expresionSnomed == "90226004" || expresionSnomed == "86273004";
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -135,7 +172,7 @@ else
 
         if (string.IsNullOrWhiteSpace(expresionSnomed))
         {
-            error = "Expresi髇 inv醠ida.";
+            error = "Expresi贸n inv谩lida.";
             return;
         }
 
@@ -143,13 +180,13 @@ else
         var pacienteId = PacienteId;
         if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(pacienteId))
         {
-            error = "No hay contexto de autenticaci髇.";
+            error = "No hay contexto de autenticaci贸n.";
             return;
         }
 
         cargando = true;
         error = null;
-        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration);
+        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration, HttpClientFactory, Logger);
         _spinnerService.Show();
         try
         {
@@ -164,6 +201,41 @@ else
             _spinnerService.Hide();
             cargando = false;
         }
+    }
+
+    async Task DownloadPrestacion(string idPrestacion)
+    {
+        _spinnerService.Show();
+        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration, HttpClientFactory, Logger);
+
+        if (esCda)
+        {
+            var token = BackendToken;
+            archivoDescargar = await _miHistoriaSaludService.DescargarCDAFilePorIdAsync(token, idPrestacion);
+            if (archivoDescargar == null || archivoDescargar.Length == 0)
+            {
+                _spinnerService.Hide();
+                await JSRuntime.InvokeVoidAsync("alert", "No se encontr贸 el archivo de la prestaci贸n.");
+                return;
+            }
+
+            string base64Pdf = Convert.ToBase64String(archivoDescargar);
+            await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, TituloMostrar);
+        }
+        else
+        {
+            // archivoDescargar = await _miHistoriaSaludService..DescargarLaboratorio(BackendToken, idProtocolo, Documento);
+            // if (archivoDescargar == null || archivoDescargar.Length == 0)
+            // {
+            //     _spinnerService.Hide();
+            //     await JSRuntime.InvokeVoidAsync("alert", "No se encontr贸 el archivo del laboratorio.");
+            //     return;
+            // }
+
+            // string base64Pdf = Convert.ToBase64String(archivoDescargar);
+            // await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf);
+        }
+        _spinnerService.Hide();
     }
 
     private void Volver()

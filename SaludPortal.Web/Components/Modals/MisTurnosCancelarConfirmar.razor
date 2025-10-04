@@ -1,0 +1,117 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Services
+@using AndesServices.Entities
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@inject IHttpClientFactory httpClientFactory
+@inject BlazorSpinner.SpinnerService _spinnerService
+@inject MessageService MessageService
+
+@inherits AuthenticatedComponentBase
+
+<div>
+    <h2>CANCELAR TURNO</h2>
+    <h3>
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
+            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+        </svg> Detalles del turno
+    </h3>
+</div>
+<div class="d-inline-flex flex-lg-row" style="background:#edfce2;color:#000;width:100%;">
+    <div class="p-sm-2 flex-shrink-1"></div>
+    <div class="p-lg-10 flex-fill flex-grow-1" style="padding:5px; width:100%; margin:5px;">
+        <p>
+            <div><label><strong>Prestación</strong></label></div>
+            <div><label>@TipoPrestacion</label></div>
+        </p>
+        <hr />
+        <p>
+            <div><label><strong>Paciente</strong></label></div>
+            <div><label>@_unPaciente?.nombre @_unPaciente?.apellido</label></div>
+        </p>
+        <hr />
+        <p>
+            <div><label><strong>Fecha y hora del turno</strong></label></div>
+            <div><label>@FechaHoraTurno</label></div>
+        </p>
+        <hr />
+        <p>
+            <div><label><strong>Lugar</strong></label></div>
+            <div><label>@EfectorNombre</label></div>
+        </p>
+        <hr />
+    </div>
+</div>
+<br />
+<br />
+<div><p>¿Está seguro que desea cancelar el turno?</p></div>
+<div style="display: flex; justify-content: space-between; width: 100%;">
+    <button @onclick="() => CancelarTurno()" class="btn btn-primary" title="Confirmar">Confirmar</button>
+    <button @onclick="Close" class="btn btn-outline-primary" title="Cerrar">Cerrar</button>
+</div>
+@code {
+    [CascadingParameter] BlazoredModalInstance ModalCancelarConfirmarTurno { get; set; } = default!;
+    [CascadingParameter] IModalService ModalService { get; set; } = default!;
+    private PacienteService? _unPacienteService;
+    private Paciente? _unPaciente = new Paciente();
+    private MisTurnosService? _unTurnoService;
+    private MisTurnos? _unTurno = new MisTurnos();
+    private string token = "";
+
+    protected override async Task OnAuthenticatedInitializedAsync()
+    {
+        token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
+
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(token))
+            return;
+
+        // Obtengo el paciente
+        _unPacienteService = new PacienteService(Configuration);
+        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+
+    }
+
+    // [Parameter] public string Paciente { get; set; }
+    [Parameter] public string FechaHoraTurno { get; set; }
+    [Parameter] public string TipoPrestacion { get; set; }
+    [Parameter] public string EfectorNombre { get; set; }
+    [Parameter] public string EfectorDomicilio { get; set; }
+    [Parameter] public string IdTurno { get; set; }
+    [Parameter] public string IdBloque { get; set; }
+    [Parameter] public string IdAgenda { get; set; }
+    [Parameter] public TipoPrestacion _unTipoPrestacion { get; set; }
+
+    private async Task Close() => await ModalCancelarConfirmarTurno.CloseAsync();
+
+    private async Task CancelarTurno()
+    {
+        _spinnerService.Show();
+        
+        if (_unPaciente != null)
+        {
+            _unTurnoService = new MisTurnosService(Configuration, httpClientFactory);
+            bool resultado = await _unTurnoService.CancelarTurnoAsync(token, IdTurno, IdBloque, IdAgenda, _unPaciente);
+            _spinnerService.Hide();
+
+            if (resultado)
+            {
+                await ModalCancelarConfirmarTurno.CloseAsync();
+                MessageService.Title = "Turno cancelado";
+                MessageService.Content = "El turno ha sido cancelado.";
+                Nav.NavigateTo("/turnosmensajecancelado");
+            }
+            else
+            {
+                await ModalCancelarConfirmarTurno.CloseAsync();
+                MessageService.Title = "Turno sin cancelar";
+                MessageService.Content = "No se pudo cancelar el turno. Posiblemente el turno ya no se encontraba disponible. Por favor, intente nuevamente.";
+                Nav.NavigateTo("/turnosmensajecancelado");
+            }
+        }
+    }
+}

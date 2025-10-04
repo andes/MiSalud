@@ -87,6 +87,17 @@ builder.Services.AddControllers();
 
 builder.Services.AddRazorPages();
 
+builder.Configuration.AddJsonFile("saludConfig.json", optional: false, reloadOnChange: true);
+
+builder.Services
+    .AddOptions<SaludConfiguracion>()
+    .BindConfiguration("SaludConfiguracion")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddSingleton
+    (sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SaludConfiguracion>>().Value);
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

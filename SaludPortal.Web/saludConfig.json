@@ -1,0 +1,6 @@
+﻿{
+  "SaludConfiguracion": {
+    "fechaDesde": 10, // expresado en años
+    "misLaboratoriosPageSize": 10 //cantidad de elementos por página en laboratorios
+  }
+}

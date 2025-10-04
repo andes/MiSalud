@@ -20,5 +20,7 @@ namespace AndesServices.Interfaces
         /// <param name="estado">Estado de la prestación a consultar.</param>
         /// <returns>Lista de prestaciones de la historia de salud para una categoria.</returns>
         Task<List<PrestacionHistoriaSalud>> ObtenerPrestacionesAsync(string token, string tipoPrestaciones, string idPaciente, string estado);
+
+        Task<Byte[]> DescargarCDAFilePorIdAsync(string token, string id);
     }
 }

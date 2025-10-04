@@ -70,5 +70,25 @@ namespace SaludPortal.Web.Services
                 return false;
             }
         }
+
+        public async Task<bool> CancelarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("Token no proporcionado.");
+                return false;
+            }
+            try
+            {
+                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
+                return await misTurnosService.CancelarTurnoAsync(token, idTurno, idBloque, idAgenda, paciente);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Se produjo un error al cancelar el turno.");
+                Console.WriteLine(exception.Message);
+                return false;
+            }
+        }
     }
 }

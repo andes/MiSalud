@@ -72,7 +72,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener los turnos: {exception.Message}");
+                Console.WriteLine($"Error al obtener el archivo del laboratorio: {exception.Message}");
                 return await Task.FromResult(unByte);
             }
             return await Task.FromResult(unByte);
@@ -149,7 +149,6 @@ namespace AndesServices.Services
                 {
                     client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
-                    //string queryParams = "?pacienteId=67fe623a589d44b5a4c91063&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
                     string queryParams = "?pacienteId=" + pacienteId + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
 
                     using (HttpResponseMessage res = await client.GetAsync(url + queryParams))
@@ -162,10 +161,6 @@ namespace AndesServices.Services
                             var rootArray = JArray.Parse(jsonString);
                             var dataToken = rootArray[0]["Data"];
                             List<MisLaboratorios>? listaLaboratorios = dataToken?.ToObject<List<MisLaboratorios>>();
-
-                            //MisLaboratoriosResponse? misLaboratoriosResp = JsonConvert.DeserializeObject<MisLaboratoriosResponse>(result);
-
-                            //MisLaboratoriosResponse? misLaboratoriosResp = await res.Content.ReadFromJsonAsync<MisLaboratoriosResponse>();
 
                             if (listaLaboratorios == null)
                             {

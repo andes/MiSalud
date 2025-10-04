@@ -6,13 +6,14 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Net.Mime;
+using System.Reflection;
 using System.Text;
 
 namespace AndesServices.Services
 {
     public class MisTurnosService : IMisTurnos
     {
-        private IConfiguration? _configuration { get; }
+        private IConfiguration _configuration { get; }
         private readonly IHttpClientFactory _httpClientFactory;
 
         public MisTurnosService(IConfiguration? configuration, IHttpClientFactory? httpClientFactory)
@@ -21,15 +22,66 @@ namespace AndesServices.Services
             _httpClientFactory = httpClientFactory;
         }
 
+        private string GetServiciosBaseUrl()
+        {
+            var cfg = new ConexionServicios();
+            _configuration.GetSection("urlServicios").Bind(cfg);
+            var baseUrl = cfg.usarProd ? cfg.UrlProyectoServiciosProd : cfg.UrlProyectoServiciosDemo;
+            return baseUrl.TrimEnd('/');
+        }
+
         public Task<bool> ActualizarTurnoAsync(string token, string idTurno, string motivoConsulta, string profesional, DateTime fechaHoraDacion)
         {
             throw new NotImplementedException();
         }
 
-        public Task<bool> EliminarTurnoAsync(string token, string idTurno)
+        public async Task<bool> CancelarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente)
         {
-            throw new NotImplementedException();
+            string url = GetServiciosBaseUrl() + "/modules/mobileApp/turnos/cancelar";
 
+            try
+            {
+                using (HttpClient client = _httpClientFactory.CreateClient())
+                {
+                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                    string jsonCancelarTurno = $@"{{
+                        ""agenda_id"": ""{idAgenda}"",
+                        ""bloque_id"": ""{idBloque}"",
+                        ""turno_id"": ""{idTurno}"",
+                        ""familiar"": {{
+                            ""id"": ""{paciente.id}"",
+    	                    ""documento"": ""{paciente.documento}"",
+    	                    ""apellido"": ""{paciente.apellido}"",
+    	                    ""nombre"": ""{paciente.nombre}"",
+    	                    ""alias"": ""{paciente.alias}"",
+    	                    ""fechaNacimiento"": ""{paciente.fechaNacimiento}"",
+    	                    ""sexo"": ""{paciente.sexo}"",
+    	                    ""telefono"": ""{paciente.telefono}""}}
+                    }}";
+
+                    var request = new HttpRequestMessage
+                    {
+                        Method = HttpMethod.Post,
+                        RequestUri = new Uri(url),
+                        Content = new StringContent(jsonCancelarTurno, System.Text.Encoding.UTF8, "application/json")
+                    };
+
+                    using (HttpResponseMessage res = await client.SendAsync(request))
+                    {
+                        if (res.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine("Turno cancelado.");
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Error al cancelar el turno: {exception.Message}");
+            }
+            return false;
         }
 
         public async Task<List<MisTurnos>> ObtenerMisTurnosAsync(string token, string? documento = "")
@@ -37,9 +89,7 @@ namespace AndesServices.Services
             var conexionServicios = new ConexionServicios();
             _configuration.GetSection("urlServicios").Bind(conexionServicios);
 
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/mobileApp/turnos"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/mobileApp/turnos";
+            string url = GetServiciosBaseUrl() + "/modules/mobileApp/turnos";
 
             try
             {
@@ -92,7 +142,7 @@ namespace AndesServices.Services
                 {
                     client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
-                    string tipoTurno = "mobile";
+                    string tipoTurno = "programado";
                     string emitidoPor = "misalud";
                     string nota = "Turno pedido desde portal mi salud";
                     string motivoConsulta = "";
@@ -140,6 +190,7 @@ namespace AndesServices.Services
             string url = conexionServicios.usarProd
                 ? conexionServicios.UrlProyectoServiciosProd + "/modules/mobileApp/agendasDisponibles"
                 : conexionServicios.UrlProyectoServiciosDemo + "/modules/mobileApp/agendasDisponibles";
+            string estado = "disponible";
 
             try
             {
@@ -147,13 +198,20 @@ namespace AndesServices.Services
                 {
                     client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
+                    var userLocationJson = JsonConvert.SerializeObject(userLocation);
+                    var queryParams = new Dictionary<string, string?>
+                    {
+                        ["estado"] = estado,
+                        ["userLocation"] = userLocationJson
+                    };
+
+                    string finalUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryParams);
+
                     var request = new HttpRequestMessage
                     {
                         Method = HttpMethod.Get,
-                        RequestUri = new Uri(url),
-                        Content = new StringContent(JsonConvert.SerializeObject(new { idPaciente, userLocation }), System.Text.Encoding.UTF8, "application/json")
+                        RequestUri = new Uri(finalUrl)
                     };
-
 
                     using (HttpResponseMessage res = await client.SendAsync(request))
                     {

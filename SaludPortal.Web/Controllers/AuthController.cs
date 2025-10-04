@@ -53,7 +53,7 @@ namespace SaludPortal.Web.Controllers
                     new AuthenticationProperties
                     {
                         IsPersistent = model.RememberMe,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1)
                     });
 
                 return Ok(new { message = "Login exitoso" });

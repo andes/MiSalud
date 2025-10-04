@@ -2,7 +2,9 @@
 
 
 @using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Services
 @using System.Security.Claims
 @using AndesServices.Entities
@@ -30,22 +32,39 @@
                 <div class="form-control" style="box-shadow: 2px 2px 4px #000000;">
                     @if (misTurnos.tipoPrestacion != null)
                     {
-                        <div class="p-lg-10 flex-fill flex-grow-1">
-                            <h4>
-                                <strong>Fecha: </strong>@misTurnos.horaInicio.ToString("dd/MM/yyyy") @misTurnos.horaInicio.AddHours(-3).ToShortTimeString()
-                            </h4>
-                            @if (misTurnos.tipoPrestacion.term != null)
-                            {
-                                <div>
-                                    <strong>Prestación: </strong>
-                                    @misTurnos.tipoPrestacion.term
-                                </div>
-                            }
+                        <div class="d-flex align-items-stretch justify-content-between">
                             <div>
-                                <strong>Lugar: </strong>@misTurnos.organizacion.nombre
+                                <h4>
+                                    <strong>Fecha: </strong>@misTurnos.horaInicio.ToString("dd/MM/yyyy") @misTurnos.horaInicio.AddHours(-3).ToShortTimeString()
+                                </h4>
+                                @if (misTurnos.tipoPrestacion.term != null)
+                                {
+                                    <div>
+                                        <strong>Prestación: </strong>
+                                        @misTurnos.tipoPrestacion.term
+                                    </div>
+                                }
+                                <div>
+                                    <strong>Lugar: </strong>@misTurnos.organizacion.nombre
+                                </div>
                             </div>
-                        </div>
-                    }
+
+                            <button @onclick="async () => await ShowModalCancelarConfirmar(
+                                                                                misTurnos.horaInicio,
+                                                                                misTurnos.horaInicio.AddHours(-3),
+                                                                                misTurnos.tipoPrestacion.term,
+                                                                                misTurnos.organizacion?.nombre ?? string.Empty,
+                                                                                misTurnos.agenda_id,
+                                                                                misTurnos._id,
+                                                                                misTurnos.bloque_id)"
+                class=" d-flex flex-wrap align-items-center justify-content-center gap-2 text-white align-self-stretch"
+                style="cursor:pointer; background-color:red;border-radius:10px;padding:6px 10px;"
+                title="Cancelar turno">
+            <span>Cancelar</span>
+            <Icon Name="cancelar-turno" Size="32" Fill="#fff" AriaLabel="Cancelar" />
+        </button>
+    </div>
+        }
                 </div>
             }
         }
@@ -76,6 +95,7 @@
     private PacienteService? _unPacienteService;
     private Paciente? _unPaciente = new Paciente();
     private Direccion _direccionGeoreferencia = new Direccion();
+    private long idAgenda = 0;
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -83,14 +103,59 @@
         if (string.IsNullOrEmpty(token))
             return;
 
+        // var pacienteId = PacienteId;
+        // if (string.IsNullOrEmpty(pacienteId))
+        //     return;
+
         _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
 
         if (_misTurnosService != null)
         {
             _spinnerService.Show();
-            // Obtengo los turnos
-            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
-            _spinnerService.Hide();
+            try
+            {
+
+                // // Obtengo el paciente
+                // _unPacienteService = new PacienteService(Configuration);
+                // _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+
+                // Obtengo los turnos
+                lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                _spinnerService.Hide();
+            }
         }
+    }
+
+    [CascadingParameter] IModalService Modal { get; set; } = default!;
+
+    private async Task ShowModalCancelarConfirmar(DateTime Fecha, DateTime Hora, string TipoPrestacion, string EfectorNombre, string IdAgenda, string IdTurno, string IdBloque)
+    {
+        var options = new ModalOptions()
+        {
+            Size = ModalSize.Automatic,
+            Position = ModalPosition.TopCenter,
+            HideCloseButton = true,
+            HideHeader = true
+        };
+
+        // string Paciente = _unPaciente.nombre + " " + _unPaciente.apellido;
+
+        var parameters = new ModalParameters()
+        // .Add(nameof(MisTurnosCancelarConfirmar.Paciente), Paciente)
+        .Add(nameof(MisTurnosCancelarConfirmar.FechaHoraTurno), Fecha.ToString("dd/MM/yyyy") + " " + Hora.ToString("HH:mm"))
+        .Add(nameof(MisTurnosCancelarConfirmar.EfectorNombre), EfectorNombre)
+        .Add(nameof(TurnoNuevoConfirmar.TipoPrestacion), TipoPrestacion)
+        .Add(nameof(MisTurnosCancelarConfirmar.IdTurno), IdTurno)
+        .Add(nameof(MisTurnosCancelarConfirmar.IdBloque), IdBloque)
+        .Add(nameof(MisTurnosCancelarConfirmar.IdAgenda), IdAgenda);
+
+        Modal.Show<MisTurnosCancelarConfirmar>(parameters, options);
     }
 }

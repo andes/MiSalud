@@ -51,6 +51,7 @@ namespace AndesServices.Entities
         public string? notaError { get; set; }
         public List<object> ofertePrestacional { get; set; }
         public List<object> trasladosEspeciales { get; set; }
+        public List<string>? adjuntos { get; set; }
     }
 
     public class LugarNacimiento
