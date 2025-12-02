@@ -5,9 +5,11 @@ namespace SaludPortal.Web.Services
     public class PacienteService
     {
         private readonly IConfiguration _configuration;
-        public PacienteService(IConfiguration configuration)
+        private readonly IHttpClientFactory _httpClientFactory;
+        public PacienteService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
         public async Task<Paciente> ObtenerPacientePorIdAsync(string token, string idPaciente)
         {
@@ -18,7 +20,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                AndesServices.Services.PacienteService miPacienteService = new AndesServices.Services.PacienteService(_configuration);
+                AndesServices.Services.PacienteService miPacienteService = new AndesServices.Services.PacienteService(_configuration, _httpClientFactory);
                 return await miPacienteService.ObtenerPacientePorIdAsync(token, idPaciente);
             }
             catch (Exception exception)
@@ -33,7 +35,7 @@ namespace SaludPortal.Web.Services
         {
             try
             {
-                AndesServices.Services.PacienteService miPacienteService = new AndesServices.Services.PacienteService(_configuration);
+                AndesServices.Services.PacienteService miPacienteService = new AndesServices.Services.PacienteService(_configuration, _httpClientFactory);
                 return await miPacienteService.ObtenerGeoreferenciaPaciente(direccion);
             }
             catch (Exception exception)

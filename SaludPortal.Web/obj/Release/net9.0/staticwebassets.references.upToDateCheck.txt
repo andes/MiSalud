@@ -47,3 +47,17 @@ C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-
 C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
 C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
 C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json

@@ -9,6 +9,11 @@
 
 	<ItemGroup>
 	  <Compile Remove="Services\GlobalServices.cs" />
+	  <Compile Remove="WeatherApiClient.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Remove="Components\Pages\Weather.razor" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -10,7 +10,6 @@ namespace AndesServices.Entities
         //public ParametrosSalida? ParametrosSalida { get; set; }
         public List<MisLaboratorios>? Data { get; set; }
     }
-
     public class ParametrosEntrada
     {
         public string @estado { get; set; }
@@ -41,5 +40,6 @@ namespace AndesServices.Entities
         public string efectorSolicitante { get; set; }
         public string origen { get; set; }
         public string tipoMuestra { get; set; }
+        public string tipo { get; set; } // cda, raña
     }
 }

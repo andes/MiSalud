@@ -10,6 +10,7 @@
 @* @inject NavigationManager Nav *@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IConfiguration Configuration
+@inject IHttpClientFactory httpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
 
 <h1>Mis Datos</h1>
@@ -59,7 +60,7 @@
         if (string.IsNullOrEmpty(token))
             return;
 
-        _pacienteService = new PacienteService(Configuration);
+        _pacienteService = new PacienteService(Configuration, httpClientFactory);
 
         if (_pacienteService != null && BackendToken != null)
         {

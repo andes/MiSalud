@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj": {}
+    "C:\\Andes\\MiSalud\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj": {}
   },
   "projects": {
-    "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj": {
+    "C:\\Andes\\MiSalud\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj",
+        "projectUniqueName": "C:\\Andes\\MiSalud\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj",
         "projectName": "SaludPortal.AppHost",
-        "projectPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj",
-        "packagesPath": "C:\\Users\\maria\\.nuget\\packages\\",
-        "outputPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.AppHost\\obj\\",
+        "projectPath": "C:\\Andes\\MiSalud\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj",
+        "packagesPath": "C:\\Users\\Juan\\.nuget\\packages\\",
+        "outputPath": "C:\\Andes\\MiSalud\\SaludPortal.AppHost\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\maria\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Juan\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -52,16 +52,16 @@
           "dependencies": {
             "Aspire.Dashboard.Sdk.win-x64": {
               "target": "Package",
-              "version": "[9.3.1, )",
+              "version": "[9.4.1, )",
               "autoReferenced": true
             },
             "Aspire.Hosting.AppHost": {
               "target": "Package",
-              "version": "[9.3.1, )"
+              "version": "[9.4.1, )"
             },
             "Aspire.Hosting.Orchestration.win-x64": {
               "target": "Package",
-              "version": "[9.3.1, )",
+              "version": "[9.4.1, )",
               "autoReferenced": true
             }
           },
@@ -81,7 +81,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

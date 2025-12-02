@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SaludPortal.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5c96c0f77b24044f43d0ebbe5695ccf7902a1397")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a949c91f71bc523fc7f563affc6c278b544ab332")]
 [assembly: System.Reflection.AssemblyProductAttribute("SaludPortal.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SaludPortal.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

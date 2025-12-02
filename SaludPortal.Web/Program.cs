@@ -3,6 +3,7 @@ using AndesServices.Entities.ViewModels;
 using AndesServices.Interfaces;
 using Blazored.Modal;
 using BlazorSpinner;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -39,7 +40,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.LoginPath = "/login";
         o.AccessDeniedPath = "/login";
         o.SlidingExpiration = true;
-        o.ExpireTimeSpan = TimeSpan.FromHours(2);
+        o.ExpireTimeSpan = TimeSpan.FromHours(1);
     });
 
 //builder.Services.AddDataProtection()
@@ -81,12 +82,9 @@ builder.Services.AddScoped(sp =>
     if (!baseUrl.EndsWith("/")) baseUrl += "/";
     return new HttpClient { BaseAddress = new Uri(baseUrl) };
 });
-builder.Services.AddSession();
-
+builder.Services.AddSession(o => o.IdleTimeout = TimeSpan.FromMinutes(60));
 builder.Services.AddControllers();
-
 builder.Services.AddRazorPages();
-
 builder.Configuration.AddJsonFile("saludConfig.json", optional: false, reloadOnChange: true);
 
 builder.Services
@@ -118,23 +116,15 @@ app.UseAuthorization();
 app.UseSession();
 app.MapControllers();
 app.UseAntiforgery();
-//app.UseOutputCache();
 app.MapStaticAssets();
 app.MapRazorPages();
 
-//var hubPath = builder.Configuration["Blazor:ServerHubPath"] ?? "/_blazor";
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
-//app.MapRazorComponents<App>()
-//   .AddInteractiveServerRenderMode(o =>
-//   {
-//       o.Path = hubPath; // Nueva ruta del hub SignalR
-//   });
 
-// En Program.cs (en vez de AddRazorComponents/AddInteractiveServerComponents)
-//builder.Services.AddServerSideBlazor();
-
-//app.MapBlazorHub("misaludtest.andes.gob.ar/ws");
-//app.MapFallbackToPage("/_Host");
-
+app.MapPost("/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/login");
+});
 
 app.Run();

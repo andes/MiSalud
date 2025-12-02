@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.Web\\SaludPortal.Web.csproj": {}
+    "C:\\Andes\\MiSalud\\SaludPortal.Web\\SaludPortal.Web.csproj": {}
   },
   "projects": {
-    "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\AndesServices\\AndesServices.csproj": {
+    "C:\\Andes\\MiSalud\\AndesServices\\AndesServices.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\AndesServices\\AndesServices.csproj",
+        "projectUniqueName": "C:\\Andes\\MiSalud\\AndesServices\\AndesServices.csproj",
         "projectName": "AndesServices",
-        "projectPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\AndesServices\\AndesServices.csproj",
-        "packagesPath": "C:\\Users\\maria\\.nuget\\packages\\",
-        "outputPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\AndesServices\\obj\\",
+        "projectPath": "C:\\Andes\\MiSalud\\AndesServices\\AndesServices.csproj",
+        "packagesPath": "C:\\Users\\Juan\\.nuget\\packages\\",
+        "outputPath": "C:\\Andes\\MiSalud\\AndesServices\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\maria\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Juan\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -32,8 +32,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj": {
-                "projectPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj"
+              "C:\\Andes\\MiSalud\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj": {
+                "projectPath": "C:\\Andes\\MiSalud\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj"
               }
             }
           }
@@ -56,11 +56,11 @@
           "dependencies": {
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
-              "version": "[9.0.6, )"
+              "version": "[9.0.8, )"
             },
             "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": {
               "target": "Package",
-              "version": "[1.21.2, )"
+              "version": "[1.22.1, )"
             },
             "Newtonsoft.Json": {
               "target": "Package",
@@ -86,7 +86,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {
@@ -95,20 +95,20 @@
         }
       }
     },
-    "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj": {
+    "C:\\Andes\\MiSalud\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj",
+        "projectUniqueName": "C:\\Andes\\MiSalud\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj",
         "projectName": "SaludPortal.ServiceDefaults",
-        "projectPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj",
-        "packagesPath": "C:\\Users\\maria\\.nuget\\packages\\",
-        "outputPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.ServiceDefaults\\obj\\",
+        "projectPath": "C:\\Andes\\MiSalud\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj",
+        "packagesPath": "C:\\Users\\Juan\\.nuget\\packages\\",
+        "outputPath": "C:\\Andes\\MiSalud\\SaludPortal.ServiceDefaults\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\maria\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Juan\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -143,11 +143,11 @@
           "dependencies": {
             "Microsoft.Extensions.Http.Resilience": {
               "target": "Package",
-              "version": "[9.6.0, )"
+              "version": "[9.8.0, )"
             },
             "Microsoft.Extensions.ServiceDiscovery": {
               "target": "Package",
-              "version": "[9.3.1, )"
+              "version": "[9.4.1, )"
             },
             "OpenTelemetry.Exporter.OpenTelemetryProtocol": {
               "target": "Package",
@@ -189,24 +189,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.Web\\SaludPortal.Web.csproj": {
+    "C:\\Andes\\MiSalud\\SaludPortal.Web\\SaludPortal.Web.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.Web\\SaludPortal.Web.csproj",
+        "projectUniqueName": "C:\\Andes\\MiSalud\\SaludPortal.Web\\SaludPortal.Web.csproj",
         "projectName": "SaludPortal.Web",
-        "projectPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.Web\\SaludPortal.Web.csproj",
-        "packagesPath": "C:\\Users\\maria\\.nuget\\packages\\",
-        "outputPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.Web\\obj\\",
+        "projectPath": "C:\\Andes\\MiSalud\\SaludPortal.Web\\SaludPortal.Web.csproj",
+        "packagesPath": "C:\\Users\\Juan\\.nuget\\packages\\",
+        "outputPath": "C:\\Andes\\MiSalud\\SaludPortal.Web\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\maria\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Juan\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -221,11 +221,11 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\AndesServices\\AndesServices.csproj": {
-                "projectPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\AndesServices\\AndesServices.csproj"
+              "C:\\Andes\\MiSalud\\AndesServices\\AndesServices.csproj": {
+                "projectPath": "C:\\Andes\\MiSalud\\AndesServices\\AndesServices.csproj"
               },
-              "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj": {
-                "projectPath": "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj"
+              "C:\\Andes\\MiSalud\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj": {
+                "projectPath": "C:\\Andes\\MiSalud\\SaludPortal.ServiceDefaults\\SaludPortal.ServiceDefaults.csproj"
               }
             }
           }
@@ -254,9 +254,17 @@
               "target": "Package",
               "version": "[7.3.1, )"
             },
-            "Microsoft.AspNetCore.Authentication.OpenIdConnect": {
+            "MailKit": {
               "target": "Package",
-              "version": "[9.0.6, )"
+              "version": "[4.13.0, )"
+            },
+            "Microsoft.AspNetCore.Components.Authorization": {
+              "target": "Package",
+              "version": "[9.0.8, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.13.1, )"
             }
           },
           "imports": [
@@ -278,7 +286,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

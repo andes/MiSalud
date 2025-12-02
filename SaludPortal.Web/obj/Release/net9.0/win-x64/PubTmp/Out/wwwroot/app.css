@@ -88,7 +88,78 @@ h1:focus {
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
 
-    .btn-verde:hover, .btn-celeste:hover {
+.btn-naranja {
+    background-color: #494642;
+    border-radius: 15px;
+    color: #fff;
+    /*border: solid 1px #69a94f;*/
+    font-weight: 700;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+.btn-azul {
+    background-color: #00374c;
+    border-radius: 15px;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+    .btn-verde:hover, .btn-celeste:hover, .btn-naranja:hover, .btn-azul:hover {
         background-color: #2b3e4c;
         color: #fff;
     }
+
+.btn-icon-right {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.accordion-button {
+    border-radius: 5px;
+    background-color: #00374c !important;
+    color: #fff !important;
+}
+
+    .accordion-button::after {
+        filter: brightness(0) invert(1);
+    }
+
+.form-control {
+    background-color: #00374c;
+    color: #fff;
+}
+
+.table.receta {
+    background-color: #00374c;
+    border: solid 1px #fff;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+    .table.receta th, .table.receta td {
+        padding: 8px 12px;
+    }
+
+    .table.receta th {
+        background-color: #00374c;
+        color: #fff;
+        border: none;
+    }
+
+    .table.receta tr:nth-child(even) {
+        background-color: #00374c;
+    }
+    .table.receta thead th {
+        background: #fff4e0;
+        color: #322b21;
+    }
+
+.login-form input.form-control:empty,
+.login-form input.form-control:not([value]):not(:focus),
+.login-form input.form-control[value=""] {
+    background-color: #fff !important;
+    color: #000;
+}

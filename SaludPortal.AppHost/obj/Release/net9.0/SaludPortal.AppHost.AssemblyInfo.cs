@@ -12,21 +12,21 @@ using System;
 using System.Reflection;
 
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("50dc20c9-515d-43d0-8ef3-60a058225963")]
-[assembly: System.Reflection.AssemblyMetadata("dcpclipath", "C:\\Users\\maria\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.3.1\\tools\\d" +
+[assembly: System.Reflection.AssemblyMetadata("dcpclipath", "C:\\Users\\maria\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.4.1\\tools\\d" +
     "cp.exe")]
-[assembly: System.Reflection.AssemblyMetadata("dcpextensionpaths", "C:\\Users\\maria\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.3.1\\tools\\e" +
+[assembly: System.Reflection.AssemblyMetadata("dcpextensionpaths", "C:\\Users\\maria\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.4.1\\tools\\e" +
     "xt\\")]
-[assembly: System.Reflection.AssemblyMetadata("dcpbinpath", "C:\\Users\\maria\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.3.1\\tools\\e" +
+[assembly: System.Reflection.AssemblyMetadata("dcpbinpath", "C:\\Users\\maria\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.4.1\\tools\\e" +
     "xt\\bin\\")]
 [assembly: System.Reflection.AssemblyMetadata("apphostprojectpath", "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.AppHost")]
 [assembly: System.Reflection.AssemblyMetadata("apphostprojectname", "SaludPortal.AppHost.csproj")]
-[assembly: System.Reflection.AssemblyMetadata("aspiredashboardpath", "C:\\Users\\maria\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\9.3.1\\tools\\Aspire.Da" +
+[assembly: System.Reflection.AssemblyMetadata("aspiredashboardpath", "C:\\Users\\maria\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\9.4.1\\tools\\Aspire.Da" +
     "shboard.exe")]
 [assembly: System.Reflection.AssemblyMetadataAttribute("apphostprojectbaseintermediateoutputpath", "C:\\Projects\\vsc\\salud\\salud-portalpaciente\\SaludPortal.AppHost\\obj\\")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("SaludPortal.AppHost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5c96c0f77b24044f43d0ebbe5695ccf7902a1397")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4755d9935fcce89a009be27cbd51234b8cf0746a")]
 [assembly: System.Reflection.AssemblyProductAttribute("SaludPortal.AppHost")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SaludPortal.AppHost")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

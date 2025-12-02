@@ -24,50 +24,6 @@ namespace SaludPortal.Web.Services
             _configuration = configuration;
         }
 
-        //public async Task<bool> Login(string username, string password, bool rememberMe = false)
-        //{
-        //    try
-        //    {
-        //        var http = _httpContextAccessor.HttpContext;
-        //        if (http == null)
-        //        {
-        //            _logger.LogWarning("HttpContext null al intentar login. ¿Componente no interactivo o llamado en background?");
-        //            return false;
-        //        }
-
-        //        LoginService loginService = new LoginService(_configuration, _logger);
-        //        User? usuario = await loginService.Login(username, password);
-
-        //        if (usuario == null || string.IsNullOrEmpty(usuario.token))
-        //        {
-        //            _logger.LogWarning("Login fallido para {User}", username);
-        //            return false;
-        //        }
-
-        //        var claims = BuildClaims(username, usuario);
-        //        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        //        var principal = new ClaimsPrincipal(claimsIdentity);
-
-        //        var authProps = new AuthenticationProperties
-        //        {
-        //            IsPersistent = rememberMe,
-        //            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2),
-        //            AllowRefresh = true
-        //        };
-
-        //        await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
-        //        _cachedUser = principal;
-        //        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-
-        //        _logger.LogInformation("Login correcto para {User}", username);
-        //        return true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception("Usuario o contraseña inválido");
-        //    }
-        //}
-
         public async Task Logout()
         {
             var http = _httpContextAccessor.HttpContext;

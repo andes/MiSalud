@@ -3,6 +3,8 @@
     public class VMMisLaboratorios
     {
         public List<MisLaboratorios>? LstMisLaboratorios { get; set; }
+
+        public List<MisLaboratoriosCDA>? LstMisLaboratoriosCDA { get; set; }
         public string FechaDesde { get; set; }
         public string FechaHasta { get; set; }
         public List<LaboratoriosLachybs>? LstLaboratoriosLachybs { get; set; }

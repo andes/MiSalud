@@ -152,7 +152,7 @@ else
 
 
             // Obtengo el paciente
-            _unPacienteService = new PacienteService(Configuration);
+            _unPacienteService = new PacienteService(Configuration, httpClientFactory);
             _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
 
             // Verifico que domicilio utilizar para referencia a las organizaciones

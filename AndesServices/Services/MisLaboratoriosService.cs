@@ -1,13 +1,14 @@
 ﻿using AndesServices.Entities;
 using AndesServices.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using Newtonsoft.Json.Linq;
 
 namespace AndesServices.Services
 {
@@ -55,6 +56,41 @@ namespace AndesServices.Services
                     client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
                     var parametrosBody = new StringContent("{\"protocolo\":{\"data\":{\"idProtocolo\":" + idProtocolo + ",\"documento\":" + documento + "}}}", System.Text.Encoding.UTF8, "application/json");
                     using (HttpResponseMessage res = await client.PostAsync(url, parametrosBody))
+                    {
+                        if (res.IsSuccessStatusCode)
+                        {
+                            byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
+                            if (fileResponse == null)
+                            {
+                                Console.WriteLine("Error: File is null.");
+                                return await Task.FromResult(unByte);
+                            }
+
+                            return fileResponse;
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Error al obtener el archivo del laboratorio: {exception.Message}");
+                return await Task.FromResult(unByte);
+            }
+            return await Task.FromResult(unByte);
+        }
+
+        public async Task<Byte[]> DescargarLaboratorioCDAPorIdAsync(string token, string documento)
+        {
+            byte[] unByte = null;
+            var baseUrl = GetServiciosBaseUrl();
+            var url = $"{baseUrl}/modules/cda/{documento}";
+        
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+                    using (HttpResponseMessage res = await client.GetAsync(url))
                     {
                         if (res.IsSuccessStatusCode)
                         {
@@ -149,26 +185,130 @@ namespace AndesServices.Services
                 {
                     client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
-                    string queryParams = "?pacienteId=" + pacienteId + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
-
-                    using (HttpResponseMessage res = await client.GetAsync(url + queryParams))
+                    using (HttpResponseMessage res = await client.GetAsync(url))
                     {
                         if (res.IsSuccessStatusCode)
                         {
-                            List<MisLaboratorios?> misLaboratorios = new List<MisLaboratorios?>();
-
                             string jsonString = await res.Content.ReadAsStringAsync();
-                            var rootArray = JArray.Parse(jsonString);
-                            var dataToken = rootArray[0]["Data"];
-                            List<MisLaboratorios>? listaLaboratorios = dataToken?.ToObject<List<MisLaboratorios>>();
+                            var root = JToken.Parse(jsonString);
+
+                            // Desanidar si vino como string con JSON dentro
+                            if (root.Type == JTokenType.String)
+                            {
+                                root = JToken.Parse(root.Value<string>());
+                            }
+
+                            // Soportar objeto o array con propiedad Data
+                            JToken data = root.Type == JTokenType.Array ? root[0]?["Data"] : root["Data"];
+                            var listaLaboratorios = data?.ToObject<List<MisLaboratorios>>();
 
                             if (listaLaboratorios == null)
+                            {
+                                _logger.LogInformation("Respuesta sin Data. Body: {Body}", jsonString);
+                                return null;
+                            }
+
+                            // Normalizar fechas a formato dd/MM/yyyy
+                            foreach (var laboratorio in listaLaboratorios)
+                            {
+                                if (!string.IsNullOrEmpty(laboratorio.fecha))
+                                {
+                                    laboratorio.fecha = NormalizarFecha(laboratorio.fecha);
+                                }
+                            }
+
+                            return listaLaboratorios;
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Error al obtener los laboratorios");
+                return null;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Normaliza una fecha a formato dd/MM/yyyy desde cualquier formato reconocible
+        /// </summary>
+        private string NormalizarFecha(string fecha)
+        {
+            if (string.IsNullOrWhiteSpace(fecha))
+                return fecha;
+
+            try
+            {
+                // Intentar parsear en formato dd/MM/yyyy (ya está en el formato correcto)
+                if (DateTime.TryParseExact(fecha, "dd/MM/yyyy", 
+                    System.Globalization.CultureInfo.InvariantCulture, 
+                    System.Globalization.DateTimeStyles.None, out DateTime resultado))
+                {
+                    return resultado.ToString("dd/MM/yyyy");
+                }
+
+                // Intentar parsear en formato ISO (yyyyMMdd)
+                if (DateTime.TryParseExact(fecha, "yyyyMMdd", 
+                    System.Globalization.CultureInfo.InvariantCulture, 
+                    System.Globalization.DateTimeStyles.None, out resultado))
+                {
+                    return resultado.ToString("dd/MM/yyyy");
+                }
+
+                // Intentar parsear en formato yyyy-MM-dd
+                if (DateTime.TryParseExact(fecha, "yyyy-MM-dd", 
+                    System.Globalization.CultureInfo.InvariantCulture, 
+                    System.Globalization.DateTimeStyles.None, out resultado))
+                {
+                    return resultado.ToString("dd/MM/yyyy");
+                }
+
+                // Intentar parsear con el parseador general
+                if (DateTime.TryParse(fecha, out resultado))
+                {
+                    return resultado.ToString("dd/MM/yyyy");
+                }
+
+                // Si no se pudo parsear, devolver la fecha original
+                _logger.LogWarning("No se pudo parsear la fecha: {Fecha}", fecha);
+                return fecha;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error al normalizar fecha: {Fecha}", fecha);
+                return fecha;
+            }
+        }
+
+        public async Task<List<MisLaboratoriosCDA>> ObtenerMisLaboratoriosCDAAsync(string token, string pacienteId, string fechaDde, string fechaHta)
+        {
+            var baseUrl = GetServiciosBaseUrl();
+            var url = $"{baseUrl}/modules/cda/paciente/{pacienteId}";
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                    //string queryParams = "?pacienteId=" + pacienteId + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
+
+                    using (HttpResponseMessage res = await client.GetAsync(url))
+                    {
+                        if (res.IsSuccessStatusCode)
+                        {
+                            List<MisLaboratoriosCDA?> misLaboratorios = new List<MisLaboratoriosCDA?>();
+
+                            misLaboratorios = await res.Content.ReadFromJsonAsync<List<MisLaboratoriosCDA>>();
+
+                            if (misLaboratorios == null)
                             {
                                 Console.WriteLine("No se encontraron laboratorios.");
                                 return null;
                             }
 
-                            return listaLaboratorios;
+                            return misLaboratorios;
                         }
                     }
                 }
@@ -188,7 +328,7 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("LACHYBS_NOREDIRECT"); // Asegura su registro (AllowAutoRedirect = false opcional)
+                var client = _httpClientFactory.CreateClient("LACHYBS_NOREDIRECT");
                 client.DefaultRequestHeaders.Authorization = BuildBasicAuthHeader(usuario?.Trim(), clave?.Trim());
                 if (!client.DefaultRequestHeaders.Accept.Any())
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -196,27 +336,22 @@ namespace AndesServices.Services
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("SaludPortalClient/1.0");
 
                 var res = await client.GetAsync(url);
-                //var body = await res.Content.ReadAsStringAsync();
-                //if ((int)res.StatusCode is 301 or 302 or 307 or 308)
-                //{
-                    // Posible redirect (http→https?). Preserva Authorization manualmente
-                    var redirectUri = res.Headers.Location.IsAbsoluteUri
-                        ? res.Headers.Location
-                        : new Uri(new Uri(url), res.Headers.Location);
+                var redirectUri = res.Headers.Location.IsAbsoluteUri
+                    ? res.Headers.Location
+                    : new Uri(new Uri(url), res.Headers.Location);
 
-                    Console.WriteLine($"[LACHYBS] Following redirect to {redirectUri}");
+                Console.WriteLine($"[LACHYBS] Following redirect to {redirectUri}");
 
-                    var secondReq = new HttpRequestMessage(HttpMethod.Get, redirectUri);
-                    secondReq.Headers.Authorization = BuildBasicAuthHeader(usuario?.Trim(), clave?.Trim());
-                    secondReq.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    if (!secondReq.Headers.UserAgent.Any())
-                        secondReq.Headers.UserAgent.ParseAdd("SaludPortalClient/1.0");
+                var secondReq = new HttpRequestMessage(HttpMethod.Get, redirectUri);
+                secondReq.Headers.Authorization = BuildBasicAuthHeader(usuario?.Trim(), clave?.Trim());
+                secondReq.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                if (!secondReq.Headers.UserAgent.Any())
+                    secondReq.Headers.UserAgent.ParseAdd("SaludPortalClient/1.0");
 
-                    res.Dispose();
-                    res = await client.SendAsync(secondReq);
-                    var body = await res.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[LACHYBS] 2nd Status {(int)res.StatusCode} {res.ReasonPhrase}");
-                //}
+                res.Dispose();
+                res = await client.SendAsync(secondReq);
+                var body = await res.Content.ReadAsStringAsync();
+                Console.WriteLine($"[LACHYBS] 2nd Status {(int)res.StatusCode} {res.ReasonPhrase}");
 
                 if (!res.IsSuccessStatusCode)
                 {
@@ -230,6 +365,16 @@ namespace AndesServices.Services
                     _logger.LogInformation("LACHYBS sin resultados para dni {Documento}", documento);
                     return null;
                 }
+
+                // Normalizar fechas a formato dd/MM/yyyy
+                foreach (var laboratorio in lista)
+                {
+                    if (!string.IsNullOrEmpty(laboratorio.fecha))
+                    {
+                        laboratorio.fecha = NormalizarFecha(laboratorio.fecha);
+                    }
+                }
+
                 return lista;
             }
             catch (Exception ex)

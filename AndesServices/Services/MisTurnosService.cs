@@ -128,12 +128,7 @@ namespace AndesServices.Services
 
         public async Task<bool> RegistrarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion)
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/turnos"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/turnos";
+            string url = GetServiciosBaseUrl() + "/modules/turnos";
 
             url += $"/turno/{idTurno}/bloque/{idBloque}/agenda/{idAgenda}";
             try

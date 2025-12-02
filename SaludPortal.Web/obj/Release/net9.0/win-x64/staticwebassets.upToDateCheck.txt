@@ -1,9 +1,12 @@
 wwwroot\-favicon.png
 wwwroot\app.css
 wwwroot\favicon.png
+wwwroot\images\AppStore-Andes.png
 wwwroot\images\Banner-Superior-Web.png
+wwwroot\images\bannermisalud.png
 wwwroot\images\gobierno-neuquen.svg
 wwwroot\images\neuquen-logo.svg
+wwwroot\images\PlayStore-Andes.png
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css
@@ -49,6 +52,9 @@ wwwroot\lib\bootstrap\dist\js\bootstrap.js.map
 wwwroot\lib\bootstrap\dist\js\bootstrap.min.js
 wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map
 wwwroot\loadingSalud.svg
+wwwroot\js\auth.js
+wwwroot\js\cookieMonitor.js
+Components\Pages\Home.razor.js
 C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\app.css
 C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\images\gobierno-neuquen.svg
 C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\images\neuquen-logo.svg
@@ -97,3 +103,6 @@ C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\lib\bootstrap
 C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js
 C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map
 C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\loadingSalud.svg
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\js\auth.js
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\wwwroot\js\cookieMonitor.js
+C:\Projects\vsc\salud\salud-portalpaciente\SaludPortal.Web\Components\Pages\Home.razor.js

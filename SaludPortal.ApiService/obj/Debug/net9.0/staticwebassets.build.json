@@ -1,12 +1,1 @@
-{
-  "Version": 1,
-  "Hash": "qKp4nkudz8qXvYVp48TmWPx7xmigkq6kF+5Kg3zrQYE=",
-  "Source": "SaludPortal.ApiService",
-  "BasePath": "_content/SaludPortal.ApiService",
-  "Mode": "Default",
-  "ManifestType": "Build",
-  "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": [],
-  "Endpoints": []
-}
+{"Version":1,"Hash":"vWTJz72EOze5T5ElSTZSvmnZe+e9kZuN0oPSqyZ4WHE=","Source":"SaludPortal.ApiService","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}

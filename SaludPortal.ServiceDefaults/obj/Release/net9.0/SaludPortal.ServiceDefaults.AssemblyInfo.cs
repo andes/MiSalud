@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SaludPortal.ServiceDefaults")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5c96c0f77b24044f43d0ebbe5695ccf7902a1397")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4755d9935fcce89a009be27cbd51234b8cf0746a")]
 [assembly: System.Reflection.AssemblyProductAttribute("SaludPortal.ServiceDefaults")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SaludPortal.ServiceDefaults")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

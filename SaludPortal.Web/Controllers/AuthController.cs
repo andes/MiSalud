@@ -52,8 +52,7 @@ namespace SaludPortal.Web.Controllers
                     new ClaimsPrincipal(identity),
                     new AuthenticationProperties
                     {
-                        IsPersistent = model.RememberMe,
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1)
+                        IsPersistent = model.RememberMe
                     });
 
                 return Ok(new { message = "Login exitoso" });
@@ -70,7 +69,10 @@ namespace SaludPortal.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            Response.Cookies.Delete(SaludConstantes.CookieName, new CookieOptions { Path = "/login" });
+            Response.Cookies.Delete(SaludConstantes.CookieName, new CookieOptions { Path = "/" });
+
+            _authStateProvider.ForceRefresh();
+
             return Ok(new { message = "Logout ok" });
         }
 

@@ -1,12 +1,1 @@
-{
-  "Version": 1,
-  "Hash": "te8u64jZEN0PY8TuyL4qhH7Pgnps2TaK5yPi+DN4p8E=",
-  "Source": "AndesServices",
-  "BasePath": "_content/AndesServices",
-  "Mode": "Default",
-  "ManifestType": "Build",
-  "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": [],
-  "Endpoints": []
-}
+{"Version":1,"Hash":"qShx1AzaIyeR+NOGCWn7x1bEQpBm5Z+XZvdHVMgGs2M=","Source":"AndesServices","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}

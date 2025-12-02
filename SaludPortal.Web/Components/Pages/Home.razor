@@ -31,18 +31,10 @@
             HideCloseButton = false,
             HideHeader = true
         };
-        // var parameters = new ModalParameters()
-        // .Add(nameof(MisTurnosDetalle.Paciente), unTurno.paciente.nombre + " " + unTurno.paciente.apellido)
-        // .Add(nameof(MisTurnosDetalle.FechaHoraTurno), unTurno.horaInicio.ToString("dd/MM/yyyy") + " " + unTurno.horaInicio.ToString("HH:mm"))
-        // .Add(nameof(MisTurnosDetalle.DatosConsulta), unTurno.motivoConsulta)
-        // .Add(nameof(MisTurnosDetalle.Lugar), unTurno.organizacion?.nombre);
-
+        
         Modal.Show<InfoBoxesPrivacidad>(options);
-
     }
-    // private IJSObjectReference? _module;
-    // private IJSObjectReference? _blurHandle;
-
+    
     protected override async Task OnParametersSetAsync()
     {
         if (AuthenticationState != null)

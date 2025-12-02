@@ -84,7 +84,10 @@
         }
         else
         {
-            Nav.NavigateTo($"/historiasalud/categoria/{exprEncoded}?titulo={tituloEncoded}");
+            if (expresionSnomed == "16076005") //Recetas
+                Nav.NavigateTo($"MisRecetas");
+            else
+                Nav.NavigateTo($"/historiasalud/categoria/{exprEncoded}?titulo={tituloEncoded}");
         }
     }
 }

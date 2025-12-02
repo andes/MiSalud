@@ -52,9 +52,12 @@
             <div class="form-control laboratorios">
                 @if (misLaboratorios.Laboratorio != null)
                 {
-                    <div class="d-flex justify-content-between" @onclick="@(() => DownloadLaboratorio(misLaboratorios.idProtocolo.ToString(), misLaboratorios.Laboratorio))" title="Descargar" tabindex="0">
+                    <div class="d-flex justify-content-between" @onclick="@(() => DownloadLaboratorio(misLaboratorios.idProtocolo.ToString(), misLaboratorios))" title="Descargar" tabindex="0">
                         <div>
-                            <p><strong>@DateTime.Parse(@misLaboratorios.fecha).ToString("dd/MM/yyyy")</strong></p>
+                            @if (!string.IsNullOrEmpty(misLaboratorios.fecha))
+                            {   
+                                <p><strong>@misLaboratorios.fecha</strong></p>
+                            }
                             <p><strong>Informe De Laboratorio</strong></p>
                             <p>
                                 <Icon Name="hospital" Size="16" Fill="#fff" class="text-secondary me-1" AriaLabel="Institución" />
@@ -218,6 +221,7 @@ else
 
         string fechaDesde = DateTime.Now.AddYears(SaludConfiguracion.fechaDesde * (-1)).ToString("yyyyMMdd");
 
+        // Mis Laboratorios
         _misLaboratoriosService = new MisLaboratoriosService(Configuration, HttpClientFactory, Logger);
 
         if (_misLaboratoriosService != null)
@@ -228,24 +232,24 @@ else
             var cfg = new ConexionServicios();
             Configuration.GetSection("urlServicios").Bind(cfg);
 
-            if (!cfg.usarProd)
+            // Mis Laboratorios CDA
+            Model.LstMisLaboratoriosCDA = await _misLaboratoriosService.ObtenerMisLaboratoriosCDAAsync(token, pacienteId, fechaDesde, DateTime.Now.ToString("yyyyMMdd"));
+
+            if (Model.LstMisLaboratoriosCDA.Count() > 0)
             {
-                Model.LstLaboratoriosLachybs = await _misLaboratoriosService.ObtenerMisLaboratoriosLACHYBSAsync("xroad", "sol2025", documento);
-
-                if (Model.LstLaboratoriosLachybs.Count() > 0)
+                foreach (var item in Model.LstMisLaboratoriosCDA)
                 {
-                    foreach (var item in Model.LstLaboratoriosLachybs)
-                    {
-                        AndesServices.Entities.MisLaboratorios unLaboratorio = new AndesServices.Entities.MisLaboratorios();
-                        unLaboratorio.Laboratorio = "CLÍNICA RAÑA";
-                        unLaboratorio.medicoSolicitante = item.solicitante_apellido + " " + item.solicitante_nombre;
-                        unLaboratorio.fecha = item.fecha;
-                        unLaboratorio.idProtocolo = item.protocolo_id;
+                    AndesServices.Entities.MisLaboratorios unLaboratorio = new AndesServices.Entities.MisLaboratorios();
+                    unLaboratorio.Laboratorio = item.organizacion.nombre;
+                    unLaboratorio.medicoSolicitante = item.profesional.apellido + " " + item.profesional.nombre;
+                    unLaboratorio.fecha = item.fecha.ToString("dd/MM/yyyy");
+                    unLaboratorio.idProtocolo = item.cda_id;
+                    unLaboratorio.tipo = "cda";
 
-                        Model.LstMisLaboratorios.Add(unLaboratorio);
-                    }
+                    Model.LstMisLaboratorios.Add(unLaboratorio);
                 }
             }
+
             _spinnerService.Hide();
 
             await ResetAndInitVisibleAsync();
@@ -275,10 +279,22 @@ else
         // Ordenamos una sola vez para no ordenar en cada render
         if (Model.LstMisLaboratorios != null)
         {
-            // Si 'fecha' viene en formato yyyyMMdd, ordenar por string mantiene orden correcto.
-            // Si prefieres ordenar por DateTime, descomenta la línea de abajo y comenta la actual.
-            // Model.LstMisLaboratorios = Model.LstMisLaboratorios.OrderByDescending(l => DateTime.Parse(l.fecha)).ToList();
-            Model.LstMisLaboratorios = Model.LstMisLaboratorios.OrderByDescending(l => l.fecha).ToList();
+            // Las fechas ya vienen en formato dd/MM/yyyy desde el servicio
+            // Ordenamos parseando las fechas de forma segura
+            Model.LstMisLaboratorios = Model.LstMisLaboratorios.OrderByDescending(l => 
+            {
+                if (string.IsNullOrEmpty(l.fecha)) 
+                    return DateTime.MinValue;
+                
+                if (DateTime.TryParseExact(l.fecha, "dd/MM/yyyy", 
+                    System.Globalization.CultureInfo.InvariantCulture, 
+                    System.Globalization.DateTimeStyles.None, out DateTime result))
+                {
+                    return result;
+                }
+                
+                return DateTime.MinValue;
+            }).ToList();
         }
 
         _visibleLabs.Clear();
@@ -367,36 +383,77 @@ else
         _dotNetRef?.Dispose();
     }
 
-    async Task DownloadLaboratorio(string idProtocolo, string laboratorio)
+    async Task DownloadLaboratorio(string idProtocolo, AndesServices.Entities.MisLaboratorios unLaboratorio)
     {
         _spinnerService.Show();
         _misLaboratoriosService = new MisLaboratoriosService(Configuration, HttpClientFactory, Logger);
-        if (laboratorio == "CLÍNICA RAÑA")
+        switch (unLaboratorio.tipo)
         {
-            archivoDescargarLACHyBS = await _misLaboratoriosService.DescargarLaboratorioLACHyBSPorIdAsync("xroad", "sol2025", idProtocolo);
-            if (archivoDescargarLACHyBS == null || archivoDescargarLACHyBS.Length == 0)
-            {
-                _spinnerService.Hide();
-                await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
-                return;
-            }
+            case "raña":
+                archivoDescargarLACHyBS = await _misLaboratoriosService.DescargarLaboratorioLACHyBSPorIdAsync("xroad", "sol2025", idProtocolo);
+                if (archivoDescargarLACHyBS == null || archivoDescargarLACHyBS.Length == 0)
+                {
+                    _spinnerService.Hide();
+                    await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
+                    return;
+                }
 
-            if (!string.IsNullOrEmpty(archivoDescargarLACHyBS))
-                await JSRuntime.InvokeVoidAsync("open", archivoDescargarLACHyBS, "_blank");
-        }
-        else
-        {
-            archivoDescargar = await _misLaboratoriosService.DescargarLaboratorio(BackendToken, idProtocolo, Documento);
-            if (archivoDescargar == null || archivoDescargar.Length == 0)
-            {
-                _spinnerService.Hide();
-                await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
-                return;
-            }
+                if (!string.IsNullOrEmpty(archivoDescargarLACHyBS))
+                    await JSRuntime.InvokeVoidAsync("open", archivoDescargarLACHyBS, "_blank");
 
-            string base64Pdf = Convert.ToBase64String(archivoDescargar);
-            await JSRuntime.InvokeVoidAsync("openPdfLab", base64Pdf);
+                break;
+            case "cda":
+
+                string laboratorioAdjunto = Model.LstMisLaboratoriosCDA.Where(c => c.cda_id == unLaboratorio.idProtocolo).Select(c => c.adjuntos[0]).FirstOrDefault();
+                laboratorioAdjunto = laboratorioAdjunto.Substring(laboratorioAdjunto.LastIndexOf('/') +1);
+                laboratorioAdjunto = laboratorioAdjunto.Substring(0, laboratorioAdjunto.LastIndexOf('.'));
+                archivoDescargar = await _misLaboratoriosService.DescargarLaboratorioCDA(BackendToken, laboratorioAdjunto);
+
+                string base64Pdf_CDA = Convert.ToBase64String(archivoDescargar);
+                await JSRuntime.InvokeVoidAsync("openPdfLab", base64Pdf_CDA);
+
+                break;
+
+            default: //rup
+                archivoDescargar = await _misLaboratoriosService.DescargarLaboratorio(BackendToken, idProtocolo, Documento);
+                if (archivoDescargar == null || archivoDescargar.Length == 0)
+                {
+                    _spinnerService.Hide();
+                    await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
+                    return;
+                }
+
+                string base64Pdf = Convert.ToBase64String(archivoDescargar);
+                await JSRuntime.InvokeVoidAsync("openPdfLab", base64Pdf);
+                break;
         }
+        // if (laboratorio == "CLÍNICA RAÑA")
+        // {
+        //     archivoDescargarLACHyBS = await _misLaboratoriosService.DescargarLaboratorioLACHyBSPorIdAsync("xroad", "sol2025", idProtocolo);
+        //     if (archivoDescargarLACHyBS == null || archivoDescargarLACHyBS.Length == 0)
+        //     {
+        //         _spinnerService.Hide();
+        //         await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
+        //         return;
+        //     }
+
+        //     if (!string.IsNullOrEmpty(archivoDescargarLACHyBS))
+        //         await JSRuntime.InvokeVoidAsync("open", archivoDescargarLACHyBS, "_blank");
+        // }
+        // else
+        // {
+        //     archivoDescargar = await _misLaboratoriosService.DescargarLaboratorio(BackendToken, idProtocolo, Documento);
+        //     if (archivoDescargar == null || archivoDescargar.Length == 0)
+        //     {
+        //         _spinnerService.Hide();
+        //         await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
+        //         return;
+        //     }
+
+        //     string base64Pdf = Convert.ToBase64String(archivoDescargar);
+        //     await JSRuntime.InvokeVoidAsync("openPdfLab", base64Pdf);
+        // }
+
         _spinnerService.Hide();
     }
 

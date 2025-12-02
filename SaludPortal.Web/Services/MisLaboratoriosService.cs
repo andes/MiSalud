@@ -43,6 +43,27 @@ namespace SaludPortal.Web.Services
                 return null;
             }
         }
+
+        public async Task<List<MisLaboratoriosCDA>> ObtenerMisLaboratoriosCDAAsync(string token, string pacienteId, string fechaDde, string fechaHta)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                _coreLogger.LogWarning("Token no proporcionado.");
+                return null;
+            }
+
+            try
+            {
+                return await CreateCoreService()
+                    .ObtenerMisLaboratoriosCDAAsync(token, pacienteId, fechaDde, fechaHta);
+            }
+            catch (Exception ex)
+            {
+                _coreLogger.LogError(ex, "Error obteniendo laboratorios paciente {PacienteId}", pacienteId);
+                return null;
+            }
+        }
+
         public async Task<byte[]> DescargarLaboratorio(string token, string idProtocolo, string documento)
         {
             if (string.IsNullOrWhiteSpace(token))
@@ -59,6 +80,22 @@ namespace SaludPortal.Web.Services
             catch (Exception ex)
             {
                 _coreLogger.LogError(ex, "Error descargando laboratorio {IdProtocolo}", idProtocolo);
+                return null;
+            }
+        }
+
+        public async Task<byte[]> DescargarLaboratorioCDA(string token, string documento)
+        {
+            
+
+            try
+            {
+                return await CreateCoreService()
+                    .DescargarLaboratorioCDAPorIdAsync(token, documento);
+            }
+            catch (Exception ex)
+            {
+                _coreLogger.LogError(ex, "Error descargando laboratorio CDA {documento}", documento);
                 return null;
             }
         }

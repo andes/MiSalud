@@ -71,3 +71,4 @@ C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-
 C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\rjsmrazor.dswa.cache.json
 C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\rjsmcshtml.dswa.cache.json
 C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\staticwebassets.build.json.cache
+C:\Projects\vsc\salud\salud-portalpaciente\AndesServices\obj\Release\net9.0\win-x64\swae.build.ex.cache
