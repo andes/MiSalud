@@ -67,8 +67,13 @@
                                                         <div>
                                                             @foreach (var turno in grupo)
                                                             {
-                                                                <button class="btn btn-info" style="margin:3px;" title="Seleccionar" 
-                                                                @onclick="() => ShowModalConfirmar(grupo.Key, turno.horaInicio.AddHours(-3), tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, turno._id, bloque._id)"><i class="fa fa-calendar" aria-hidden="true" style="max-width:16px;"></i> @turno.horaInicio.AddHours(-3).ToString("HH:mm") </button>
+                                                                if (turno.estado == "disponible")
+                                                                {
+                                                                    <button class="btn btn-info" style="margin:3px;" title="Seleccionar"
+                                                                            @onclick="() => ShowModalConfirmar(grupo.Key, turno.horaInicio.AddHours(-3), tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, turno._id, bloque._id)">
+                                                                        <i class="fa fa-calendar" aria-hidden="true" style="max-width:16px;"></i> @turno.horaInicio.AddHours(-3).ToString("HH:mm")
+                                                                    </button>
+                                                                }
                                                             }
                                                         </div>
                                                     </div>

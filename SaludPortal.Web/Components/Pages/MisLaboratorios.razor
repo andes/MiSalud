@@ -237,7 +237,7 @@ else
 
             if (Model.LstMisLaboratoriosCDA.Count() > 0)
             {
-                foreach (var item in Model.LstMisLaboratoriosCDA)
+                foreach (var item in Model.LstMisLaboratoriosCDA.Where(c => c?.prestacion?.snomed?.conceptId == "4241000179101"))
                 {
                     AndesServices.Entities.MisLaboratorios unLaboratorio = new AndesServices.Entities.MisLaboratorios();
                     unLaboratorio.Laboratorio = item.organizacion.nombre;
