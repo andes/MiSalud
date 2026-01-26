@@ -139,8 +139,56 @@ namespace AndesServices.Services
 
                     string tipoTurno = "programado";
                     string emitidoPor = "misalud";
-                    string nota = "Turno pedido desde portal mi salud";
-                    string motivoConsulta = "";
+                    string nota = "Solicitud realizada desde portal mi salud";
+
+                    var request = new HttpRequestMessage
+                    {
+                        Method = HttpMethod.Patch,
+                        RequestUri = new Uri(url),
+                        Content = new StringContent(JsonConvert.SerializeObject(new
+                        {
+                            idAgenda,
+                            idBloque,
+                            idTurno,
+                            paciente,
+                            tipoPrestacion,
+                            tipoTurno,
+                            emitidoPor,
+                            nota
+                        }), System.Text.Encoding.UTF8, "application/json")
+                    };
+
+                    using (HttpResponseMessage res = await client.SendAsync(request))
+                    {
+                        if (res.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine("Turno confirmado.");
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Error al registrar el turno: {exception.Message}");
+            }
+            return false;
+        }
+
+        public async Task<bool> RegistrarTurnoTeleConsultaAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta = "", string estado = "")
+        {
+            string url = GetServiciosBaseUrl() + "/modules/turnos";
+
+            url += $"/turno/{idTurno}/bloque/{idBloque}/agenda/{idAgenda}";
+            try
+            {
+                using (HttpClient client = _httpClientFactory.CreateClient())
+                {
+                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                    string tipoTurno = "programado";
+                    string emitidoPor = "misalud";
+                    string nota = "Cel.: " + paciente.telefono + ". Motivo: " + motivoConsulta;
 
                     var request = new HttpRequestMessage
                     {
@@ -156,6 +204,7 @@ namespace AndesServices.Services
                             tipoTurno,
                             emitidoPor,
                             nota,
+                            estado,
                             motivoConsulta
                         }), System.Text.Encoding.UTF8, "application/json")
                     };
@@ -174,10 +223,10 @@ namespace AndesServices.Services
             {
                 Console.WriteLine($"Error al registrar el turno: {exception.Message}");
             }
-            return false; // Ensure a boolean is returned in case of failure
+            return false;
         }
 
-        public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string token, string idPaciente, userLocation userLocation)
+        public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string token, string idPaciente, userLocation userLocation, bool esTeleConsulta)
         {
             var conexionServicios = new ConexionServicios();
             _configuration.GetSection("urlServicios").Bind(conexionServicios);
@@ -219,6 +268,8 @@ namespace AndesServices.Services
                                 return null;
                             }
 
+                            organizacionAgendas = await filtrarAgendasOrganizacionesTeleConsultaAsync(organizacionAgendas, esTeleConsulta);
+
                             return organizacionAgendas;
                         }
                     }
@@ -227,6 +278,205 @@ namespace AndesServices.Services
             catch (Exception exception)
             {
                 Console.WriteLine($"Error al obtener las agendas: {exception.Message}");
+                return null;
+            }
+            return null;
+        }
+
+        private async Task<List<OrganizacionAgenda>> filtrarAgendasOrganizacionesTeleConsultaAsync(List<OrganizacionAgenda> organizacionAgendas, bool esTeleConsulta = false)
+        {
+            // TEMPORAL HASTA TANTO SE CORRIJA EL ENDPOINT
+            // -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+            const string conceptIdTeleconsulta = "6421000013106";
+            // Filtrar in-place sin crear nuevos objetos
+            for (int i = organizacionAgendas.Count - 1; i >= 0; i--)
+            {
+                var org = organizacionAgendas[i];
+                if (org?.agendas == null)
+                {
+                    organizacionAgendas.RemoveAt(i);
+                    continue;
+                }
+
+                // Filtrar agendas
+                for (int j = org.agendas.Count - 1; j >= 0; j--)
+                {
+                    var agenda = org.agendas[j];
+                    if (agenda?.bloques == null)
+                    {
+                        org.agendas.RemoveAt(j);
+                        continue;
+                    }
+
+                    // Filtrar bloques según el criterio
+                    for (int k = agenda.bloques.Count - 1; k >= 0; k--)
+                    {
+                        var bloque = agenda.bloques[k];
+                        if (bloque?.tipoPrestaciones == null)
+                        {
+                            agenda.bloques.RemoveAt(k);
+                            continue;
+                        }
+
+                        bool cumpleCriterio = false;
+                        if (esTeleConsulta)
+                        {
+                            // Buscar si contiene el conceptId de teleconsulta
+                            for (int l = 0; l < bloque.tipoPrestaciones.Count; l++)
+                            {
+                                if (bloque.tipoPrestaciones[l]?.conceptId?.Contains(conceptIdTeleconsulta) == true)
+                                {
+                                    cumpleCriterio = true;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Buscar si NO contiene el conceptId de teleconsulta
+                            for (int l = 0; l < bloque.tipoPrestaciones.Count; l++)
+                            {
+                                if (bloque.tipoPrestaciones[l]?.conceptId != conceptIdTeleconsulta)
+                                {
+                                    cumpleCriterio = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!cumpleCriterio)
+                        {
+                            agenda.bloques.RemoveAt(k);
+                        }
+                    }
+
+                    // Remover agenda si no tiene bloques válidos
+                    if (agenda.bloques.Count == 0)
+                    {
+                        org.agendas.RemoveAt(j);
+                    }
+                }
+
+                // Remover organización si no tiene agendas válidas
+                if (org.agendas.Count == 0)
+                {
+                    organizacionAgendas.RemoveAt(i);
+                }
+            }
+
+
+            //List<ConceptoTurneable> conceptosTurneables = await ObtenerConceptosTurneablesAsync(token, esTeleconsulta);
+
+            //if (conceptosTurneables != null && conceptosTurneables.Count > 0)
+            //{
+            //    var conceptIdsValidos = new HashSet<string>(conceptosTurneables.Count);
+            //    for (int i = 0; i < conceptosTurneables.Count; i++)
+            //    {
+            //        conceptIdsValidos.Add(conceptosTurneables[i].conceptId);
+            //    }
+
+            //    // Filtrar in-place organizaciones → agendas → bloques
+            //    for (int i = organizacionAgendas.Count - 1; i >= 0; i--)
+            //    {
+            //        var org = organizacionAgendas[i];
+            //        if (org?.agendas == null)
+            //        {
+            //            organizacionAgendas.RemoveAt(i);
+            //            continue;
+            //        }
+
+            //        for (int j = org.agendas.Count - 1; j >= 0; j--)
+            //        {
+            //            var agenda = org.agendas[j];
+            //            if (agenda?.bloques == null)
+            //            {
+            //                org.agendas.RemoveAt(j);
+            //                continue;
+            //            }
+
+            //            for (int k = agenda.bloques.Count - 1; k >= 0; k--)
+            //            {
+            //                var bloque = agenda.bloques[k];
+            //                if (bloque?.tipoPrestaciones == null)
+            //                {
+            //                    agenda.bloques.RemoveAt(k);
+            //                    continue;
+            //                }
+
+            //                bool tieneConceptoValido = false;
+            //                for (int l = 0; l < bloque.tipoPrestaciones.Count; l++)
+            //                {
+            //                    var conceptId = bloque.tipoPrestaciones[l]?.conceptId;
+            //                    if (conceptId != null && conceptIdsValidos.Contains(conceptId))
+            //                    {
+            //                        tieneConceptoValido = true;
+            //                        break;
+            //                    }
+            //                }
+
+            //                if (!tieneConceptoValido)
+            //                {
+            //                    agenda.bloques.RemoveAt(k);
+            //                }
+            //            }
+
+            //            if (agenda.bloques.Count == 0)
+            //            {
+            //                org.agendas.RemoveAt(j);
+            //            }
+            //        }
+
+            //        if (org.agendas.Count == 0)
+            //        {
+            //            organizacionAgendas.RemoveAt(i);
+            //        }
+            //    }
+            //}
+
+            return organizacionAgendas;
+        }
+
+        public async Task<List<ConceptoTurneable>> ObtenerConceptosTurneablesAsync(string token, bool esTeleConsulta = false)
+        {
+            string url = GetServiciosBaseUrl() + "/core/tm/conceptos-turneables";
+
+            try
+            {
+                using (HttpClient client = _httpClientFactory.CreateClient())
+                {
+                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                    var queryParams = new Dictionary<string, string?>
+                    {
+                        ["teleConsulta"] = esTeleConsulta.ToString().ToLower(),
+                    };
+
+                    string finalUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryParams);
+                    var request = new HttpRequestMessage
+                    {
+                        Method = HttpMethod.Get,
+                        RequestUri = new Uri(finalUrl)
+                    };
+
+                    using (HttpResponseMessage res = await client.SendAsync(request))
+                    {
+                        if (res.IsSuccessStatusCode)
+                        {
+                            List<ConceptoTurneable?> conceptosTurneables = await res.Content.ReadFromJsonAsync<List<ConceptoTurneable>>();
+                            if (conceptosTurneables == null)
+                            {
+                                Console.WriteLine("No se encontraron conceptos turneables.");
+                                return null;
+                            }
+
+                            return conceptosTurneables;
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Error al obtener los conceptos turneables: {exception.Message}");
                 return null;
             }
             return null;

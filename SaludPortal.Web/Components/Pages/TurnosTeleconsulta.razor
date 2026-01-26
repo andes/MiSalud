@@ -1,4 +1,4 @@
-﻿@page "/turnosnuevo"
+@page "/turnosteleconsulta"
 
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Modals
@@ -15,91 +15,121 @@
 
 @inherits AuthenticatedComponentBase
 
-<h1>Nuevo turno</h1>
+<h1>Teleconsulta</h1>
 <hr />
-<h2>Agendas disponibles</h2>
 
-@if (lstAgendas != null && lstAgendas.Count > 0)
+@if (!consentimientoAceptado)
 {
-    var tipoPrestacionIndex = 0;
-    <div class="accordion" id="accAgendas">
-        @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
-        {
-            var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
-            var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
-            var accOrgId = $"accOrganizaciones_{tipoPrestacionIndex}";
-            var organizacionIndex = 0;
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="@tipoId">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
-                        @tipoPrestaciones.term
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Consentimiento de Teleconsulta</h5>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    </p>
+                    <p>
+                        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                        Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                    </p>
+                    <p class="fw-bold text-primary">
+                        ¿Acepta los términos y condiciones para continuar con la teleconsulta?
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="RechazarConsentimiento">
+                        <i class="fa fa-times" aria-hidden="true"></i> Rechazar
                     </button>
-                </h2>
-                <div id="@collapseTipoId" class="accordion-collapse collapse" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
-                    <div class="accordion-body">
-                        <div class="accordion" id="@accOrgId">
-                            @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
-                            {
-                                var orgId = $"Organizacion_{tipoPrestacionIndex}_{organizacionIndex}";
-                                var collapseOrgId = $"collapseOrg_{tipoPrestacionIndex}_{organizacionIndex}";
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="@orgId">
-                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseOrgId" aria-expanded="true" aria-controls="@collapseOrgId">
-                                            <div>
-                                                <i class="fa fa-h-square" aria-hidden="true" style="max-width:16px;"></i> @efectores.Efector.nombre
-                                                <br />
-                                                <i class="fa fa-map-marker" aria-hidden="true" style="max-width:16px;"></i> @efectores.Domicilio
-                                            </div>
-                                        </button>
-                                    </h2>
-                                    <div id="@collapseOrgId" class="accordion-collapse collapse" aria-labelledby="@orgId" data-bs-parent="#@accOrgId">
-                                        <div class="accordion-body">
-                                            @foreach (var bloque in RecuperarAgendas(tipoPrestaciones.id, efectores.Efector._id))
-                                            {
-                                                var turnosPorFecha = bloque.turnos
-                                                .GroupBy(t => t.horaInicio.Date)
-                                                .OrderBy(g => g.Key);
+                    <button type="button" class="btn btn-success" @onclick="AceptarConsentimiento">
+                        <i class="fa fa-check" aria-hidden="true"></i> Aceptar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
-                                                foreach (var grupo in turnosPorFecha)
+@if (consentimientoAceptado)
+{
+    <h2>Agendas disponibles para teleconsulta</h2>
+
+    @if (lstAgendas != null && lstAgendas.Count > 0)
+    {
+        var tipoPrestacionIndex = 0;
+        <div class="accordion" id="accAgendas">
+            @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
+            {
+                var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
+                var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
+                var accOrgId = $"accOrganizaciones_{tipoPrestacionIndex}";
+                var organizacionIndex = 0;
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="@tipoId">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
+                            @tipoPrestaciones.term
+                        </button>
+                    </h2>
+                    <div id="@collapseTipoId" class="accordion-collapse collapse show" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
+                        <div class="accordion-body">
+                            <div class="accordion" id="@accOrgId">
+                                @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
+                                {
+                                    var orgId = $"Organizacion_{tipoPrestacionIndex}_{organizacionIndex}";
+                                    var collapseOrgId = $"collapseOrg_{tipoPrestacionIndex}_{organizacionIndex}";
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="@orgId">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseOrgId" aria-expanded="true" aria-controls="@collapseOrgId">
+                                                <div>
+                                                    <i class="fa fa-video-camera" aria-hidden="true" style="max-width:16px;"></i> @efectores.Efector.nombre
+                                                    <br />
+                                                    <span class="badge bg-success">Teleconsulta</span>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="@collapseOrgId" class="accordion-collapse collapse show" aria-labelledby="@orgId" data-bs-parent="#@accOrgId">
+                                            <div class="accordion-body">
+                                                @foreach (var bloque in RecuperarAgendas(tipoPrestaciones.id, efectores.Efector._id))
                                                 {
-                                                    <div>
-                                                        <strong>@grupo.Key.ToString("dd/MM/yyyy") (@bloque.restantesMobile disponibles)</strong>
-                                                        <div>
-                                                            @foreach (var turno in grupo)
-                                                            {
-                                                                if (turno.estado == "disponible")
-                                                                {
-                                                                    <button class="btn btn-info" style="margin:3px;" title="Seleccionar"
-                                                                            @onclick="() => ShowModalConfirmar(grupo.Key, turno.horaInicio.AddHours(-3), tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, turno._id, bloque._id)">
-                                                                        <i class="fa fa-calendar" aria-hidden="true" style="max-width:16px;"></i> @turno.horaInicio.AddHours(-3).ToString("HH:mm")
-                                                                    </button>
-                                                                }
-                                                            }
+                                                    var primerTurnoDisponible = bloque.turnos
+                                                    .FirstOrDefault(t => t.estado == "disponible");
+
+                                                    if (primerTurnoDisponible != null)
+                                                    {
+                                                        <div style="margin-bottom: 10px;">
+                                                            <button class="btn btn-success" title="Seleccionar"
+                                                                    @onclick="() => ShowModalConfirmar(primerTurnoDisponible.horaInicio.Date, primerTurnoDisponible.horaInicio.AddHours(-3), tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, primerTurnoDisponible._id, bloque._id)">
+                                                                <i class="fa fa-video-camera" aria-hidden="true" style="max-width:16px;"></i> Solicitar atención
+                                                            </button>
                                                         </div>
-                                                    </div>
+                                                    }
+                                                    break;
                                                 }
-                                            }
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <hr />
-                                organizacionIndex++;
-                            }
+                                    <hr />
+                                    organizacionIndex++;
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <hr />
-            tipoPrestacionIndex++;
-        }
-    </div>
-}
-else
-{
-    <p>No hay turnos disponibles.</p>
+                <hr />
+                tipoPrestacionIndex++;
+            }
+        </div>
+    }
+    else
+    {
+        <p>No hay turnos de teleconsulta disponibles.</p>
+    }
 }
 
 @code {
+    private bool consentimientoAceptado = false;
     private List<OrganizacionAgenda> lstAgendas = new List<OrganizacionAgenda>();
     private MisTurnosService? _misTurnosService;
     private PacienteService? _unPacienteService;
@@ -114,11 +144,22 @@ else
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
+    private void AceptarConsentimiento()
+    {
+        consentimientoAceptado = true;
+        StateHasChanged();
+    }
+
+    private void RechazarConsentimiento()
+    {
+        Nav.NavigateTo("/misturnos", forceLoad: true);
+    }
+
     private async Task ShowModalConfirmar(DateTime Fecha, DateTime Hora, string TipoPrestacion, string Efector, string EfectorDomicilio, string IdTipoPrestacion, string IdTurno, string IdBloque)
     {
         var options = new ModalOptions()
         {
-            Size = ModalSize.Automatic,
+            Size = ModalSize.Large,
             Position = ModalPosition.TopCenter,
             HideCloseButton = true,
             HideHeader = true
@@ -127,17 +168,17 @@ else
         string Paciente = _unPaciente.nombre + " " + _unPaciente.apellido;
 
         var parameters = new ModalParameters()
-        .Add(nameof(TurnoNuevoConfirmar.Paciente), Paciente)
-        .Add(nameof(TurnoNuevoConfirmar.FechaHoraTurno), Fecha.ToString("dd/MM/yyyy") + " " + Hora.ToString("HH:mm"))
-        .Add(nameof(TurnoNuevoConfirmar.TipoPrestacion), TipoPrestacion)
-        .Add(nameof(TurnoNuevoConfirmar.EfectorNombre), Efector)
-        .Add(nameof(TurnoNuevoConfirmar.EfectorDomicilio), EfectorDomicilio)
-        .Add(nameof(TurnoNuevoConfirmar.IdTurno), IdTurno)
-        .Add(nameof(TurnoNuevoConfirmar.IdBloque), IdBloque)
-        .Add(nameof(TurnoNuevoConfirmar.IdAgenda), ObtenerAgendaPorIdBloque(IdBloque)._id)
-        .Add(nameof(TurnoNuevoConfirmar._unTipoPrestacion), ObtenerTipoPrestacionesDisponibles(IdTipoPrestacion));
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.Paciente), Paciente)
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.FechaTurno), Fecha.ToString("dd/MM/yyyy"))
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.TipoPrestacion), TipoPrestacion)
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.EfectorNombre), Efector)
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.EfectorDomicilio), EfectorDomicilio)
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.IdTurno), IdTurno)
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.IdBloque), IdBloque)
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.IdAgenda), ObtenerAgendaPorIdBloque(IdBloque)._id)
+        .Add(nameof(TurnoNuevoTeleconsultaConfirmar._unTipoPrestacion), ObtenerTipoPrestacionesDisponibles(IdTipoPrestacion));
 
-        Modal.Show<TurnoNuevoConfirmar>(parameters, options);
+        Modal.Show<TurnoNuevoTeleconsultaConfirmar>(parameters, options);
     }
 
     protected override async Task OnAuthenticatedInitializedAsync()
@@ -154,8 +195,6 @@ else
 
         try
         {
-
-
             // Obtengo el paciente
             _unPacienteService = new PacienteService(Configuration, httpClientFactory);
             _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
@@ -184,7 +223,8 @@ else
 
             if (_misTurnosService != null && _userLocation != null)
             {
-                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(token, pacienteId, _userLocation, esTeleconsulta: false);
+                // La diferencia principal: esTeleconsulta: true
+                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(token, pacienteId, _userLocation, esTeleconsulta: true);
 
                 // Obtener todos los IDs de organizaciones únicos
                 var orgIds = lstAgendas

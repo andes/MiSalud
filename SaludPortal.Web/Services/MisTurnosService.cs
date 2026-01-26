@@ -32,7 +32,7 @@ namespace SaludPortal.Web.Services
             return null;
         }
 
-        public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string token, string idPaciente, userLocation userLocation)
+        public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string token, string idPaciente, userLocation userLocation, bool esTeleconsulta)
         {
             if (string.IsNullOrEmpty(token))
             {
@@ -42,7 +42,7 @@ namespace SaludPortal.Web.Services
             try
             {
                 AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
-                return await misTurnosService.ObtenerAgendasOrganizaciones(token, idPaciente, userLocation);
+                return await misTurnosService.ObtenerAgendasOrganizaciones(token, idPaciente, userLocation, esTeleconsulta);
             }
             catch (Exception exception)
             {
@@ -62,6 +62,26 @@ namespace SaludPortal.Web.Services
             {
                 AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
                 return await misTurnosService.RegistrarTurnoAsync(token, idTurno, idBloque, idAgenda, paciente, tipoPrestacion);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Se produjo un error al registrar el turno.");
+                Console.WriteLine(exception.Message);
+                return false;
+            }
+        }
+
+        public async Task<bool> RegistrarTurnoTeleConsultaAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta = "", string estado ="")
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("Token no proporcionado.");
+                return false;
+            }
+            try
+            {
+                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
+                return await misTurnosService.RegistrarTurnoTeleConsultaAsync(token, idTurno, idBloque, idAgenda, paciente, tipoPrestacion, motivoConsulta, estado);
             }
             catch (Exception exception)
             {

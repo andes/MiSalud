@@ -1,6 +1,7 @@
 ﻿@page "/turnosmensajeconfirma"
 
 @using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
 @inject MessageService MessageService
 
 <h1>MIS TURNOS</h1>
@@ -16,11 +17,13 @@
 <div class="d-inline-flex flex-lg-row" style="background:#edfce2;color:#000;width:100%;">
     <div class="p-sm-2 flex-shrink-1"></div>
     <div class="p-lg-10 flex-fill flex-grow-1" style="padding:5px; width:100%; margin:5px;">
-        <p>@MessageService.Content</p>
+        @if (MessageService.Content != null && !string.IsNullOrWhiteSpace(MessageService.Content))
+        {
+            <p>@((MarkupString)MessageService.Content)</p>
+        }
     </div>
 </div>
 
 @code {
     private string Mensaje { get; set; } = "";
-
 }

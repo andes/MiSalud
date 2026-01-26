@@ -35,7 +35,18 @@
                         <div class="d-flex align-items-stretch justify-content-between">
                             <div>
                                 <h4>
-                                    <strong>Fecha: </strong>@misTurnos.horaInicio.ToString("dd/MM/yyyy") @misTurnos.horaInicio.AddHours(-3).ToShortTimeString()
+                                    
+                                    @if (misTurnos.tipoPrestacion.conceptId == conceptIdTeleconsulta)
+                                    {
+                                        <strong>Fecha de solicitud: </strong>
+                                        @misTurnos.horaInicio.ToString("dd/MM/yyyy")
+                                    }
+                                    else
+                                    {
+                                        <strong>Fecha: </strong>
+                                        @misTurnos.horaInicio.ToString("dd/MM/yyyy")
+                                        @misTurnos.horaInicio.AddHours(-3).ToShortTimeString()
+                                    }
                                 </h4>
                                 @if (misTurnos.tipoPrestacion.term != null)
                                 {
@@ -45,18 +56,22 @@
                                     </div>
                                 }
                                 <div>
-                                    <strong>Lugar: </strong>@misTurnos.organizacion.nombre
+                                    @if (misTurnos.tipoPrestacion.conceptId != conceptIdTeleconsulta)
+                                    {
+                                        <strong>Lugar: </strong>
+                                        @misTurnos.organizacion.nombre
+                                    }
                                 </div>
                             </div>
 
                             <button @onclick="async () => await ShowModalCancelarConfirmar(
-                                                                                misTurnos.horaInicio,
-                                                                                misTurnos.horaInicio.AddHours(-3),
-                                                                                misTurnos.tipoPrestacion.term,
-                                                                                misTurnos.organizacion?.nombre ?? string.Empty,
-                                                                                misTurnos.agenda_id,
-                                                                                misTurnos._id,
-                                                                                misTurnos.bloque_id)"
+                                                                                                                                                        misTurnos.horaInicio,
+                                                                                                                                                        misTurnos.horaInicio.AddHours(-3),
+                                                                                                                                                        misTurnos.tipoPrestacion.term,
+                                                                                                                                                        misTurnos.organizacion?.nombre ?? string.Empty,
+                                                                                                                                                        misTurnos.agenda_id,
+                                                                                                                                                        misTurnos._id,
+                                                                                                                                                        misTurnos.bloque_id)"
                 class=" d-flex flex-wrap align-items-center justify-content-center gap-2 text-white align-self-stretch"
                 style="cursor:pointer; background-color:red;border-radius:10px;padding:6px 10px;"
                 title="Cancelar turno">
@@ -82,11 +97,10 @@
     }
     <hr />
 
-    <a href="/turnosNuevo" class="btn btn-verde">SOLICITAR TURNO</a>
-    <a href="/turnosHistorial" class="btn btn-celeste">HISTORIAL DE TURNOS</a>
-    @* <a href="/misturnos" class="btn btn-naranja" title="Próximamente">TELECONSULTA</a> *@
+    <a href="/turnosNuevo" class="btn btn-verde" title="Solicitar turno">SOLICITAR TURNO</a>
+    <a href="/turnosHistorial" class="btn btn-celeste" title="Historial de turnos">HISTORIAL DE TURNOS</a>
+    <a href="/turnosTeleconsulta" class="btn btn-naranja" title="Teleconsulta">TELECONSULTA</a>
 }
-
 
 @code {
     private bool turnosFuturos = false;
@@ -96,6 +110,7 @@
     private Paciente? _unPaciente = new Paciente();
     private Direccion _direccionGeoreferencia = new Direccion();
     private long idAgenda = 0;
+    private const string conceptIdTeleconsulta = "6421000013106";
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
