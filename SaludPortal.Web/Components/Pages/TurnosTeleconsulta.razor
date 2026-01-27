@@ -20,14 +20,24 @@
 
 @if (!consentimientoAceptado)
 {
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show d-block" tabindex="-1" style="background-color:rgba(0,0,0,0.5);--bs-modal-width:850px;" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Consentimiento de Teleconsulta</h5>
                 </div>
                 <div class="modal-body">
-                    <p>
+                    <p><strong>Al seleccionar Teleconsulta Ud. está accediendo a un espacio de prueba.</strong></p>
+                    <p><strong>La información con respecto a su salud es información sensible que está protegida por la Ley Provincial de Derechos de los Pacientes 2611 y la Ley Nacional de protección de datos personales 23.526.</strong></p>
+                    <p>Ud. va a ser contactado al número de teléfono que indique por personal de Gestión de Pacientes, que le solicitará información adicional que puede ser necesaria para resolver su consulta en un plazo estimado de 24-48 horas.</p>
+                    <p>Una vez que Ud. completó los datos solicitados podrá visualizar en el Portal Mi Salud: “solicitud de teleconsulta realizada”, y podrá cancelarla en cualquier momento. </p>
+                    <p>Su consulta podrá ser resuelta vía contacto de personal de salud que tendrá acceso a su Historia Clínica. De corresponder receta o certificado podrá visualizarlos una vez emitido en <strong>Portal Mi Salud</strong>. De ser necesario ampliar la evaluación se le podrá asignar un turno presencial en caso de ser necesario o un turno para videoconsulta con un profesional.</p>
+                    <p><span style="color:red;">Su consulta puede ser rechazada, y se le informará el motivo.</span></p>
+                    <p><strong>Importante:</strong></p>
+                    <p>NO es un canal de resolución de urgencias ni emergencias médicas.</p>
+                    <p>NO reemplaza la atención presencial.</p>
+
+                    @* <p>
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                         Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
                     </p>
@@ -37,7 +47,7 @@
                     </p>
                     <p class="fw-bold text-primary">
                         ¿Acepta los términos y condiciones para continuar con la teleconsulta?
-                    </p>
+                    </p> *@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="RechazarConsentimiento">

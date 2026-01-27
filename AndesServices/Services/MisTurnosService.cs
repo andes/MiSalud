@@ -321,10 +321,11 @@ namespace AndesServices.Services
                         bool cumpleCriterio = false;
                         if (esTeleConsulta)
                         {
+                            // filtro solo para el Hospital Heller
                             // Buscar si contiene el conceptId de teleconsulta
                             for (int l = 0; l < bloque.tipoPrestaciones.Count; l++)
                             {
-                                if (bloque.tipoPrestaciones[l]?.conceptId?.Contains(conceptIdTeleconsulta) == true)
+                                if (org.id == "57fcf038326e73143fb48dac" && bloque.tipoPrestaciones[l]?.conceptId?.Contains(conceptIdTeleconsulta) == true)
                                 {
                                     cumpleCriterio = true;
                                     break;
@@ -333,10 +334,11 @@ namespace AndesServices.Services
                         }
                         else
                         {
+                            // filtro solo para el Hospital Heller la combinación de ambos
                             // Buscar si NO contiene el conceptId de teleconsulta
                             for (int l = 0; l < bloque.tipoPrestaciones.Count; l++)
                             {
-                                if (bloque.tipoPrestaciones[l]?.conceptId != conceptIdTeleconsulta)
+                                if (org.id == "57fcf038326e73143fb48dac" && bloque.tipoPrestaciones[l]?.conceptId != conceptIdTeleconsulta)
                                 {
                                     cumpleCriterio = true;
                                     break;
@@ -349,6 +351,7 @@ namespace AndesServices.Services
                             agenda.bloques.RemoveAt(k);
                         }
                     }
+
 
                     // Remover agenda si no tiene bloques válidos
                     if (agenda.bloques.Count == 0)
