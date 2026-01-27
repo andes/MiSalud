@@ -55,7 +55,7 @@
                     <div class="d-flex justify-content-between" @onclick="@(() => DownloadLaboratorio(misLaboratorios.idProtocolo.ToString(), misLaboratorios))" title="Descargar" tabindex="0">
                         <div>
                             @if (!string.IsNullOrEmpty(misLaboratorios.fecha))
-                            {   
+                            {
                                 <p><strong>@misLaboratorios.fecha</strong></p>
                             }
                             <p><strong>Informe De Laboratorio</strong></p>
@@ -246,7 +246,12 @@ else
                     unLaboratorio.idProtocolo = item.cda_id;
                     unLaboratorio.tipo = "cda";
 
+                    if (Model.LstMisLaboratorios == null)
+                    {
+                        Model.LstMisLaboratorios = new List<AndesServices.Entities.MisLaboratorios>();
+                    }
                     Model.LstMisLaboratorios.Add(unLaboratorio);
+
                 }
             }
 
@@ -281,18 +286,18 @@ else
         {
             // Las fechas ya vienen en formato dd/MM/yyyy desde el servicio
             // Ordenamos parseando las fechas de forma segura
-            Model.LstMisLaboratorios = Model.LstMisLaboratorios.OrderByDescending(l => 
+            Model.LstMisLaboratorios = Model.LstMisLaboratorios.OrderByDescending(l =>
             {
-                if (string.IsNullOrEmpty(l.fecha)) 
+                if (string.IsNullOrEmpty(l.fecha))
                     return DateTime.MinValue;
-                
-                if (DateTime.TryParseExact(l.fecha, "dd/MM/yyyy", 
-                    System.Globalization.CultureInfo.InvariantCulture, 
+
+                if (DateTime.TryParseExact(l.fecha, "dd/MM/yyyy",
+                    System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.None, out DateTime result))
                 {
                     return result;
                 }
-                
+
                 return DateTime.MinValue;
             }).ToList();
         }
@@ -405,7 +410,7 @@ else
             case "cda":
 
                 string laboratorioAdjunto = Model.LstMisLaboratoriosCDA.Where(c => c.cda_id == unLaboratorio.idProtocolo).Select(c => c.adjuntos[0]).FirstOrDefault();
-                laboratorioAdjunto = laboratorioAdjunto.Substring(laboratorioAdjunto.LastIndexOf('/') +1);
+                laboratorioAdjunto = laboratorioAdjunto.Substring(laboratorioAdjunto.LastIndexOf('/') + 1);
                 laboratorioAdjunto = laboratorioAdjunto.Substring(0, laboratorioAdjunto.LastIndexOf('.'));
                 archivoDescargar = await _misLaboratoriosService.DescargarLaboratorioCDA(BackendToken, laboratorioAdjunto);
 

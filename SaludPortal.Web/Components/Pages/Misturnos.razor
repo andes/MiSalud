@@ -44,8 +44,7 @@
                                     else
                                     {
                                         <strong>Fecha: </strong>
-                                        @misTurnos.horaInicio.ToString("dd/MM/yyyy")
-                                        @misTurnos.horaInicio.AddHours(-3).ToShortTimeString()
+                                        @misTurnos.horaInicio.ToString("dd/MM/yyyy") <span> </span> @misTurnos.horaInicio.AddHours(-3).ToShortTimeString()
                                     }
                                 </h4>
                                 @if (misTurnos.tipoPrestacion.term != null)
