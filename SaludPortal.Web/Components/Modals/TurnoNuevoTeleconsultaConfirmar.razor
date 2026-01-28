@@ -12,7 +12,7 @@
 @inherits AuthenticatedComponentBase
 
 <div>
-    <h2>CONFIRMAR TELECONSULTA</h2>
+    <h2>CONFIRMAR TELESALUD</h2>
     <h3>
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
             <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
@@ -41,7 +41,7 @@
             <div><label><strong>Teléfono celular de contacto *</strong></label></div>
             <div class="mt-2 d-flex gap-2 align-items-start">
                 <div style="flex: 0 0 150px;">
-                    <input type="text"
+                    <input type="number"
                            class="form-control @(errorCodigoArea ? "is-invalid" : "")"
                            placeholder="Cod. área (sin 0)"
                            @bind="codigoArea"
@@ -53,7 +53,7 @@
                     }
                 </div>
                 <div style="flex: 1;">
-                    <input type="text"
+                    <input type="number"
                            class="form-control @(errorTelefono ? "is-invalid" : "")"
                            placeholder="Número (sin 15)"
                            @bind="telefono"
@@ -72,7 +72,7 @@
             <div><label><strong>Confirmar teléfono celular de contacto *</strong></label></div>
             <div class="mt-2 d-flex gap-2 align-items-start">
                 <div style="flex: 0 0 150px;">
-                    <input type="text"
+                    <input type="number"
                            class="form-control @(errorConfirmarCodigoArea || errorCoincidenciaCodigoArea ? "is-invalid" : (confirmarCodigoArea.Length > 0 && !errorCoincidenciaCodigoArea ? "is-valid" : ""))"
                            placeholder="Cod. área (sin 0)"
                            @bind="confirmarCodigoArea"
@@ -88,7 +88,7 @@
                     }
                 </div>
                 <div style="flex: 1;">
-                    <input type="text"
+                    <input type="number"
                            class="form-control @(errorConfirmarTelefono || errorCoincidenciaTelefono ? "is-invalid" : (confirmarTelefono.Length > 0 && !errorCoincidenciaTelefono ? "is-valid" : ""))"
                            placeholder="Número (sin 15)"
                            @bind="confirmarTelefono"
@@ -113,7 +113,7 @@
                 <select class="form-select" @bind="motivoSeleccionado" @bind:after="OnMotivoChanged">
                     <option value="">-- Seleccione un motivo --</option>
                     <option value="Receta">Receta</option>
-                    <option value="Certificado">Certificado</option>
+                    @* <option value="Certificado">Certificado</option> *@
                     <option value="Otros">Otros</option>
                 </select>
             </div>
@@ -525,7 +525,7 @@
                 {
                     await ModalConfirmarTurno.CloseAsync();
                     MessageService.Title = "Turno confirmado";
-                    MessageService.Content = $"El turno de teleconsulta ha sido confirmado exitosamente.<br/><br/><strong>Teléfono de contacto:</strong> {telefonoCompleto}.<br/><strong>Motivo:</strong> {motivoCompleto}.";
+                    MessageService.Content = $"El turno de tele salud ha sido confirmado exitosamente.<br/><br/><strong>Teléfono de contacto:</strong> {telefonoCompleto}.<br/><strong>Motivo:</strong> {motivoCompleto}.";
                     Nav.NavigateTo("/turnosmensajeconfirma");
                 }
                 else

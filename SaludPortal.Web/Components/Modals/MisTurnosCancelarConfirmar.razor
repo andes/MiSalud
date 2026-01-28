@@ -32,11 +32,14 @@
             <div><label>@_unPaciente?.nombre @_unPaciente?.apellido</label></div>
         </p>
         <hr />
-        <p>
-            <div><label><strong>Fecha y hora del turno</strong></label></div>
-            <div><label>@FechaHoraTurno</label></div>
-        </p>
-        <hr />
+        @if (!EsTeleconsulta)
+        {
+            <p>
+                <div><label><strong>Fecha y hora del turno</strong></label></div>
+                <div><label>@FechaHoraTurno</label></div>
+            </p>
+            <hr />
+        }
         <p>
             <div><label><strong>Lugar</strong></label></div>
             <div><label>@EfectorNombre</label></div>
@@ -48,8 +51,8 @@
 <br />
 <div><p>¿Está seguro que desea cancelar el turno?</p></div>
 <div style="display: flex; justify-content: space-between; width: 100%;">
-    <button @onclick="() => CancelarTurno()" class="btn btn-primary" title="Confirmar">Confirmar</button>
     <button @onclick="Close" class="btn btn-outline-primary" title="Cerrar">Cerrar</button>
+    <button @onclick="() => CancelarTurno()" class="btn btn-primary" title="Confirmar">Confirmar</button>
 </div>
 @code {
     [CascadingParameter] BlazoredModalInstance ModalCancelarConfirmarTurno { get; set; } = default!;
@@ -84,6 +87,7 @@
     [Parameter] public string IdTurno { get; set; }
     [Parameter] public string IdBloque { get; set; }
     [Parameter] public string IdAgenda { get; set; }
+    [Parameter] public bool EsTeleconsulta { get; set; }
     [Parameter] public TipoPrestacion _unTipoPrestacion { get; set; }
 
     private async Task Close() => await ModalCancelarConfirmarTurno.CloseAsync();
@@ -91,7 +95,7 @@
     private async Task CancelarTurno()
     {
         _spinnerService.Show();
-        
+
         if (_unPaciente != null)
         {
             _unTurnoService = new MisTurnosService(Configuration, httpClientFactory);

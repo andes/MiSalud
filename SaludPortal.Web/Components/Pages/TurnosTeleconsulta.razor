@@ -1,4 +1,5 @@
 @page "/turnosteleconsulta"
+@page "/turnostelesalud"
 
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Modals
@@ -15,7 +16,7 @@
 
 @inherits AuthenticatedComponentBase
 
-<h1>Teleconsulta</h1>
+<h1>Telesalud</h1>
 <hr />
 
 @if (!consentimientoAceptado)
@@ -24,30 +25,22 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Consentimiento de Teleconsulta</h5>
+                    <h5 class="modal-title">Consentimiento de Telesalud</h5>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Al seleccionar Teleconsulta Ud. está accediendo a un espacio de prueba.</strong></p>
+                    <p><strong>Al seleccionar Telesalud Ud. está accediendo a un espacio en constante evolución.</strong></p>
                     <p><strong>La información con respecto a su salud es información sensible que está protegida por la Ley Provincial de Derechos de los Pacientes 2611 y la Ley Nacional de protección de datos personales 23.526.</strong></p>
-                    <p>Ud. va a ser contactado al número de teléfono que indique por personal de Gestión de Pacientes, que le solicitará información adicional que puede ser necesaria para resolver su consulta en un plazo estimado de 24-48 horas.</p>
-                    <p>Una vez que Ud. completó los datos solicitados podrá visualizar en el Portal Mi Salud: “solicitud de teleconsulta realizada”, y podrá cancelarla en cualquier momento. </p>
-                    <p>Su consulta podrá ser resuelta vía contacto de personal de salud que tendrá acceso a su Historia Clínica. De corresponder receta o certificado podrá visualizarlos una vez emitido en <strong>Portal Mi Salud</strong>. De ser necesario ampliar la evaluación se le podrá asignar un turno presencial en caso de ser necesario o un turno para videoconsulta con un profesional.</p>
-                    <p><span style="color:red;">Su consulta puede ser rechazada, y se le informará el motivo.</span></p>
+                    <hr />
                     <p><strong>Importante:</strong></p>
                     <p>NO es un canal de resolución de urgencias ni emergencias médicas.</p>
                     <p>NO reemplaza la atención presencial.</p>
+                    <hr />
+                    <p>Ud. va a ser contactado al número de teléfono que indique por personal de Gestión de Pacientes, que le solicitará información adicional que puede ser necesaria para resolver su consulta en un plazo estimado de 24-48 horas.</p>
+                    <p>Una vez que Ud. completó los datos solicitados podrá visualizar en el Portal Mi Salud: “solicitud de telesalud realizada”, y podrá cancelarla en cualquier momento. </p>
+                    <p>Su consulta podrá ser resuelta vía contacto de personal de salud que tendrá acceso a su Historia Clínica. De corresponder receta o certificado podrá visualizarlos una vez emitido en <strong>Portal Mi Salud</strong>. De ser necesario ampliar la evaluación se le podrá asignar un turno presencial en caso de ser necesario o un turno para videoconsulta con un profesional.</p>
+                    <p><span style="color:red;">Su consulta puede ser rechazada, y se le informará el motivo.</span></p>
 
-                    @* <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                    </p>
-                    <p>
-                        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-                        Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                    </p>
-                    <p class="fw-bold text-primary">
-                        ¿Acepta los términos y condiciones para continuar con la teleconsulta?
-                    </p> *@
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="RechazarConsentimiento">
@@ -64,7 +57,7 @@
 
 @if (consentimientoAceptado)
 {
-    <h2>Agendas disponibles para teleconsulta</h2>
+    <h2>Agendas disponibles para telesalud</h2>
 
     @if (lstAgendas != null && lstAgendas.Count > 0)
     {
@@ -95,7 +88,7 @@
                                                 <div>
                                                     <i class="fa fa-video-camera" aria-hidden="true" style="max-width:16px;"></i> @efectores.Efector.nombre
                                                     <br />
-                                                    <span class="badge bg-success">Teleconsulta</span>
+                                                    <span class="badge bg-success">Telesalud</span>
                                                 </div>
                                             </button>
                                         </h2>
@@ -134,7 +127,7 @@
     }
     else
     {
-        <p>No hay turnos de teleconsulta disponibles.</p>
+        <p>No hay turnos de telesalud disponibles.</p>
     }
 }
 

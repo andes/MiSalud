@@ -246,7 +246,8 @@ namespace AndesServices.Services
                     var queryParams = new Dictionary<string, string?>
                     {
                         ["estado"] = estado,
-                        ["userLocation"] = userLocationJson
+                        ["userLocation"] = userLocationJson,
+                        ["teleConsulta"] = "true"
                     };
 
                     string finalUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryParams);
@@ -268,7 +269,7 @@ namespace AndesServices.Services
                                 return null;
                             }
 
-                            organizacionAgendas = await filtrarAgendasOrganizacionesTeleConsultaAsync(organizacionAgendas, esTeleConsulta);
+                            organizacionAgendas = await filtrarAgendasOrganizacionesTeleConsultaAsync(token, organizacionAgendas, esTeleConsulta);
 
                             return organizacionAgendas;
                         }
@@ -283,7 +284,7 @@ namespace AndesServices.Services
             return null;
         }
 
-        private async Task<List<OrganizacionAgenda>> filtrarAgendasOrganizacionesTeleConsultaAsync(List<OrganizacionAgenda> organizacionAgendas, bool esTeleConsulta = false)
+        private async Task<List<OrganizacionAgenda>> filtrarAgendasOrganizacionesTeleConsultaAsync(string token, List<OrganizacionAgenda> organizacionAgendas, bool esTeleConsulta = false)
         {
             // TEMPORAL HASTA TANTO SE CORRIJA EL ENDPOINT
             // -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
@@ -368,7 +369,7 @@ namespace AndesServices.Services
             }
 
 
-            //List<ConceptoTurneable> conceptosTurneables = await ObtenerConceptosTurneablesAsync(token, esTeleconsulta);
+            //List<ConceptoTurneable> conceptosTurneables = await ObtenerConceptosTurneablesAsync(token, esTeleConsulta);
 
             //if (conceptosTurneables != null && conceptosTurneables.Count > 0)
             //{

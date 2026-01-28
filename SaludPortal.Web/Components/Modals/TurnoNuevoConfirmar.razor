@@ -47,8 +47,8 @@
 <br />
 <br />
 <div style="display: flex; justify-content: space-between; width: 100%;">
-    <button @onclick="() => ConfirmarTurno()" class="btn btn-primary" title="Confirmar">Confirmar</button>
     <button @onclick="Close" class="btn btn-outline-primary" title="Cerrar">Cerrar</button>
+    <button @onclick="() => ConfirmarTurno()" class="btn btn-primary" title="Confirmar">Confirmar</button>
 </div>
 @code {
     [CascadingParameter] BlazoredModalInstance ModalConfirmarTurno { get; set; } = default!;
