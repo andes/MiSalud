@@ -5,11 +5,9 @@ namespace SaludPortal.Web.Services
 {
     public class OrganizacionService
     {
-        private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
-        public OrganizacionService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public OrganizacionService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
         }
 
@@ -22,7 +20,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                AndesServices.Services.OrganizacionService organizacionService = new AndesServices.Services.OrganizacionService(_configuration, _httpClientFactory);
+                AndesServices.Services.OrganizacionService organizacionService = new AndesServices.Services.OrganizacionService(_httpClientFactory);
                 return await organizacionService.ObtenerOrganizacionPorIdAsync(token, id);
             }
             catch (Exception exception)

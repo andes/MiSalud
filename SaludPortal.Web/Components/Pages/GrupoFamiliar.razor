@@ -9,9 +9,8 @@
 @inherits AuthenticatedComponentBase
 @* @inject NavigationManager Nav *@
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
+@inject SaludPortal.Web.Services.PacienteService _pacienteService
 
 <h1>Mis Datos</h1>
 <hr />
@@ -48,7 +47,6 @@
 
 @code {
     private AndesServices.Entities.Paciente unPaciente = new AndesServices.Entities.Paciente();
-    private PacienteService? _pacienteService;
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -60,13 +58,8 @@
         if (string.IsNullOrEmpty(token))
             return;
 
-        _pacienteService = new PacienteService(Configuration, httpClientFactory);
-
-        if (_pacienteService != null && BackendToken != null)
-        {
-            _spinnerService.Show();
-            unPaciente = await _pacienteService.ObtenerPacientePorIdAsync(BackendToken, pacienteId);
-            _spinnerService.Hide();
-        }
+        _spinnerService.Show();
+        unPaciente = await _pacienteService.ObtenerPacientePorIdAsync(BackendToken, pacienteId);
+        _spinnerService.Hide();
     }
 }

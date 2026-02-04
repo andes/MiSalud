@@ -9,9 +9,8 @@
 @using AndesServices.Entities
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
+@inject SaludPortal.Web.Services.MisTurnosService _misTurnosService
 
 @inherits AuthenticatedComponentBase
 
@@ -93,7 +92,7 @@
                                     <p><strong>@numerar </strong></p>
                                 }
 
-                                <p><strong>Fecha turno: </strong>@miTurno.horaInicio.ToString("dd/MM/yyyy") @miTurno.horaInicio.AddHours(-3).ToString("HH:mm")</p>
+                                <p><strong>Fecha turno: </strong>@miTurno.horaInicio.ToString("dd/MM/yyyy") @DateTimeHelper.ToArgentinaTime(miTurno.horaInicio).ToString("HH:mm")</p>
 
                                 @if (miTurno.asistencia != null)
                                 {
@@ -171,7 +170,7 @@
                 <a @onclick="() => ShowModal(miTurno)">
                     <div class="form-control turno" style="box-shadow: 2px 2px 4px #000000;margin-bottom:5px;" tabindex="0">
                         <p><strong>@numerar </strong></p>
-                        <p><strong>Fecha turno: </strong>@miTurno.horaInicio.ToString("dd/MM/yyyy") @miTurno.horaInicio.AddHours(-3).ToString("HH:mm")</p>
+                        <p><strong>Fecha turno: </strong>@miTurno.horaInicio.ToString("dd/MM/yyyy") @DateTimeHelper.ToArgentinaTime(miTurno.horaInicio).ToString("HH:mm")</p>
 
                         @if (miTurno.asistencia != null)
                         {
@@ -236,7 +235,6 @@
 @code {
     private string tipoPrestacion = "";
     private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
-    private MisTurnosService? _misTurnosService;
     private int numerar = 0;
     // private string fechaHoraAtencion = "";
     // private string Paciente = "";
@@ -256,7 +254,7 @@
         };
         var parameters = new ModalParameters()
         .Add(nameof(MisTurnosDetalle.Paciente), unTurno.paciente.nombre + " " + unTurno.paciente.apellido)
-        .Add(nameof(MisTurnosDetalle.FechaHoraTurno), unTurno.horaInicio.ToString("dd/MM/yyyy") + " " + unTurno.horaInicio.AddHours(-3).ToString("HH:mm"))
+        .Add(nameof(MisTurnosDetalle.FechaHoraTurno), unTurno.horaInicio.ToString("dd/MM/yyyy") + " " + DateTimeHelper.ToArgentinaTime(unTurno.horaInicio).ToString("HH:mm"))
         .Add(nameof(MisTurnosDetalle.DatosConsulta), unTurno.motivoConsulta)
         .Add(nameof(MisTurnosDetalle.Lugar), unTurno.organizacion?.nombre);
 
@@ -271,13 +269,8 @@
         if (string.IsNullOrEmpty(token))
             return;
 
-        _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
-
-        if (_misTurnosService != null)
-        {
-            _spinnerService.Show();
-            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
-            _spinnerService.Hide();
-        }
+        _spinnerService.Show();
+        lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
+        _spinnerService.Hide();
     }
 }

@@ -8,8 +8,8 @@
 @using SaludPortal.Web.Components.Shared
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
+@inject FarmaciasTurnoService _farmaciasTurnoService
+@inject PacienteService _pacienteService
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject AndesServices.Entities.ViewModels.VMFarmaciasTurno Model
 @inherits AuthenticatedComponentBase
@@ -55,17 +55,13 @@
 @code {
     private VMFarmaciasTurno VMFarmaciasTurno = new VMFarmaciasTurno();
     private List<AndesServices.Entities.Localidad> lstLocalidades = new List<AndesServices.Entities.Localidad>();
-    private FarmaciasTurnoService? _farmaciasTurnoService;
-    private PacienteService? _pacienteService;
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
-        _farmaciasTurnoService = new FarmaciasTurnoService(Configuration);
         _spinnerService.Show();
         Model.LstLocalidad = await _farmaciasTurnoService.ObtenerLocalidadesAsync();
 
         // obtener la localidad del paciente
-        _pacienteService = new PacienteService(Configuration, httpClientFactory);
         Paciente paciente = await _pacienteService.ObtenerPacientePorIdAsync(BackendToken, PacienteId);
         string localidadPaciente = "";
         if (paciente != null && paciente.direccion != null)
@@ -99,7 +95,6 @@
             Nav.NavigateTo($"/login", true);
         }
 
-        _farmaciasTurnoService = new FarmaciasTurnoService(Configuration);
         _spinnerService.Show();
         Model.LstFarmaciasTurno = await _farmaciasTurnoService.ObtenerFarmaciasTurnoAsync(Model.LocalidadId, DateTime.Now.ToString("yyyy-MM-dd"), DateTime.Now.ToString("yyyy-MM-dd"));
         _spinnerService.Hide();

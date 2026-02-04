@@ -11,57 +11,37 @@ namespace AndesServices.Services
 {
     public class PacienteService : IPaciente
     {
-        private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public PacienteService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public PacienteService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
-        }
-
-        private string GetServiciosBaseUrl()
-        {
-            var cfg = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(cfg);
-            var baseUrl = cfg.usarProd ? cfg.UrlProyectoServiciosProd : cfg.UrlProyectoServiciosDemo;
-            return baseUrl.TrimEnd('/');
         }
 
         public async Task<Paciente> ObtenerPacientePorIdAsync(string token, string idPaciente)
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/mobileApp/paciente"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/mobileApp/paciente";
-
             if (string.IsNullOrEmpty(token))
             {
                 throw new ArgumentException("Token no proporcionado.");
             }
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                using (HttpResponseMessage res = await client.GetAsync($"modules/mobileApp/paciente/{idPaciente}"))
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+                    res.EnsureSuccessStatusCode();
 
-                    using (HttpResponseMessage res = await client.GetAsync(url + "/" + idPaciente))
+                    Paciente unPaciente = await res.Content.ReadFromJsonAsync<Paciente>();
+
+                    if (unPaciente == null)
                     {
-                        res.EnsureSuccessStatusCode();
-
-                        Paciente unPaciente = await res.Content.ReadFromJsonAsync<Paciente>();
-
-                        if (unPaciente == null)
-                        {
-                            Console.WriteLine("No se encontraron recetas disponibles.");
-                            return null;
-                        }
-
-                        return unPaciente;
+                        Console.WriteLine("No se encontraron recetas disponibles.");
+                        return null;
                     }
 
+                    return unPaciente;
                 }
             }
 
@@ -74,37 +54,28 @@ namespace AndesServices.Services
 
         public async Task<userLocation> ObtenerGeoreferenciaPaciente(string direccion)
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/georeferencia/georeferenciar"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/georeferencia/georeferenciar";
-
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                var request = new HttpRequestMessage
                 {
-                    var request = new HttpRequestMessage
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri($"modules/georeferencia/georeferenciar?direccion={Uri.EscapeDataString(direccion)}", UriKind.Relative),
+                };
+
+                using (HttpResponseMessage res = await client.SendAsync(request))
+                {
+                    res.EnsureSuccessStatusCode();
+
+                    userLocation unaGeoreferencia = await res.Content.ReadFromJsonAsync<userLocation>();
+
+                    if (unaGeoreferencia == null)
                     {
-                        Method = HttpMethod.Get,
-                        RequestUri = new Uri(url + "?direccion=" + direccion),
-                    };
-
-                    using (HttpResponseMessage res = await client.SendAsync(request))
-                    {
-                        res.EnsureSuccessStatusCode();
-
-                        userLocation unaGeoreferencia = await res.Content.ReadFromJsonAsync<userLocation>();
-
-                        if (unaGeoreferencia == null)
-                        {
-                            Console.WriteLine("No se encontraron recetas disponibles.");
-                            return null;
-                        }
-
-                        return unaGeoreferencia;
+                        Console.WriteLine("No se encontraron recetas disponibles.");
+                        return null;
                     }
+
+                    return unaGeoreferencia;
                 }
             }
 

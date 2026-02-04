@@ -11,12 +11,11 @@
 @using System.Text.Json
 
 @inject IHttpClientFactory HttpClientFactory
-@inject ILogger<AndesServices.Services.HistoriaSaludService> Logger
-@inject IConfiguration Configuration
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
+@inject MiHistoriaSaludService _miHistoriaSaludService
 
 <style>
     .prestaciones p {
@@ -67,7 +66,9 @@ else
                 </div>
                 <div>
                     <strong>Fecha: </strong>
-                    @(p.ejecucion?.fecha?.ToString("dd/MM/yyyy") + " " + p.ejecucion?.fecha?.AddHours(-3).ToString("HH:mm"))
+                    @(p.ejecucion?.fecha != null 
+                        ? DateTimeHelper.ToArgentinaTime(p.ejecucion.fecha)?.ToString("dd/MM/yyyy") + " " + DateTimeHelper.ToArgentinaTime(p.ejecucion.fecha)?.ToString("HH:mm") 
+                        : "")
                 </div>
                 <div>
                     <strong>Profesional: </strong>
@@ -141,7 +142,6 @@ else
 
     private string? titulo;
     private List<PrestacionHistoriaSalud>? prestaciones;
-    private MiHistoriaSaludService? _miHistoriaSaludService;
     private bool cargando;
     private string? error;
     private string TituloMostrar => string.IsNullOrWhiteSpace(titulo) ? expresionSnomed ?? "" : titulo!;
@@ -189,7 +189,6 @@ else
 
         cargando = true;
         error = null;
-        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration, HttpClientFactory, Logger);
         _spinnerService.Show();
         try
         {
@@ -209,7 +208,6 @@ else
     async Task DownloadPrestacion(string idPrestacion)
     {
         _spinnerService.Show();
-        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration, HttpClientFactory, Logger);
 
         if (esCda)
         {

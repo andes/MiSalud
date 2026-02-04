@@ -10,10 +10,11 @@ namespace AndesServices.Services
 {
     public class VacunacionService : IVacunacion
     {
-        private IConfiguration? _configuration { get; }
-        public VacunacionService(IConfiguration? configuration)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public VacunacionService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         public Task<bool> ActualizarVacunacionAsync(string token, string idVacunacion, string vacuna, string fechaVacuna, string dosis)
@@ -28,32 +29,23 @@ namespace AndesServices.Services
 
         public async Task<List<Vacunacion>> ObtenerCampañasVacunacion(string token)
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/mobileApp/vacunas"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/mobileApp/vacunas";
-
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/vacunas"))
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-
-                    using (HttpResponseMessage res = await client.GetAsync(url))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        List<Vacunacion?> vacunacion = await res.Content.ReadFromJsonAsync<List<Vacunacion>>();
+                        if (vacunacion == null)
                         {
-                            List<Vacunacion?> vacunacion = await res.Content.ReadFromJsonAsync<List<Vacunacion>>();
-                            if (vacunacion == null)
-                            {
-                                Console.WriteLine("No se encontraron campañas de vacunación.");
-                                return null;
-                            }
-
-                            return vacunacion;
+                            Console.WriteLine("No se encontraron campañas de vacunación.");
+                            return null;
                         }
+
+                        return vacunacion;
                     }
                 }
             }

@@ -13,16 +13,17 @@ namespace SaludPortal.Web.Controllers
     public class AuthController : ControllerBase
     {
         private readonly CustomAuthenticationStateProvider _authStateProvider; // Cambia el tipo
-        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<LoginService> _logger;
 
         public AuthController(
             CustomAuthenticationStateProvider authStateProvider,
             IConfiguration configuration,
+            IHttpClientFactory httpClientFactory,
             ILogger<LoginService> logger)
         {
             _authStateProvider = authStateProvider;
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
@@ -33,7 +34,7 @@ namespace SaludPortal.Web.Controllers
             try
             {
                 if (!ModelState.IsValid) return BadRequest("Datos inválidos");
-                LoginService loginService = new(_configuration, _logger);
+                LoginService loginService = new(_logger, _httpClientFactory);
                 var usuario = await loginService.Login(model.Email, model.Password);
                 if (usuario == null || string.IsNullOrEmpty(usuario.token))
                     return Unauthorized("Credenciales inválidas");

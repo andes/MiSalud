@@ -13,22 +13,13 @@ namespace AndesServices.Services
 {
     public class MisTurnosService : IMisTurnos
     {
-        private IConfiguration _configuration { get; }
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public MisTurnosService(IConfiguration? configuration, IHttpClientFactory? httpClientFactory)
+        public MisTurnosService(IHttpClientFactory? httpClientFactory)
         {
-            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
         }
 
-        private string GetServiciosBaseUrl()
-        {
-            var cfg = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(cfg);
-            var baseUrl = cfg.usarProd ? cfg.UrlProyectoServiciosProd : cfg.UrlProyectoServiciosDemo;
-            return baseUrl.TrimEnd('/');
-        }
 
         public Task<bool> ActualizarTurnoAsync(string token, string idTurno, string motivoConsulta, string profesional, DateTime fechaHoraDacion)
         {
@@ -37,15 +28,12 @@ namespace AndesServices.Services
 
         public async Task<bool> CancelarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente)
         {
-            string url = GetServiciosBaseUrl() + "/modules/mobileApp/turnos/cancelar";
-
             try
             {
-                using (HttpClient client = _httpClientFactory.CreateClient())
-                {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
-                    string jsonCancelarTurno = $@"{{
+                string jsonCancelarTurno = $@"{{
                         ""agenda_id"": ""{idAgenda}"",
                         ""bloque_id"": ""{idBloque}"",
                         ""turno_id"": ""{idTurno}"",
@@ -60,14 +48,14 @@ namespace AndesServices.Services
     	                    ""telefono"": ""{paciente.telefono}""}}
                     }}";
 
-                    var request = new HttpRequestMessage
-                    {
-                        Method = HttpMethod.Post,
-                        RequestUri = new Uri(url),
-                        Content = new StringContent(jsonCancelarTurno, System.Text.Encoding.UTF8, "application/json")
-                    };
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri("modules/mobileApp/turnos/cancelar", UriKind.Relative),
+                    Content = new StringContent(jsonCancelarTurno, System.Text.Encoding.UTF8, "application/json")
+                };
 
-                    using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await client.SendAsync(request))
                     {
                         if (res.IsSuccessStatusCode)
                         {
@@ -75,7 +63,6 @@ namespace AndesServices.Services
                             return true;
                         }
                     }
-                }
             }
             catch (Exception exception)
             {
@@ -86,32 +73,25 @@ namespace AndesServices.Services
 
         public async Task<List<MisTurnos>> ObtenerMisTurnosAsync(string token, string? documento = "")
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = GetServiciosBaseUrl() + "/modules/mobileApp/turnos";
-
             try
             {
-                using (HttpClient client = _httpClientFactory.CreateClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/turnos"))
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-
-                    using (HttpResponseMessage res = await client.GetAsync(url))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        List<MisTurnos?> misTurnos = await res.Content.ReadFromJsonAsync<List<MisTurnos>>();
+                        if (misTurnos == null)
                         {
-                            List<MisTurnos?> misTurnos = await res.Content.ReadFromJsonAsync<List<MisTurnos>>();
-                            if (misTurnos == null)
-                            {
-                                Console.WriteLine("No se encontraron turnos.");
-                                return null;
-                            }
-
-                            return misTurnos;
+                            Console.WriteLine("No se encontraron turnos.");
+                            return null;
                         }
+
+                        return misTurnos;
                     }
-                }
+                }                
             }
             catch (Exception exception)
             {
@@ -128,37 +108,33 @@ namespace AndesServices.Services
 
         public async Task<bool> RegistrarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion)
         {
-            string url = GetServiciosBaseUrl() + "/modules/turnos";
-
-            url += $"/turno/{idTurno}/bloque/{idBloque}/agenda/{idAgenda}";
             try
             {
-                using (HttpClient client = _httpClientFactory.CreateClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                string tipoTurno = "programado";
+                string emitidoPor = "misalud";
+                string nota = "Solicitud realizada desde portal mi salud";
+
+                var request = new HttpRequestMessage
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-
-                    string tipoTurno = "programado";
-                    string emitidoPor = "misalud";
-                    string nota = "Solicitud realizada desde portal mi salud";
-
-                    var request = new HttpRequestMessage
+                    Method = HttpMethod.Patch,
+                    RequestUri = new Uri($"modules/turnos/turno/{idTurno}/bloque/{idBloque}/agenda/{idAgenda}", UriKind.Relative),
+                    Content = new StringContent(JsonConvert.SerializeObject(new
                     {
-                        Method = HttpMethod.Patch,
-                        RequestUri = new Uri(url),
-                        Content = new StringContent(JsonConvert.SerializeObject(new
-                        {
-                            idAgenda,
-                            idBloque,
-                            idTurno,
-                            paciente,
-                            tipoPrestacion,
-                            tipoTurno,
-                            emitidoPor,
-                            nota
-                        }), System.Text.Encoding.UTF8, "application/json")
-                    };
+                        idAgenda,
+                        idBloque,
+                        idTurno,
+                        paciente,
+                        tipoPrestacion,
+                        tipoTurno,
+                        emitidoPor,
+                        nota
+                    }), System.Text.Encoding.UTF8, "application/json")
+                };
 
-                    using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await client.SendAsync(request))
                     {
                         if (res.IsSuccessStatusCode)
                         {
@@ -166,7 +142,6 @@ namespace AndesServices.Services
                             return true;
                         }
                     }
-                }
             }
             catch (Exception exception)
             {
@@ -177,39 +152,35 @@ namespace AndesServices.Services
 
         public async Task<bool> RegistrarTurnoTeleConsultaAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta = "", string estado = "")
         {
-            string url = GetServiciosBaseUrl() + "/modules/turnos";
-
-            url += $"/turno/{idTurno}/bloque/{idBloque}/agenda/{idAgenda}";
             try
             {
-                using (HttpClient client = _httpClientFactory.CreateClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                string tipoTurno = "programado";
+                string emitidoPor = "misalud";
+                string nota = "Cel.: " + paciente.telefono + ". Motivo: " + motivoConsulta;
+
+                var request = new HttpRequestMessage
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-
-                    string tipoTurno = "programado";
-                    string emitidoPor = "misalud";
-                    string nota = "Cel.: " + paciente.telefono + ". Motivo: " + motivoConsulta;
-
-                    var request = new HttpRequestMessage
+                    Method = HttpMethod.Patch,
+                    RequestUri = new Uri($"modules/turnos/turno/{idTurno}/bloque/{idBloque}/agenda/{idAgenda}", UriKind.Relative),
+                    Content = new StringContent(JsonConvert.SerializeObject(new
                     {
-                        Method = HttpMethod.Patch,
-                        RequestUri = new Uri(url),
-                        Content = new StringContent(JsonConvert.SerializeObject(new
-                        {
-                            idAgenda,
-                            idBloque,
-                            idTurno,
-                            paciente,
-                            tipoPrestacion,
-                            tipoTurno,
-                            emitidoPor,
-                            nota,
-                            estado,
-                            motivoConsulta
-                        }), System.Text.Encoding.UTF8, "application/json")
-                    };
+                        idAgenda,
+                        idBloque,
+                        idTurno,
+                        paciente,
+                        tipoPrestacion,
+                        tipoTurno,
+                        emitidoPor,
+                        nota,
+                        estado,
+                        motivoConsulta
+                    }), System.Text.Encoding.UTF8, "application/json")
+                };
 
-                    using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await client.SendAsync(request))
                     {
                         if (res.IsSuccessStatusCode)
                         {
@@ -217,7 +188,6 @@ namespace AndesServices.Services
                             return true;
                         }
                     }
-                }
             }
             catch (Exception exception)
             {
@@ -228,51 +198,43 @@ namespace AndesServices.Services
 
         public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string token, string idPaciente, userLocation userLocation, bool esTeleConsulta)
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/mobileApp/agendasDisponibles"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/mobileApp/agendasDisponibles";
             string estado = "disponible";
 
             try
             {
-                using (HttpClient client = _httpClientFactory.CreateClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                var userLocationJson = JsonConvert.SerializeObject(userLocation);
+                var queryParams = new Dictionary<string, string?>
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+                    ["estado"] = estado,
+                    ["userLocation"] = userLocationJson,
+                    ["teleConsulta"] = "true"
+                };
 
-                    var userLocationJson = JsonConvert.SerializeObject(userLocation);
-                    var queryParams = new Dictionary<string, string?>
+                string finalUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("modules/mobileApp/agendasDisponibles", queryParams);
+
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(finalUrl, UriKind.Relative)
+                };
+
+                using (HttpResponseMessage res = await client.SendAsync(request))
+                {
+                    if (res.IsSuccessStatusCode)
                     {
-                        ["estado"] = estado,
-                        ["userLocation"] = userLocationJson,
-                        ["teleConsulta"] = "true"
-                    };
-
-                    string finalUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryParams);
-
-                    var request = new HttpRequestMessage
-                    {
-                        Method = HttpMethod.Get,
-                        RequestUri = new Uri(finalUrl)
-                    };
-
-                    using (HttpResponseMessage res = await client.SendAsync(request))
-                    {
-                        if (res.IsSuccessStatusCode)
+                        List<OrganizacionAgenda?> organizacionAgendas = await res.Content.ReadFromJsonAsync<List<OrganizacionAgenda>>();
+                        if (organizacionAgendas == null)
                         {
-                            List<OrganizacionAgenda?> organizacionAgendas = await res.Content.ReadFromJsonAsync<List<OrganizacionAgenda>>();
-                            if (organizacionAgendas == null)
-                            {
-                                Console.WriteLine("No se encontraron agendas.");
-                                return null;
-                            }
-
-                            organizacionAgendas = await filtrarAgendasOrganizacionesTeleConsultaAsync(token, organizacionAgendas, esTeleConsulta);
-
-                            return organizacionAgendas;
+                            Console.WriteLine("No se encontraron agendas.");
+                            return null;
                         }
+
+                        organizacionAgendas = await filtrarAgendasOrganizacionesTeleConsultaAsync(token, organizacionAgendas, esTeleConsulta);
+
+                        return organizacionAgendas;
                     }
                 }
             }
@@ -442,39 +404,35 @@ namespace AndesServices.Services
 
         public async Task<List<ConceptoTurneable>> ObtenerConceptosTurneablesAsync(string token, bool esTeleConsulta = false)
         {
-            string url = GetServiciosBaseUrl() + "/core/tm/conceptos-turneables";
-
             try
             {
-                using (HttpClient client = _httpClientFactory.CreateClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                var queryParams = new Dictionary<string, string?>
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+                    ["teleConsulta"] = esTeleConsulta.ToString().ToLower(),
+                };
 
-                    var queryParams = new Dictionary<string, string?>
-                    {
-                        ["teleConsulta"] = esTeleConsulta.ToString().ToLower(),
-                    };
+                string finalUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("core/tm/conceptos-turneables", queryParams);
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(finalUrl, UriKind.Relative)
+                };
 
-                    string finalUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryParams);
-                    var request = new HttpRequestMessage
+                using (HttpResponseMessage res = await client.SendAsync(request))
+                {
+                    if (res.IsSuccessStatusCode)
                     {
-                        Method = HttpMethod.Get,
-                        RequestUri = new Uri(finalUrl)
-                    };
-
-                    using (HttpResponseMessage res = await client.SendAsync(request))
-                    {
-                        if (res.IsSuccessStatusCode)
+                        List<ConceptoTurneable?> conceptosTurneables = await res.Content.ReadFromJsonAsync<List<ConceptoTurneable>>();
+                        if (conceptosTurneables == null)
                         {
-                            List<ConceptoTurneable?> conceptosTurneables = await res.Content.ReadFromJsonAsync<List<ConceptoTurneable>>();
-                            if (conceptosTurneables == null)
-                            {
-                                Console.WriteLine("No se encontraron conceptos turneables.");
-                                return null;
-                            }
-
-                            return conceptosTurneables;
+                            Console.WriteLine("No se encontraron conceptos turneables.");
+                            return null;
                         }
+
+                        return conceptosTurneables;
                     }
                 }
             }

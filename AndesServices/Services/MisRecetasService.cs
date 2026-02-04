@@ -7,11 +7,11 @@ namespace AndesServices.Services
 {
     public class MisRecetasService : IMisRecetas
     {
-        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public MisRecetasService(IConfiguration configuration)
+        public MisRecetasService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         public Task<bool> ActualizarEstadoRecetaAsync(string token, string recetaId, Estado nuevoEstado)
@@ -26,36 +26,27 @@ namespace AndesServices.Services
 
         public async Task<List<MisReceta>> ObtenerRecetasPacienteAsync(string token, string pacienteId)
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/recetas"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/recetas";
-
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                string estado = "sin-dispensa,dispensada,dispensa-parcial";
+                //string queryParams = "?estado=" + estado + "&dni=" + dni + "&fecNac=" + fecNac + "&apellido=" + apellido + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
+                string url = $"modules/recetas?pacienteId={pacienteId}&estadoDispensa={estado}";
+
+                using (HttpResponseMessage res = await client.GetAsync(url))
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-
-                    string estado = "sin-dispensa,dispensada,dispensa-parcial";
-                    //string queryParams = "?estado=" + estado + "&dni=" + dni + "&fecNac=" + fecNac + "&apellido=" + apellido + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
-                    string queryParams = "?pacienteId=" + pacienteId + "&estadoDispensa=" + estado;
-
-                    using (HttpResponseMessage res = await client.GetAsync(url + queryParams))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        List<MisReceta?> LstMisReceta = await res.Content.ReadFromJsonAsync<List<MisReceta>>();
+                        if (LstMisReceta == null)
                         {
-                            List<MisReceta?> LstMisReceta = await res.Content.ReadFromJsonAsync<List<MisReceta>>();
-                            if (LstMisReceta == null)
-                            {
-                                Console.WriteLine("No se encontraron recetas disponibles.");
-                                return null;
-                            }
-
-                            return LstMisReceta;
+                            Console.WriteLine("No se encontraron recetas disponibles.");
+                            return null;
                         }
+
+                        return LstMisReceta;
                     }
                 }
             }

@@ -7,41 +7,32 @@ namespace AndesServices.Services
 {
     public class FarmaciasTurnoService : IFarmaciasTurno
     {
-        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public FarmaciasTurnoService(IConfiguration configuration)
+        public FarmaciasTurnoService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<List<FarmaciasTurno>> ObtenerFarmaciasTurnoAsync(string localidadId, string fechaDesde, string fechaHasta)
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/mobileApp/farmacias/turnos"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/mobileApp/farmacias/turnos";
-
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                string url = $"modules/mobileApp/farmacias/turnos?localidad={localidadId}&desde={fechaDesde}&hasta={fechaHasta}";
+
+                using (HttpResponseMessage res = await client.GetAsync(url))
                 {
-                    string queryParams = "?localidad=" + localidadId + "&desde=" + fechaDesde + "&hasta=" + fechaHasta;
-
-                    using (HttpResponseMessage res = await client.GetAsync(url + queryParams))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        List<FarmaciasTurno>? LstFarmacias = await res.Content.ReadFromJsonAsync<List<FarmaciasTurno>>();
+                        if (LstFarmacias == null)
                         {
-                            List<FarmaciasTurno>? LstFarmacias = await res.Content.ReadFromJsonAsync<List<FarmaciasTurno>>();
-                            if (LstFarmacias == null)
-                            {
-                                Console.WriteLine("No se encontraron farmacias disponibles.");
-                                return null;
-                            }
-
-                            return LstFarmacias;
+                            Console.WriteLine("No se encontraron farmacias disponibles.");
+                            return null;
                         }
+
+                        return LstFarmacias;
                     }
                 }
             }
@@ -55,30 +46,21 @@ namespace AndesServices.Services
 
         public async Task<List<Localidad>> ObtenerLocalidadesAsync()
         {
-            var conexionServicios = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(conexionServicios);
-
-            string url = conexionServicios.usarProd
-                ? conexionServicios.UrlProyectoServiciosProd + "/modules/mobileApp/farmacias/localidades"
-                : conexionServicios.UrlProyectoServiciosDemo + "/modules/mobileApp/farmacias/localidades";
-
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/farmacias/localidades"))
                 {
-                    using (HttpResponseMessage res = await client.GetAsync(url))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        List<Localidad>? LstLocalidades = await res.Content.ReadFromJsonAsync<List<Localidad>>();
+                        if (LstLocalidades == null)
                         {
-                            List<Localidad>? LstLocalidades = await res.Content.ReadFromJsonAsync<List<Localidad>>();
-                            if (LstLocalidades == null)
-                            {
-                                Console.WriteLine("No se encontraron farmacias disponibles.");
-                                return null;
-                            }
-
-                            return LstLocalidades;
+                            Console.WriteLine("No se encontraron farmacias disponibles.");
+                            return null;
                         }
+
+                        return LstLocalidades;
                     }
                 }
             }

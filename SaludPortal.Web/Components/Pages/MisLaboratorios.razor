@@ -13,11 +13,11 @@
 @inject SaludConfiguracion SaludConfiguracion
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IConfiguration Configuration
-@inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JSRuntime
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject AndesServices.Entities.ViewModels.VMMisLaboratorios Model
 @inject ILogger<AndesServices.Services.MisLaboratoriosService> Logger
+@inject SaludPortal.Web.Services.MisLaboratoriosService _misLaboratoriosService
 
 @inherits AuthenticatedComponentBase
 
@@ -172,7 +172,6 @@ else
 </script>
 
 @code {
-    private MisLaboratoriosService? _misLaboratoriosService;
     private Byte[] archivoDescargar = null;
     private string idProtocolo = "";
     private string archivoDescargarLACHyBS = "";
@@ -201,14 +200,9 @@ else
         if (string.IsNullOrEmpty(pacienteId))
             return;
 
-        _misLaboratoriosService = new MisLaboratoriosService(Configuration, HttpClientFactory, Logger);
-
-        if (_misLaboratoriosService != null)
-        {
-            _spinnerService.Show();
-            Model.LstMisLaboratorios = await _misLaboratoriosService.ObtenerMisLaboratoriosAsync(token, pacienteId, Model.FechaDesde, Model.FechaHasta);
-            _spinnerService.Hide();
-        }
+        _spinnerService.Show();
+        Model.LstMisLaboratorios = await _misLaboratoriosService.ObtenerMisLaboratoriosAsync(token, pacienteId, Model.FechaDesde, Model.FechaHasta);
+        _spinnerService.Hide();
     }
 
     protected override async Task OnAuthenticatedInitializedAsync()
@@ -222,43 +216,38 @@ else
         string fechaDesde = DateTime.Now.AddYears(SaludConfiguracion.fechaDesde * (-1)).ToString("yyyyMMdd");
 
         // Mis Laboratorios
-        _misLaboratoriosService = new MisLaboratoriosService(Configuration, HttpClientFactory, Logger);
+        _spinnerService.Show();
+        Model.LstMisLaboratorios = await _misLaboratoriosService.ObtenerMisLaboratoriosAsync(token, pacienteId, fechaDesde, DateTime.Now.ToString("yyyyMMdd"));
 
-        if (_misLaboratoriosService != null)
+        var cfg = new ConexionServicios();
+        Configuration.GetSection("urlServicios").Bind(cfg);
+
+        // Mis Laboratorios CDA
+        Model.LstMisLaboratoriosCDA = await _misLaboratoriosService.ObtenerMisLaboratoriosCDAAsync(token, pacienteId, fechaDesde, DateTime.Now.ToString("yyyyMMdd"));
+
+        if (Model.LstMisLaboratoriosCDA.Count() > 0)
         {
-            _spinnerService.Show();
-            Model.LstMisLaboratorios = await _misLaboratoriosService.ObtenerMisLaboratoriosAsync(token, pacienteId, fechaDesde, DateTime.Now.ToString("yyyyMMdd"));
-
-            var cfg = new ConexionServicios();
-            Configuration.GetSection("urlServicios").Bind(cfg);
-
-            // Mis Laboratorios CDA
-            Model.LstMisLaboratoriosCDA = await _misLaboratoriosService.ObtenerMisLaboratoriosCDAAsync(token, pacienteId, fechaDesde, DateTime.Now.ToString("yyyyMMdd"));
-
-            if (Model.LstMisLaboratoriosCDA.Count() > 0)
+            foreach (var item in Model.LstMisLaboratoriosCDA.Where(c => c?.prestacion?.snomed?.conceptId == "4241000179101"))
             {
-                foreach (var item in Model.LstMisLaboratoriosCDA.Where(c => c?.prestacion?.snomed?.conceptId == "4241000179101"))
+                AndesServices.Entities.MisLaboratorios unLaboratorio = new AndesServices.Entities.MisLaboratorios();
+                unLaboratorio.Laboratorio = item.organizacion.nombre;
+                unLaboratorio.medicoSolicitante = item.profesional.apellido + " " + item.profesional.nombre;
+                unLaboratorio.fecha = item.fecha.ToString("dd/MM/yyyy");
+                unLaboratorio.idProtocolo = item.cda_id;
+                unLaboratorio.tipo = "cda";
+
+                if (Model.LstMisLaboratorios == null)
                 {
-                    AndesServices.Entities.MisLaboratorios unLaboratorio = new AndesServices.Entities.MisLaboratorios();
-                    unLaboratorio.Laboratorio = item.organizacion.nombre;
-                    unLaboratorio.medicoSolicitante = item.profesional.apellido + " " + item.profesional.nombre;
-                    unLaboratorio.fecha = item.fecha.ToString("dd/MM/yyyy");
-                    unLaboratorio.idProtocolo = item.cda_id;
-                    unLaboratorio.tipo = "cda";
-
-                    if (Model.LstMisLaboratorios == null)
-                    {
-                        Model.LstMisLaboratorios = new List<AndesServices.Entities.MisLaboratorios>();
-                    }
-                    Model.LstMisLaboratorios.Add(unLaboratorio);
-
+                    Model.LstMisLaboratorios = new List<AndesServices.Entities.MisLaboratorios>();
                 }
+                Model.LstMisLaboratorios.Add(unLaboratorio);
+
             }
-
-            _spinnerService.Hide();
-
-            await ResetAndInitVisibleAsync();
         }
+
+        _spinnerService.Hide();
+
+        await ResetAndInitVisibleAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -391,7 +380,6 @@ else
     async Task DownloadLaboratorio(string idProtocolo, AndesServices.Entities.MisLaboratorios unLaboratorio)
     {
         _spinnerService.Show();
-        _misLaboratoriosService = new MisLaboratoriosService(Configuration, HttpClientFactory, Logger);
         switch (unLaboratorio.tipo)
         {
             case "raña":
@@ -465,7 +453,6 @@ else
     async Task DownloadLaboratorioLACHyBS(string idProtocolo)
     {
         _spinnerService.Show();
-        _misLaboratoriosService = new MisLaboratoriosService(Configuration, HttpClientFactory, Logger);
         archivoDescargarLACHyBS = await _misLaboratoriosService.DescargarLaboratorioLACHyBSPorIdAsync("xroad", "sol2025", idProtocolo);
         if (archivoDescargarLACHyBS == null || archivoDescargarLACHyBS.Length == 0)
         {

@@ -4,10 +4,10 @@
 @using AndesServices.Entities
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject MessageService MessageService
+@inject SaludPortal.Web.Services.PacienteService _unPacienteService
+@inject SaludPortal.Web.Services.MisTurnosService _unTurnoService
 
 @inherits AuthenticatedComponentBase
 
@@ -53,9 +53,7 @@
 @code {
     [CascadingParameter] BlazoredModalInstance ModalConfirmarTurno { get; set; } = default!;
     [CascadingParameter] IModalService ModalService { get; set; } = default!;
-    private PacienteService? _unPacienteService;
     private Paciente? _unPaciente = new Paciente();
-    private MisTurnosService? _unTurnoService;
     private MisTurnos? _unTurno = new MisTurnos();
 
     [Parameter] public string Paciente { get; set; }
@@ -82,12 +80,10 @@
 
         _spinnerService.Show();
         // Obtengo el paciente
-        _unPacienteService = new PacienteService(Configuration, httpClientFactory);
         _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
 
         if (_unPaciente != null)
         {
-            _unTurnoService = new MisTurnosService(Configuration, httpClientFactory);
             bool resultado = await _unTurnoService.RegistrarTurnoAsync(token, IdTurno, IdBloque, IdAgenda, _unPaciente, _unTipoPrestacion);
             _spinnerService.Hide();
 

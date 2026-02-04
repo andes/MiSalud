@@ -6,20 +6,17 @@ namespace SaludPortal.Web.Services
     using CoreMiHistorialSaludService = AndesServices.Services.HistoriaSaludService;
     public class MiHistoriaSaludService
     {
-        private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CoreMiHistorialSaludService> _coreLogger;
-        public MiHistoriaSaludService(IConfiguration configuration
-            , IHttpClientFactory httpClientFactory
+        public MiHistoriaSaludService(IHttpClientFactory httpClientFactory
             , ILogger<CoreMiHistorialSaludService> coreLogger)
         {
-            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
             _coreLogger = coreLogger;
         }
 
         private CoreMiHistorialSaludService CreateCoreService()
-            => new CoreMiHistorialSaludService(_configuration, _httpClientFactory, _coreLogger);
+            => new CoreMiHistorialSaludService(_httpClientFactory, _coreLogger);
         public async Task<List<CategoriaHistoriaSalud>> ObtenerCategoriaHistoriaSaludAsync(string token)
         {
             try

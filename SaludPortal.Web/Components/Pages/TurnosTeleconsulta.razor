@@ -10,9 +10,10 @@
 
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
+@inject SaludPortal.Web.Services.PacienteService _unPacienteService
+@inject SaludPortal.Web.Services.MisTurnosService _misTurnosService
+@inject SaludPortal.Web.Services.OrganizacionService _organizacionService
 
 @inherits AuthenticatedComponentBase
 
@@ -58,6 +59,11 @@
 @if (consentimientoAceptado)
 {
     <h2>Agendas disponibles para telesalud</h2>
+    
+    <div class="alert alert-info" role="alert">
+        <i class="fa fa-info-circle" aria-hidden="true"></i>
+        <strong>Importante:</strong> Solo puede tener un turno de telesalud asignado.
+    </div>
 
     @if (lstAgendas != null && lstAgendas.Count > 0)
     {
@@ -80,6 +86,8 @@
                             <div class="accordion" id="@accOrgId">
                                 @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
                                 {
+                                    var (primerTurnoDisponible, bloqueId) = ObtenerPrimerTurnoDisponible(tipoPrestaciones.id, efectores.Efector._id);
+                                    
                                     var orgId = $"Organizacion_{tipoPrestacionIndex}_{organizacionIndex}";
                                     var collapseOrgId = $"collapseOrg_{tipoPrestacionIndex}_{organizacionIndex}";
                                     <div class="accordion-item">
@@ -94,21 +102,23 @@
                                         </h2>
                                         <div id="@collapseOrgId" class="accordion-collapse collapse show" aria-labelledby="@orgId" data-bs-parent="#@accOrgId">
                                             <div class="accordion-body">
-                                                @foreach (var bloque in RecuperarAgendas(tipoPrestaciones.id, efectores.Efector._id))
+                                                @if (primerTurnoDisponible != null && bloqueId != null)
                                                 {
-                                                    var primerTurnoDisponible = bloque.turnos
-                                                    .FirstOrDefault(t => t.estado == "disponible");
-
-                                                    if (primerTurnoDisponible != null)
-                                                    {
-                                                        <div style="margin-bottom: 10px;">
-                                                            <button class="btn btn-success" title="Seleccionar"
-                                                                    @onclick="() => ShowModalConfirmar(primerTurnoDisponible.horaInicio.Date, primerTurnoDisponible.horaInicio.AddHours(-3), tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, primerTurnoDisponible._id, bloque._id)">
-                                                                <i class="fa fa-video-camera" aria-hidden="true" style="max-width:16px;"></i> Solicitar atención
-                                                            </button>
-                                                        </div>
-                                                    }
-                                                    break;
+                                                    <div style="margin-bottom: 10px;">
+                                                        <button class="btn btn-success" title="Seleccionar"
+                                                                @onclick="() => ShowModalConfirmar(
+                                                                    primerTurnoDisponible.horaInicio.Date, 
+                                                                    DateTimeHelper.ToArgentinaTime(primerTurnoDisponible.horaInicio), 
+                                                                    tipoPrestaciones.term, 
+                                                                    efectores.Efector.nombre, 
+                                                                    efectores.Domicilio, 
+                                                                    tipoPrestaciones.id, 
+                                                                    primerTurnoDisponible._id, 
+                                                                    bloqueId)"
+                                                        >
+                                                            <i class="fa fa-video-camera" aria-hidden="true" style="max-width:16px;"></i> Solicitar atención
+                                                        </button>
+                                                    </div>
                                                 }
                                             </div>
                                         </div>
@@ -134,16 +144,15 @@
 @code {
     private bool consentimientoAceptado = false;
     private List<OrganizacionAgenda> lstAgendas = new List<OrganizacionAgenda>();
-    private MisTurnosService? _misTurnosService;
-    private PacienteService? _unPacienteService;
     private Paciente? _unPaciente = new Paciente();
     private Direccion _direccionGeoreferencia = new Direccion();
     private userLocation _userLocation = new userLocation();
     private int itemForeachtipoPrestaciones;
     private int itemForeachOrganizaciones;
-    private SaludPortal.Web.Services.OrganizacionService? _organizacionService;
     private Organizacion organizacion = new Organizacion();
     private Dictionary<string, string> _domiciliosOrganizaciones = new();
+    private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
+    private const string conceptIdTeleconsulta = "6421000013106";
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
@@ -158,8 +167,51 @@
         Nav.NavigateTo("/misturnos", forceLoad: true);
     }
 
-    private async Task ShowModalConfirmar(DateTime Fecha, DateTime Hora, string TipoPrestacion, string Efector, string EfectorDomicilio, string IdTipoPrestacion, string IdTurno, string IdBloque)
+    private async Task ShowModalConfirmar(
+        DateTime Fecha, 
+        DateTime Hora, 
+        string TipoPrestacion, 
+        string Efector, 
+        string EfectorDomicilio, 
+        string IdTipoPrestacion, 
+        string IdTurno, 
+        string IdBloque)
     {
+        // Verificar si ya tiene un turno de telesalud con fecha mayor a hoy
+        if (lstMisTurnos != null && lstMisTurnos.Any())
+        {
+            var turnoFuturo = lstMisTurnos.FirstOrDefault(t => 
+                DateTimeHelper.ToArgentinaTime(t.horaInicio).Date > DateTimeHelper.NowArgentina().Date && 
+                t.tipoPrestacion != null &&
+                t.tipoPrestacion.conceptId == conceptIdTeleconsulta &&
+                (t.estado == "programado" || t.estado == "asignado" || t.estado == "pendiente"));
+
+            if (turnoFuturo != null)
+            {
+                // Obtener información del turno
+                var efectorNombre = turnoFuturo.organizacion?.nombre ?? "No especificado";
+                var fechaTurno = DateTimeHelper.ToArgentinaTime(turnoFuturo.horaInicio).Date.ToString("dd/MM/yyyy");
+                
+                // Mostrar modal de error
+                var errorOptions = new ModalOptions()
+                {
+                    Size = ModalSize.Medium,
+                    Position = ModalPosition.TopCenter,
+                    HideCloseButton = false,
+                    HideHeader = false
+                };
+
+                var errorParameters = new ModalParameters()
+                    .Add(nameof(ErrorModal.Titulo), 
+                        "No se puede solicitar el turno")
+                    .Add(nameof(ErrorModal.Mensaje), 
+                        $"Ya tiene un turno de telesalud asignado. Efector: {efectorNombre}, Fecha: {fechaTurno}");
+
+                Modal.Show<ErrorModal>(errorParameters, errorOptions);
+                return;
+            }
+        }
+
         var options = new ModalOptions()
         {
             Size = ModalSize.Large,
@@ -199,7 +251,6 @@
         try
         {
             // Obtengo el paciente
-            _unPacienteService = new PacienteService(Configuration, httpClientFactory);
             _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
 
             // Verifico que domicilio utilizar para referencia a las organizaciones
@@ -216,7 +267,6 @@
             }
             if (_direccionGeoreferencia == null) return;
 
-            _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
             if (_direccionGeoreferencia.valor == null || _direccionGeoreferencia.ubicacion.localidad == null || _direccionGeoreferencia.ubicacion.provincia == null)
             {
                 return;
@@ -224,8 +274,11 @@
             string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
             _userLocation = await _unPacienteService.ObtenerGeoreferenciaPacienteAsync(direccion);
 
-            if (_misTurnosService != null && _userLocation != null)
+            if (_userLocation != null)
             {
+                // Obtener los turnos del paciente para validar si ya tiene uno con fecha mayor a hoy
+                lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token) ?? new List<MisTurnos>();
+
                 // La diferencia principal: esTeleconsulta: true
                 lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(token, pacienteId, _userLocation, esTeleconsulta: true);
 
@@ -237,7 +290,6 @@
                     .ToList();
 
                 // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
-                _organizacionService = new OrganizacionService(Configuration, httpClientFactory);
                 foreach (var orgId in orgIds)
                 {
                     var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(token, orgId);
@@ -330,5 +382,23 @@
             )
         )
         ?? Enumerable.Empty<Bloque>();
+    }
+
+    /// <summary>
+    /// Obtiene el primer turno disponible para un tipo de prestación y efector
+    /// </summary>
+    /// <param name="tipoPrestacionId">ID del tipo de prestación</param>
+    /// <param name="efectorId">ID del efector</param>
+    /// <returns>Tupla con el primer turno disponible y el ID del bloque</returns>
+    private (MisTurnos?, string?) ObtenerPrimerTurnoDisponible(string tipoPrestacionId, string efectorId)
+    {
+        foreach (var bloque in RecuperarAgendas(tipoPrestacionId, efectorId))
+        {
+            var primerTurnoDisponible = bloque.turnos
+                .FirstOrDefault(t => t.estado == "disponible");
+
+            return (primerTurnoDisponible, bloque._id);
+        }
+        return (null, null);
     }
 }

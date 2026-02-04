@@ -5,11 +5,11 @@ namespace SaludPortal.Web.Services
 {
     public class RecetasService
     {
-        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public RecetasService(IConfiguration? configuration)
+        public RecetasService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<List<MisReceta>> ObtenerRecetasPacienteAsync(string token, string pacienteId)
@@ -21,7 +21,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                MisRecetasService recetasService = new MisRecetasService(_configuration);
+                MisRecetasService recetasService = new MisRecetasService(_httpClientFactory);
                 return await recetasService.ObtenerRecetasPacienteAsync(token, pacienteId);
             }
             catch (Exception exception)

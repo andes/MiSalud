@@ -4,11 +4,11 @@ namespace SaludPortal.Web.Services
 {
     public class VacunacionService
     {
-        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public VacunacionService(IConfiguration? configuration)
+        public VacunacionService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<List<Vacunacion>> ObtenerCampañasVacunacion(string token)
@@ -21,7 +21,7 @@ namespace SaludPortal.Web.Services
 
             try
             {
-                AndesServices.Services.VacunacionService vacunacionService = new AndesServices.Services.VacunacionService(_configuration);
+                AndesServices.Services.VacunacionService vacunacionService = new AndesServices.Services.VacunacionService(_httpClientFactory);
                 return await vacunacionService.ObtenerCampañasVacunacion(token);
             }
             catch (Exception exception)

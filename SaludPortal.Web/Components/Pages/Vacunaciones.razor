@@ -10,9 +10,8 @@
 @using System.Globalization
 @inherits AuthenticatedComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
 @inject BlazorSpinner.SpinnerService _spinnerService
-
+@inject SaludPortal.Web.Services.VacunacionService _vacunacionService
 
 <h1>Mis vacunas</h1>
 <hr />
@@ -51,7 +50,6 @@
 
 @code {
     private List<Vacunacion> lstVacunaciones = new List<Vacunacion>();
-    private VacunacionService? _vacunacionService;
     private DateTime fechaAplicacion;
     private string diaAplicacion;
     private string mesAplicacion;
@@ -59,8 +57,6 @@
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
-        _vacunacionService = new VacunacionService(Configuration);
-        
         var token = BackendToken;
         if (string.IsNullOrEmpty(token))
             return;

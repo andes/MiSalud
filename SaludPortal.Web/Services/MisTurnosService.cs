@@ -4,11 +4,9 @@ namespace SaludPortal.Web.Services
 {
     public class MisTurnosService
     {
-        private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
-        public MisTurnosService(IConfiguration? configuration, IHttpClientFactory httpClientFactory)
+        public MisTurnosService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
         }
 
@@ -21,7 +19,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
+                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_httpClientFactory);
                 return await misTurnosService.ObtenerMisTurnosAsync(token, documento);
             }
             catch (Exception exception)
@@ -41,7 +39,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
+                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_httpClientFactory);
                 return await misTurnosService.ObtenerAgendasOrganizaciones(token, idPaciente, userLocation, esTeleconsulta);
             }
             catch (Exception exception)
@@ -60,7 +58,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
+                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_httpClientFactory);
                 return await misTurnosService.RegistrarTurnoAsync(token, idTurno, idBloque, idAgenda, paciente, tipoPrestacion);
             }
             catch (Exception exception)
@@ -80,7 +78,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
+                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_httpClientFactory);
                 return await misTurnosService.RegistrarTurnoTeleConsultaAsync(token, idTurno, idBloque, idAgenda, paciente, tipoPrestacion, motivoConsulta, estado);
             }
             catch (Exception exception)
@@ -100,7 +98,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_configuration, _httpClientFactory);
+                AndesServices.Services.MisTurnosService misTurnosService = new AndesServices.Services.MisTurnosService(_httpClientFactory);
                 return await misTurnosService.CancelarTurnoAsync(token, idTurno, idBloque, idAgenda, paciente);
             }
             catch (Exception exception)

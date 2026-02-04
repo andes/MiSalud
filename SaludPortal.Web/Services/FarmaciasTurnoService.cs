@@ -6,10 +6,11 @@ namespace SaludPortal.Web.Services
 {
     public class FarmaciasTurnoService
     {
-        private readonly IConfiguration _configuration;
-        public FarmaciasTurnoService(IConfiguration configuration)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public FarmaciasTurnoService(IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
         public async Task<List<FarmaciasTurno>> ObtenerFarmaciasTurnoAsync(string localidadId, string fechaDesde, string fechaHasta)
         {
@@ -21,7 +22,7 @@ namespace SaludPortal.Web.Services
             }
             try
             {
-                AndesServices.Services.FarmaciasTurnoService farmaciasTurno = new AndesServices.Services.FarmaciasTurnoService(_configuration);
+                AndesServices.Services.FarmaciasTurnoService farmaciasTurno = new AndesServices.Services.FarmaciasTurnoService(_httpClientFactory);
                 return await farmaciasTurno.ObtenerFarmaciasTurnoAsync(localidadId,fechaDesde,fechaHasta);
             }
             catch (Exception exception)
@@ -36,7 +37,7 @@ namespace SaludPortal.Web.Services
         {
             try
             {
-                AndesServices.Services.FarmaciasTurnoService farmaciasTurno = new AndesServices.Services.FarmaciasTurnoService(_configuration);
+                AndesServices.Services.FarmaciasTurnoService farmaciasTurno = new AndesServices.Services.FarmaciasTurnoService(_httpClientFactory);
                 return await farmaciasTurno.ObtenerLocalidadesAsync();
             }
             catch (Exception exception)

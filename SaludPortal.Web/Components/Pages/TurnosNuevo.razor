@@ -9,9 +9,10 @@
 
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
+@inject SaludPortal.Web.Services.PacienteService _unPacienteService
+@inject SaludPortal.Web.Services.MisTurnosService _misTurnosService
+@inject SaludPortal.Web.Services.OrganizacionService _organizacionService
 
 @inherits AuthenticatedComponentBase
 
@@ -70,8 +71,16 @@
                                                                 if (turno.estado == "disponible")
                                                                 {
                                                                     <button class="btn btn-info" style="margin:3px;" title="Seleccionar"
-                                                                            @onclick="() => ShowModalConfirmar(grupo.Key, turno.horaInicio.AddHours(-3), tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, turno._id, bloque._id)">
-                                                                        <i class="fa fa-calendar" aria-hidden="true" style="max-width:16px;"></i> @turno.horaInicio.AddHours(-3).ToString("HH:mm")
+                                                                            @onclick="() => ShowModalConfirmar(
+                                                                                                grupo.Key, DateTimeHelper.ToArgentinaTime(turno.horaInicio), 
+                                                                                                tipoPrestaciones.term, 
+                                                                                                efectores.Efector.nombre,
+                                                                                                efectores.Domicilio, 
+                                                                                                tipoPrestaciones.id, 
+                                                                                                turno._id, 
+                                                                                                bloque._id
+                                                                                            )">
+                                                                        <i class="fa fa-calendar" aria-hidden="true" style="max-width:16px;"></i> @DateTimeHelper.ToArgentinaTime(turno.horaInicio).ToString("HH:mm")
                                                                     </button>
                                                                 }
                                                             }
@@ -101,14 +110,11 @@ else
 
 @code {
     private List<OrganizacionAgenda> lstAgendas = new List<OrganizacionAgenda>();
-    private MisTurnosService? _misTurnosService;
-    private PacienteService? _unPacienteService;
     private Paciente? _unPaciente = new Paciente();
     private Direccion _direccionGeoreferencia = new Direccion();
     private userLocation _userLocation = new userLocation();
     private int itemForeachtipoPrestaciones;
     private int itemForeachOrganizaciones;
-    private SaludPortal.Web.Services.OrganizacionService? _organizacionService;
     private Organizacion organizacion = new Organizacion();
     private Dictionary<string, string> _domiciliosOrganizaciones = new();
 
@@ -154,10 +160,7 @@ else
 
         try
         {
-
-
             // Obtengo el paciente
-            _unPacienteService = new PacienteService(Configuration, httpClientFactory);
             _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
 
             // Verifico que domicilio utilizar para referencia a las organizaciones
@@ -174,7 +177,6 @@ else
             }
             if (_direccionGeoreferencia == null) return;
 
-            _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
             if (_direccionGeoreferencia.valor == null || _direccionGeoreferencia.ubicacion.localidad == null || _direccionGeoreferencia.ubicacion.provincia == null)
             {
                 return;
@@ -182,7 +184,7 @@ else
             string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
             _userLocation = await _unPacienteService.ObtenerGeoreferenciaPacienteAsync(direccion);
 
-            if (_misTurnosService != null && _userLocation != null)
+            if (_userLocation != null)
             {
                 lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(token, pacienteId, _userLocation, esTeleconsulta: false);
 
@@ -194,7 +196,6 @@ else
                     .ToList();
 
                 // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
-                _organizacionService = new OrganizacionService(Configuration, httpClientFactory);
                 foreach (var orgId in orgIds)
                 {
                     var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(token, orgId);

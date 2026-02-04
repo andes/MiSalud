@@ -1,0 +1,24 @@
+﻿@using SaludPortal.Web.Components.Shared
+
+<div>
+    <div class="d-flex align-items-center mb-3">
+        <i class="fa fa-exclamation-triangle text-danger me-2" style="font-size: 2rem;" aria-hidden="true"></i>
+        <h4 class="mb-0">@Titulo</h4>
+    </div>
+    <div class="alert alert-danger" role="alert">
+        <p class="mb-0">@Mensaje</p>
+    </div>
+    <div style="display: flex; justify-content: flex-end; width: 100%;">
+        <button @onclick="Close" class="btn btn-primary" title="Cerrar">Cerrar</button>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance ModalInstance { get; set; } = default!;
+    [CascadingParameter] IModalService ModalService { get; set; } = default!;
+    
+    [Parameter] public string Titulo { get; set; } = "Error";
+    [Parameter] public string Mensaje { get; set; } = "";
+    
+    private async Task Close() => await ModalInstance.CloseAsync();
+}

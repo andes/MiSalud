@@ -15,8 +15,7 @@
 @inject AndesServices.Entities.ViewModels.VMHistoriaSalud Model
 @inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
-@inject ILogger<AndesServices.Services.HistoriaSaludService> Logger
-
+@inject MiHistoriaSaludService _miHistoriaSaludService 
 <h1>Historia de Salud</h1>
 <hr />
 <h2>Categorias</h2>
@@ -35,7 +34,6 @@
 @code {
     private VMHistoriaSalud vmHistoriaSalud = new VMHistoriaSalud();
     private List<AndesServices.Entities.CategoriaHistoriaSalud> lstCategorias = new List<AndesServices.Entities.CategoriaHistoriaSalud>();
-    private MiHistoriaSaludService? _miHistoriaSaludService;
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -43,7 +41,6 @@
         if (string.IsNullOrEmpty(token))
             return;
 
-        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration, HttpClientFactory, Logger);
         _spinnerService.Show();
         Model.lstCategoriasHistoriaSalud = await _miHistoriaSaludService.ObtenerCategoriaHistoriaSaludAsync(BackendToken);
         _spinnerService.Hide();
@@ -59,7 +56,6 @@
         if (string.IsNullOrEmpty(pacienteId))
             return;
 
-        _miHistoriaSaludService = new MiHistoriaSaludService(Configuration, HttpClientFactory, Logger);
         _spinnerService.Show();
         Model.lstPrestacionesHistoriaSalud = await _miHistoriaSaludService.ObtenerPrestacionesAsync(token, idTipoPrestacion, pacienteId);
         _spinnerService.Hide();

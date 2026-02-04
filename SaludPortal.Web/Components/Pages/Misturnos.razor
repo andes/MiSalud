@@ -8,11 +8,9 @@
 @using SaludPortal.Web.Services
 @using System.Security.Claims
 @using AndesServices.Entities
-
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
-@inject IHttpClientFactory httpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
+@inject SaludPortal.Web.Services.MisTurnosService _misTurnosService
 @* @rendermode InteractiveServer *@
 @inherits AuthenticatedComponentBase
 
@@ -47,7 +45,7 @@
                                         @misTurnos.horaInicio.ToString("dd/MM/yyyy")
                                         <span> </span>
 
-                                        @misTurnos.horaInicio.AddHours(-3).ToShortTimeString()
+                                        @DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio).ToShortTimeString()
                                     }
                                 </h4>
                                 @if (misTurnos.tipoPrestacion.term != null)
@@ -69,7 +67,7 @@
                             @if (misTurnos.tipoPrestacion.conceptId == conceptIdTeleconsulta)
                             {
                                 <button @onclick="async () => await ShowModalCancelarConfirmar(misTurnos.horaInicio,
-                                                                                                                                                                                                                                                                                                                                            misTurnos.horaInicio.AddHours(-3),
+                                                                                                                                                                                                                                                                                                                                            DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio),
                                                                                                                                                                                                                                                                                                                                             misTurnos.tipoPrestacion.term,
                                                                                                                                                                                                                                                                                                                                             misTurnos.organizacion?.nombre ?? string.Empty,
                                                                                                                                                                                                                                                                                                                                             misTurnos.agenda_id,
@@ -85,7 +83,7 @@
                             else
                             {
                                 <button @onclick="async () => await ShowModalCancelarConfirmar(misTurnos.horaInicio,
-                                                                                                                                                                                                                                                                                                                                                misTurnos.horaInicio.AddHours(-3),
+                                                                                                                                                                                                                                                                                                                                                DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio),
                                                                                                                                                                                                                                                                                                                                                 misTurnos.tipoPrestacion.term,
                                                                                                                                                                                                                                                                                                                                                 misTurnos.organizacion?.nombre ?? string.Empty,
                                                                                                                                                                                                                                                                                                                                                 misTurnos.agenda_id,
@@ -125,8 +123,6 @@
 @code {
     private bool turnosFuturos = false;
     private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
-    private MisTurnosService? _misTurnosService;
-    private PacienteService? _unPacienteService;
     private Paciente? _unPaciente = new Paciente();
     private Direccion _direccionGeoreferencia = new Direccion();
     private long idAgenda = 0;
@@ -142,29 +138,19 @@
         // if (string.IsNullOrEmpty(pacienteId))
         //     return;
 
-        _misTurnosService = new MisTurnosService(Configuration, httpClientFactory);
-
-        if (_misTurnosService != null)
+        _spinnerService.Show();
+        try
         {
-            _spinnerService.Show();
-            try
-            {
-
-                // // Obtengo el paciente
-                // _unPacienteService = new PacienteService(Configuration);
-                // _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
-
-                // Obtengo los turnos
-                lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                _spinnerService.Hide();
-            }
+            // Obtengo los turnos
+            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            _spinnerService.Hide();
         }
     }
 

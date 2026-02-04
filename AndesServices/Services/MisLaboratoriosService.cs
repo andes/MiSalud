@@ -46,28 +46,24 @@ namespace AndesServices.Services
         public async Task<Byte[]> DescargarLaboratorioPorIdAsync(string token, string idProtocolo, string documento)
         {
             byte[] unByte = null;
-            var baseUrl = GetServiciosBaseUrl();
-            var url = $"{baseUrl}/modules/descargas/laboratorio";
 
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+                var parametrosBody = new StringContent("{\"protocolo\":{\"data\":{\"idProtocolo\":" + idProtocolo + ",\"documento\":" + documento + "}}}", System.Text.Encoding.UTF8, "application/json");
+                using (HttpResponseMessage res = await client.PostAsync("modules/descargas/laboratorio", parametrosBody))
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-                    var parametrosBody = new StringContent("{\"protocolo\":{\"data\":{\"idProtocolo\":" + idProtocolo + ",\"documento\":" + documento + "}}}", System.Text.Encoding.UTF8, "application/json");
-                    using (HttpResponseMessage res = await client.PostAsync(url, parametrosBody))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
+                        if (fileResponse == null)
                         {
-                            byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
-                            if (fileResponse == null)
-                            {
-                                Console.WriteLine("Error: File is null.");
-                                return await Task.FromResult(unByte);
-                            }
-
-                            return fileResponse;
+                            Console.WriteLine("Error: File is null.");
+                            return await Task.FromResult(unByte);
                         }
+
+                        return fileResponse;
                     }
                 }
             }
@@ -82,27 +78,23 @@ namespace AndesServices.Services
         public async Task<Byte[]> DescargarLaboratorioCDAPorIdAsync(string token, string documento)
         {
             byte[] unByte = null;
-            var baseUrl = GetServiciosBaseUrl();
-            var url = $"{baseUrl}/modules/cda/{documento}";
         
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+                using (HttpResponseMessage res = await client.GetAsync($"modules/cda/{documento}"))
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-                    using (HttpResponseMessage res = await client.GetAsync(url))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
+                        if (fileResponse == null)
                         {
-                            byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
-                            if (fileResponse == null)
-                            {
-                                Console.WriteLine("Error: File is null.");
-                                return await Task.FromResult(unByte);
-                            }
-
-                            return fileResponse;
+                            Console.WriteLine("Error: File is null.");
+                            return await Task.FromResult(unByte);
                         }
+
+                        return fileResponse;
                     }
                 }
             }
@@ -176,49 +168,44 @@ namespace AndesServices.Services
 
         public async Task<List<MisLaboratorios>> ObtenerMisLaboratoriosAsync(string token, string pacienteId, string fechaDde, string fechaHta)
         {
-            var baseUrl = GetServiciosBaseUrl();
-            var url = $"{baseUrl}/modules/rup/protocolosLab?pacienteId={pacienteId}&fechaDde={fechaDde}&fechaHta={fechaHta}";
-
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                using (HttpResponseMessage res = await client.GetAsync($"modules/rup/protocolosLab?pacienteId={pacienteId}&fechaDde={fechaDde}&fechaHta={fechaHta}"))
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-
-                    using (HttpResponseMessage res = await client.GetAsync(url))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        string jsonString = await res.Content.ReadAsStringAsync();
+                        var root = JToken.Parse(jsonString);
+
+                        // Desanidar si vino como string con JSON dentro
+                        if (root.Type == JTokenType.String)
                         {
-                            string jsonString = await res.Content.ReadAsStringAsync();
-                            var root = JToken.Parse(jsonString);
-
-                            // Desanidar si vino como string con JSON dentro
-                            if (root.Type == JTokenType.String)
-                            {
-                                root = JToken.Parse(root.Value<string>());
-                            }
-
-                            // Soportar objeto o array con propiedad Data
-                            JToken data = root.Type == JTokenType.Array ? root[0]?["Data"] : root["Data"];
-                            var listaLaboratorios = data?.ToObject<List<MisLaboratorios>>();
-
-                            if (listaLaboratorios == null)
-                            {
-                                _logger.LogInformation("Respuesta sin Data. Body: {Body}", jsonString);
-                                return null;
-                            }
-
-                            // Normalizar fechas a formato dd/MM/yyyy
-                            foreach (var laboratorio in listaLaboratorios)
-                            {
-                                if (!string.IsNullOrEmpty(laboratorio.fecha))
-                                {
-                                    laboratorio.fecha = NormalizarFecha(laboratorio.fecha);
-                                }
-                            }
-
-                            return listaLaboratorios;
+                            root = JToken.Parse(root.Value<string>());
                         }
+
+                        // Soportar objeto o array con propiedad Data
+                        JToken data = root.Type == JTokenType.Array ? root[0]?["Data"] : root["Data"];
+                        var listaLaboratorios = data?.ToObject<List<MisLaboratorios>>();
+
+                        if (listaLaboratorios == null)
+                        {
+                            _logger.LogInformation("Respuesta sin Data. Body: {Body}", jsonString);
+                            return null;
+                        }
+
+                        // Normalizar fechas a formato dd/MM/yyyy
+                        foreach (var laboratorio in listaLaboratorios)
+                        {
+                            if (!string.IsNullOrEmpty(laboratorio.fecha))
+                            {
+                                laboratorio.fecha = NormalizarFecha(laboratorio.fecha);
+                            }
+                        }
+
+                        return listaLaboratorios;
                     }
                 }
             }
@@ -283,33 +270,28 @@ namespace AndesServices.Services
 
         public async Task<List<MisLaboratoriosCDA>> ObtenerMisLaboratoriosCDAAsync(string token, string pacienteId, string fechaDde, string fechaHta)
         {
-            var baseUrl = GetServiciosBaseUrl();
-            var url = $"{baseUrl}/modules/cda/paciente/{pacienteId}";
-
             try
             {
-                using (HttpClient client = new HttpClient())
+                var client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+
+                //string queryParams = "?pacienteId=" + pacienteId + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
+
+                using (HttpResponseMessage res = await client.GetAsync($"modules/cda/paciente/{pacienteId}"))
                 {
-                    client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
-
-                    //string queryParams = "?pacienteId=" + pacienteId + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
-
-                    using (HttpResponseMessage res = await client.GetAsync(url))
+                    if (res.IsSuccessStatusCode)
                     {
-                        if (res.IsSuccessStatusCode)
+                        List<MisLaboratoriosCDA?> misLaboratorios = new List<MisLaboratoriosCDA?>();
+
+                        misLaboratorios = await res.Content.ReadFromJsonAsync<List<MisLaboratoriosCDA>>();
+
+                        if (misLaboratorios == null)
                         {
-                            List<MisLaboratoriosCDA?> misLaboratorios = new List<MisLaboratoriosCDA?>();
-
-                            misLaboratorios = await res.Content.ReadFromJsonAsync<List<MisLaboratoriosCDA>>();
-
-                            if (misLaboratorios == null)
-                            {
-                                Console.WriteLine("No se encontraron laboratorios.");
-                                return null;
-                            }
-
-                            return misLaboratorios;
+                            Console.WriteLine("No se encontraron laboratorios.");
+                            return null;
                         }
+
+                        return misLaboratorios;
                     }
                 }
             }
@@ -397,13 +379,6 @@ namespace AndesServices.Services
             }
             if (client.DefaultRequestHeaders.Authorization != null)
                 targetRequest.Headers.Authorization = client.DefaultRequestHeaders.Authorization;
-        }
-        private string GetServiciosBaseUrl()
-        {
-            var cfg = new ConexionServicios();
-            _configuration.GetSection("urlServicios").Bind(cfg);
-            var baseUrl = cfg.usarProd ? cfg.UrlProyectoServiciosProd : cfg.UrlProyectoServiciosDemo;
-            return baseUrl.TrimEnd('/');
         }
 
         private string GetLachybsBaseUrl()

@@ -1,6 +1,7 @@
 ﻿using AndesServices.Entities;
 using AndesServices.Entities.ViewModels;
 using AndesServices.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Blazored.Modal;
 using BlazorSpinner;
 using Microsoft.AspNetCore.Authentication;
@@ -60,9 +61,16 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? builder.Configuration["BaseUrl"] ?? "https://localhost:7046/")});
 builder.Services.AddTransient<IMisLaboratorios, AndesServices.Services.MisLaboratoriosService>();
-builder.Services.AddTransient<SaludPortal.Web.Services.MisLaboratoriosService>();
+builder.Services.AddScoped<SaludPortal.Web.Services.MisLaboratoriosService>();
+builder.Services.AddScoped<FarmaciasTurnoService>();
+builder.Services.AddScoped<PacienteService>();
+builder.Services.AddScoped<MiHistoriaSaludService>();
+builder.Services.AddScoped<MisTurnosService>();
+builder.Services.AddScoped<OrganizacionService>();
+builder.Services.AddScoped<VacunacionService>();
+builder.Services.AddScoped<RecetasService>();
+
 builder.Services.AddHttpClient("API", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? builder.Configuration["BaseUrl"] ?? "https://localhost:7046/");
@@ -75,12 +83,19 @@ builder.Services.AddHttpClient("LACHYBS_NOREDIRECT", client =>
     AllowAutoRedirect = false
 });
 
-builder.Services.AddScoped(sp =>
+// Register named HTTP client for Andes API
+builder.Services.AddHttpClient("Andes", (sp, client) =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var baseUrl = config["ApiBaseUrl"] ?? config["BaseUrl"] ?? "https://localhost:7046/";
-    if (!baseUrl.EndsWith("/")) baseUrl += "/";
-    return new HttpClient { BaseAddress = new Uri(baseUrl) };
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var conexionServicios = new ConexionServicios();
+    configuration.GetSection("urlServicios").Bind(conexionServicios);
+    
+    var baseUrl = conexionServicios.usarProd 
+        ? conexionServicios.UrlProyectoServiciosProd 
+        : conexionServicios.UrlProyectoServiciosDemo;
+    
+    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
 });
 builder.Services.AddSession(o => o.IdleTimeout = TimeSpan.FromMinutes(60));
 builder.Services.AddControllers();
