@@ -5,15 +5,17 @@
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using System.Security.Claims
 @using AndesServices.Entities
+@using System.Linq
 
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject SaludPortal.Web.Services.PacienteService _unPacienteService
-@inject SaludPortal.Web.Services.MisTurnosService _misTurnosService
-@inject SaludPortal.Web.Services.OrganizacionService _organizacionService
+@inject IPaciente _unPacienteService
+@inject IMisTurnos _misTurnosService
+@inject IOrganizacion _organizacionService
 
 @inherits AuthenticatedComponentBase
 
@@ -152,7 +154,7 @@
     private Organizacion organizacion = new Organizacion();
     private Dictionary<string, string> _domiciliosOrganizaciones = new();
     private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
-    private const string conceptIdTeleconsulta = "6421000013106";
+    private HashSet<string> conceptosTeleconsulta = new HashSet<string>();
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
@@ -183,7 +185,7 @@
             var turnoFuturo = lstMisTurnos.FirstOrDefault(t => 
                 DateTimeHelper.ToArgentinaTime(t.horaInicio).Date > DateTimeHelper.NowArgentina().Date && 
                 t.tipoPrestacion != null &&
-                t.tipoPrestacion.conceptId == conceptIdTeleconsulta &&
+                EsTeleconsulta(t.tipoPrestacion.conceptId) &&
                 (t.estado == "programado" || t.estado == "asignado" || t.estado == "pendiente"));
 
             if (turnoFuturo != null)
@@ -250,6 +252,13 @@
 
         try
         {
+            // Obtengo los conceptos de teleconsulta
+            var conceptosTurneables = await _misTurnosService.ObtenerConceptosTurneablesAsync(token, true);
+            if (conceptosTurneables != null && conceptosTurneables.Count > 0)
+            {
+                conceptosTeleconsulta = new HashSet<string>(conceptosTurneables.Select(c => c.conceptId));
+            }
+
             // Obtengo el paciente
             _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
 
@@ -272,12 +281,12 @@
                 return;
             }
             string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
-            _userLocation = await _unPacienteService.ObtenerGeoreferenciaPacienteAsync(direccion);
+            _userLocation = await _unPacienteService.ObtenerGeoreferenciaPaciente(direccion);
 
             if (_userLocation != null)
             {
                 // Obtener los turnos del paciente para validar si ya tiene uno con fecha mayor a hoy
-                lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token) ?? new List<MisTurnos>();
+                lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token, Documento ?? "") ?? new List<MisTurnos>();
 
                 // La diferencia principal: esTeleconsulta: true
                 lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(token, pacienteId, _userLocation, esTeleconsulta: true);
@@ -400,5 +409,12 @@
             return (primerTurnoDisponible, bloque._id);
         }
         return (null, null);
+    }
+
+    private bool EsTeleconsulta(string? conceptId)
+    {
+        if (string.IsNullOrEmpty(conceptId))
+            return false;
+        return conceptosTeleconsulta.Contains(conceptId);
     }
 }

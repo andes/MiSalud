@@ -28,6 +28,12 @@ namespace AndesServices.Services
 
         public async Task<bool> CancelarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente)
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("Token no proporcionado.");
+                return false;
+            }
+
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
@@ -73,6 +79,12 @@ namespace AndesServices.Services
 
         public async Task<List<MisTurnos>> ObtenerMisTurnosAsync(string token, string? documento = "")
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("Token no proporcionado.");
+                return null;
+            }
+
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
@@ -108,6 +120,12 @@ namespace AndesServices.Services
 
         public async Task<bool> RegistrarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion)
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("Token no proporcionado.");
+                return false;
+            }
+
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
@@ -152,6 +170,12 @@ namespace AndesServices.Services
 
         public async Task<bool> RegistrarTurnoTeleConsultaAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta = "", string estado = "")
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("Token no proporcionado.");
+                return false;
+            }
+
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
@@ -198,6 +222,12 @@ namespace AndesServices.Services
 
         public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string token, string idPaciente, userLocation userLocation, bool esTeleConsulta)
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("Token no proporcionado.");
+                return null;
+            }
+
             string estado = "disponible";
 
             try
@@ -248,156 +278,73 @@ namespace AndesServices.Services
 
         private async Task<List<OrganizacionAgenda>> filtrarAgendasOrganizacionesTeleConsultaAsync(string token, List<OrganizacionAgenda> organizacionAgendas, bool esTeleConsulta = false)
         {
-            // TEMPORAL HASTA TANTO SE CORRIJA EL ENDPOINT
-            // -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-            const string conceptIdTeleconsulta = "6421000013106";
-            // Filtrar in-place sin crear nuevos objetos
-            for (int i = organizacionAgendas.Count - 1; i >= 0; i--)
+            List<ConceptoTurneable> conceptosTurneables = await ObtenerConceptosTurneablesAsync(token, esTeleConsulta);
+
+            if (conceptosTurneables != null && conceptosTurneables.Count > 0)
             {
-                var org = organizacionAgendas[i];
-                if (org?.agendas == null)
+                var conceptIdsValidos = new HashSet<string>(conceptosTurneables.Count);
+                for (int i = 0; i < conceptosTurneables.Count; i++)
                 {
-                    organizacionAgendas.RemoveAt(i);
-                    continue;
+                    conceptIdsValidos.Add(conceptosTurneables[i].conceptId);
                 }
 
-                // Filtrar agendas
-                for (int j = org.agendas.Count - 1; j >= 0; j--)
+                // Filtrar in-place organizaciones → agendas → bloques
+                for (int i = organizacionAgendas.Count - 1; i >= 0; i--)
                 {
-                    var agenda = org.agendas[j];
-                    if (agenda?.bloques == null)
+                    var org = organizacionAgendas[i];
+                    if (org?.agendas == null)
                     {
-                        org.agendas.RemoveAt(j);
+                        organizacionAgendas.RemoveAt(i);
                         continue;
                     }
 
-                    // Filtrar bloques según el criterio
-                    for (int k = agenda.bloques.Count - 1; k >= 0; k--)
+                    for (int j = org.agendas.Count - 1; j >= 0; j--)
                     {
-                        var bloque = agenda.bloques[k];
-                        if (bloque?.tipoPrestaciones == null)
+                        var agenda = org.agendas[j];
+                        if (agenda?.bloques == null)
                         {
-                            agenda.bloques.RemoveAt(k);
+                            org.agendas.RemoveAt(j);
                             continue;
                         }
 
-                        bool cumpleCriterio = false;
-                        if (esTeleConsulta)
+                        for (int k = agenda.bloques.Count - 1; k >= 0; k--)
                         {
-                            // filtro solo para el Hospital Heller
-                            // Buscar si contiene el conceptId de teleconsulta
+                            var bloque = agenda.bloques[k];
+                            if (bloque?.tipoPrestaciones == null)
+                            {
+                                agenda.bloques.RemoveAt(k);
+                                continue;
+                            }
+
+                            bool tieneConceptoValido = false;
                             for (int l = 0; l < bloque.tipoPrestaciones.Count; l++)
                             {
-                                if (org.id == "57fcf038326e73143fb48dac" && bloque.tipoPrestaciones[l]?.conceptId?.Contains(conceptIdTeleconsulta) == true)
+                                var conceptId = bloque.tipoPrestaciones[l]?.conceptId;
+                                if (conceptId != null && conceptIdsValidos.Contains(conceptId))
                                 {
-                                    cumpleCriterio = true;
+                                    tieneConceptoValido = true;
                                     break;
                                 }
                             }
-                        }
-                        else
-                        {
-                            // filtro solo para el Hospital Heller la combinación de ambos
-                            // Buscar si NO contiene el conceptId de teleconsulta
-                            for (int l = 0; l < bloque.tipoPrestaciones.Count; l++)
+
+                            if (!tieneConceptoValido)
                             {
-                                if (org.id == "57fcf038326e73143fb48dac" && bloque.tipoPrestaciones[l]?.conceptId != conceptIdTeleconsulta)
-                                {
-                                    cumpleCriterio = true;
-                                    break;
-                                }
+                                agenda.bloques.RemoveAt(k);
                             }
                         }
 
-                        if (!cumpleCriterio)
+                        if (agenda.bloques.Count == 0)
                         {
-                            agenda.bloques.RemoveAt(k);
+                            org.agendas.RemoveAt(j);
                         }
                     }
 
-
-                    // Remover agenda si no tiene bloques válidos
-                    if (agenda.bloques.Count == 0)
+                    if (org.agendas.Count == 0)
                     {
-                        org.agendas.RemoveAt(j);
+                        organizacionAgendas.RemoveAt(i);
                     }
-                }
-
-                // Remover organización si no tiene agendas válidas
-                if (org.agendas.Count == 0)
-                {
-                    organizacionAgendas.RemoveAt(i);
                 }
             }
-
-
-            //List<ConceptoTurneable> conceptosTurneables = await ObtenerConceptosTurneablesAsync(token, esTeleConsulta);
-
-            //if (conceptosTurneables != null && conceptosTurneables.Count > 0)
-            //{
-            //    var conceptIdsValidos = new HashSet<string>(conceptosTurneables.Count);
-            //    for (int i = 0; i < conceptosTurneables.Count; i++)
-            //    {
-            //        conceptIdsValidos.Add(conceptosTurneables[i].conceptId);
-            //    }
-
-            //    // Filtrar in-place organizaciones → agendas → bloques
-            //    for (int i = organizacionAgendas.Count - 1; i >= 0; i--)
-            //    {
-            //        var org = organizacionAgendas[i];
-            //        if (org?.agendas == null)
-            //        {
-            //            organizacionAgendas.RemoveAt(i);
-            //            continue;
-            //        }
-
-            //        for (int j = org.agendas.Count - 1; j >= 0; j--)
-            //        {
-            //            var agenda = org.agendas[j];
-            //            if (agenda?.bloques == null)
-            //            {
-            //                org.agendas.RemoveAt(j);
-            //                continue;
-            //            }
-
-            //            for (int k = agenda.bloques.Count - 1; k >= 0; k--)
-            //            {
-            //                var bloque = agenda.bloques[k];
-            //                if (bloque?.tipoPrestaciones == null)
-            //                {
-            //                    agenda.bloques.RemoveAt(k);
-            //                    continue;
-            //                }
-
-            //                bool tieneConceptoValido = false;
-            //                for (int l = 0; l < bloque.tipoPrestaciones.Count; l++)
-            //                {
-            //                    var conceptId = bloque.tipoPrestaciones[l]?.conceptId;
-            //                    if (conceptId != null && conceptIdsValidos.Contains(conceptId))
-            //                    {
-            //                        tieneConceptoValido = true;
-            //                        break;
-            //                    }
-            //                }
-
-            //                if (!tieneConceptoValido)
-            //                {
-            //                    agenda.bloques.RemoveAt(k);
-            //                }
-            //            }
-
-            //            if (agenda.bloques.Count == 0)
-            //            {
-            //                org.agendas.RemoveAt(j);
-            //            }
-            //        }
-
-            //        if (org.agendas.Count == 0)
-            //        {
-            //            organizacionAgendas.RemoveAt(i);
-            //        }
-            //    }
-            //}
 
             return organizacionAgendas;
         }

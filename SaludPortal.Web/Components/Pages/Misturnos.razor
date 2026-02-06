@@ -6,11 +6,13 @@
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using System.Security.Claims
 @using AndesServices.Entities
+@using System.Linq
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject SaludPortal.Web.Services.MisTurnosService _misTurnosService
+@inject IMisTurnos _misTurnosService
 @* @rendermode InteractiveServer *@
 @inherits AuthenticatedComponentBase
 
@@ -34,7 +36,7 @@
                             <div>
                                 <h4>
 
-                                    @if (misTurnos.tipoPrestacion.conceptId == conceptIdTeleconsulta)
+                                    @if (EsTeleconsulta(misTurnos.tipoPrestacion.conceptId))
                                     {
                                         <strong>Fecha de solicitud: </strong>
                                         @misTurnos.horaInicio.ToString("dd/MM/yyyy")
@@ -42,10 +44,7 @@
                                     else
                                     {
                                         <strong>Fecha: </strong>
-                                        @misTurnos.horaInicio.ToString("dd/MM/yyyy")
-                                        <span> </span>
-
-                                        @DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio).ToShortTimeString()
+                                        @DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio).ToString("dd/MM/yyyy HH:mm")
                                     }
                                 </h4>
                                 @if (misTurnos.tipoPrestacion.term != null)
@@ -56,7 +55,7 @@
                                     </div>
                                 }
                                 <div>
-                                    @if (misTurnos.tipoPrestacion.conceptId != conceptIdTeleconsulta)
+                                    @if (!EsTeleconsulta(misTurnos.tipoPrestacion.conceptId))
                                     {
                                         <strong>Lugar: </strong>
                                         @misTurnos.organizacion.nombre
@@ -64,38 +63,38 @@
                                 </div>
                             </div>
 
-                            @if (misTurnos.tipoPrestacion.conceptId == conceptIdTeleconsulta)
+                            @if (EsTeleconsulta(misTurnos.tipoPrestacion.conceptId))
                             {
                                 <button @onclick="async () => await ShowModalCancelarConfirmar(misTurnos.horaInicio,
-                                                                                                                                                                                                                                                                                                                                            DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio),
-                                                                                                                                                                                                                                                                                                                                            misTurnos.tipoPrestacion.term,
-                                                                                                                                                                                                                                                                                                                                            misTurnos.organizacion?.nombre ?? string.Empty,
-                                                                                                                                                                                                                                                                                                                                            misTurnos.agenda_id,
-                                                                                                                                                                                                                                                                                                                                            misTurnos._id,
-                                                                                                                                                                                                                                                                                                                                            misTurnos.bloque_id, esTeleconsulta: true)"
-                class=" d-flex flex-wrap align-items-center justify-content-center gap-2 text-white align-self-stretch"
-                style="cursor:pointer; background-color:red;border-radius:10px;padding:6px 10px;"
-                title="Cancelar turno">
-            <span>Cancelar</span>
-            <Icon Name="cancelar-turno" Size="32" Fill="#fff" AriaLabel="Cancelar" />
-        </button>
-                }
+                                                                        DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio),
+                                                                        misTurnos.tipoPrestacion.term,
+                                                                        misTurnos.organizacion?.nombre ?? string.Empty,
+                                                                        misTurnos.agenda_id,
+                                                                        misTurnos._id,
+                                                                        misTurnos.bloque_id, esTeleconsulta: true)"
+                                        class=" d-flex flex-wrap align-items-center justify-content-center gap-2 text-white align-self-stretch"
+                                        style="cursor:pointer; background-color:red;border-radius:10px;padding:6px 10px;"
+                                        title="Cancelar turno">
+                                    <span>Cancelar</span>
+                                    <Icon Name="cancelar-turno" Size="32" Fill="#fff" AriaLabel="Cancelar" />
+                                </button>
+                            }
                             else
                             {
                                 <button @onclick="async () => await ShowModalCancelarConfirmar(misTurnos.horaInicio,
-                                                                                                                                                                                                                                                                                                                                                DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio),
-                                                                                                                                                                                                                                                                                                                                                misTurnos.tipoPrestacion.term,
-                                                                                                                                                                                                                                                                                                                                                misTurnos.organizacion?.nombre ?? string.Empty,
-                                                                                                                                                                                                                                                                                                                                                misTurnos.agenda_id,
-                                                                                                                                                                                                                                                                                                                                                misTurnos._id,
-                                                                                                                                                                                                                                                                                                                                                misTurnos.bloque_id, esTeleconsulta: false)"
-                class=" d-flex flex-wrap align-items-center justify-content-center gap-2 text-white align-self-stretch"
-                style="cursor:pointer; background-color:red;border-radius:10px;padding:6px 10px;"
-                title="Cancelar turno">
-            <span>Cancelar</span>
-            <Icon Name="cancelar-turno" Size="32" Fill="#fff" AriaLabel="Cancelar" />
-        </button>
-                }
+                                                                        DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio),
+                                                                        misTurnos.tipoPrestacion.term,
+                                                                        misTurnos.organizacion?.nombre ?? string.Empty,
+                                                                        misTurnos.agenda_id,
+                                                                        misTurnos._id,
+                                                                        misTurnos.bloque_id, esTeleconsulta: false)"
+                                        class=" d-flex flex-wrap align-items-center justify-content-center gap-2 text-white align-self-stretch"
+                                        style="cursor:pointer; background-color:red;border-radius:10px;padding:6px 10px;"
+                                        title="Cancelar turno">
+                                    <span>Cancelar</span>
+                                    <Icon Name="cancelar-turno" Size="32" Fill="#fff" AriaLabel="Cancelar" />
+                                </button>
+                            }
                         </div>
                     }
                 </div>
@@ -126,7 +125,7 @@
     private Paciente? _unPaciente = new Paciente();
     private Direccion _direccionGeoreferencia = new Direccion();
     private long idAgenda = 0;
-    private const string conceptIdTeleconsulta = "6421000013106";
+    private HashSet<string> conceptosTeleconsulta = new HashSet<string>();
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -141,8 +140,15 @@
         _spinnerService.Show();
         try
         {
+            // Obtengo los conceptos de teleconsulta
+            var conceptosTurneables = await _misTurnosService.ObtenerConceptosTurneablesAsync(token, true);
+            if (conceptosTurneables != null && conceptosTurneables.Count > 0)
+            {
+                conceptosTeleconsulta = new HashSet<string>(conceptosTurneables.Select(c => c.conceptId));
+            }
+
             // Obtengo los turnos
-            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
+            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token, Documento ?? "");
         }
         catch (Exception ex)
         {
@@ -152,6 +158,13 @@
         {
             _spinnerService.Hide();
         }
+    }
+
+    private bool EsTeleconsulta(string? conceptId)
+    {
+        if (string.IsNullOrEmpty(conceptId))
+            return false;
+        return conceptosTeleconsulta.Contains(conceptId);
     }
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
