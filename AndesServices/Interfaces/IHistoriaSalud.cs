@@ -19,7 +19,7 @@ namespace AndesServices.Interfaces
         /// <param name="idPaciente">El id del paciente.</param>
         /// <param name="estado">Estado de la prestación a consultar.</param>
         /// <returns>Lista de prestaciones de la historia de salud para una categoria.</returns>
-        Task<List<PrestacionHistoriaSalud>> ObtenerPrestacionesAsync(string token, string tipoPrestaciones, string idPaciente, string estado);
+        Task<List<PrestacionHistoriaSalud>> ObtenerPrestacionesAsync(string token, string tipoPrestaciones, string idPaciente, string estado = "validada");
 
         Task<Byte[]> DescargarCDAFilePorIdAsync(string token, string id);
     }

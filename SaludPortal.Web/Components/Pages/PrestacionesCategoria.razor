@@ -1,6 +1,7 @@
 ﻿@page "/historiasalud/categoria/{expresionSnomed}/"
 @rendermode InteractiveServer
 
+@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @using SaludPortal.Web.Components.Icons
@@ -15,7 +16,7 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
-@inject MiHistoriaSaludService _miHistoriaSaludService
+@inject IHistoriaSalud _miHistoriaSaludService
 
 <style>
     .prestaciones p {

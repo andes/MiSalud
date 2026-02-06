@@ -1,5 +1,6 @@
 ﻿@page "/turnosnuevo"
 
+@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
@@ -10,9 +11,9 @@
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject SaludPortal.Web.Services.PacienteService _unPacienteService
-@inject SaludPortal.Web.Services.MisTurnosService _misTurnosService
-@inject SaludPortal.Web.Services.OrganizacionService _organizacionService
+@inject IPaciente _unPacienteService
+@inject IMisTurnos _misTurnosService
+@inject IOrganizacion _organizacionService
 
 @inherits AuthenticatedComponentBase
 
@@ -182,7 +183,7 @@ else
                 return;
             }
             string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
-            _userLocation = await _unPacienteService.ObtenerGeoreferenciaPacienteAsync(direccion);
+            _userLocation = await _unPacienteService.ObtenerGeoreferenciaPaciente(direccion);
 
             if (_userLocation != null)
             {

@@ -1,6 +1,7 @@
 ﻿@page "/turnosHistorial"
 
 
+@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
@@ -10,7 +11,7 @@
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject SaludPortal.Web.Services.MisTurnosService _misTurnosService
+@inject IMisTurnos _misTurnosService
 
 @inherits AuthenticatedComponentBase
 
@@ -270,7 +271,7 @@
             return;
 
         _spinnerService.Show();
-        lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token);
+        lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token, Documento ?? "");
         _spinnerService.Hide();
     }
 }

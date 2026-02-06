@@ -8,7 +8,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Services\FarmaciasTurnoService.cs" />
 	  <Compile Remove="Services\GlobalServices.cs" />
+	  <Compile Remove="Services\MiHistoriaSaludService.cs" />
+	  <Compile Remove="Services\MisLaboratoriosService.cs" />
+	  <Compile Remove="Services\MisTurnosService.cs" />
+	  <Compile Remove="Services\OrganizacionService.cs" />
+	  <Compile Remove="Services\PacienteService.cs" />
+	  <Compile Remove="Services\RecetasService.cs" />
+	  <Compile Remove="Services\VacunacionService.cs" />
 	  <Compile Remove="WeatherApiClient.cs" />
 	</ItemGroup>
 

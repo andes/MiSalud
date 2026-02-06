@@ -2,6 +2,7 @@
 @page "/misvacunas"
 
 @attribute [Authorize]
+@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
@@ -11,7 +12,7 @@
 @inherits AuthenticatedComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject SaludPortal.Web.Services.VacunacionService _vacunacionService
+@inject IVacunacion _vacunacionService
 
 <h1>Mis vacunas</h1>
 <hr />

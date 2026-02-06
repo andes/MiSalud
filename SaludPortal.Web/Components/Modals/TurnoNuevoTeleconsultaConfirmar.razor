@@ -1,14 +1,15 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using AndesServices.Entities
 @using System.Text.RegularExpressions
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject MessageService MessageService
-@inject SaludPortal.Web.Services.PacienteService _unPacienteService
-@inject SaludPortal.Web.Services.MisTurnosService _unTurnoService
+@inject IPaciente _unPacienteService
+@inject IMisTurnos _unTurnoService
 
 @inherits AuthenticatedComponentBase
 

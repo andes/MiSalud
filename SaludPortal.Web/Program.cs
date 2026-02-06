@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.DataProtection;
 using SaludPortal.Web;
 using SaludPortal.Web.Components;
 using SaludPortal.Web.Services;
+using AndesServices.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,7 +33,6 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.Secure = CookieSecurePolicy.Always;
 });
 
-//builder.Services.AddAuthenticationCore();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(o =>
@@ -43,10 +43,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.SlidingExpiration = true;
         o.ExpireTimeSpan = TimeSpan.FromHours(1);
     });
-
-//builder.Services.AddDataProtection()
-//    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtection-Keys"))
-//    .SetApplicationName("SaludPortal");
 
 builder.Services.AddBlazoredModal();
 builder.Services.AddScoped<SpinnerService>();
@@ -61,15 +57,16 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddTransient<IMisLaboratorios, AndesServices.Services.MisLaboratoriosService>();
-builder.Services.AddScoped<SaludPortal.Web.Services.MisLaboratoriosService>();
-builder.Services.AddScoped<FarmaciasTurnoService>();
-builder.Services.AddScoped<PacienteService>();
-builder.Services.AddScoped<MiHistoriaSaludService>();
-builder.Services.AddScoped<MisTurnosService>();
-builder.Services.AddScoped<OrganizacionService>();
-builder.Services.AddScoped<VacunacionService>();
-builder.Services.AddScoped<RecetasService>();
+
+// Register AndesServices using interfaces
+builder.Services.AddScoped<IMisLaboratorios, MisLaboratoriosService>();
+builder.Services.AddScoped<IPaciente, PacienteService>();
+builder.Services.AddScoped<IFarmaciasTurno, FarmaciasTurnoService>();
+builder.Services.AddScoped<IHistoriaSalud, HistoriaSaludService>();
+builder.Services.AddScoped<IVacunacion, VacunacionService>();
+builder.Services.AddScoped<IMisRecetas, MisRecetasService>();
+builder.Services.AddScoped<IOrganizacion, OrganizacionService>();
+builder.Services.AddScoped<IMisTurnos, MisTurnosService>();
 
 builder.Services.AddHttpClient("API", client =>
 {

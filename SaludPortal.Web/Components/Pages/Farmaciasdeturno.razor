@@ -5,11 +5,12 @@
 @using SaludPortal.Web.Services
 @using AndesServices.Entities.ViewModels
 @using AndesServices.Entities
+@using AndesServices.Interfaces
 @using SaludPortal.Web.Components.Shared
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject FarmaciasTurnoService _farmaciasTurnoService
-@inject PacienteService _pacienteService
+@inject IFarmaciasTurno _farmaciasTurnoService
+@inject IPaciente _pacienteService
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject AndesServices.Entities.ViewModels.VMFarmaciasTurno Model
 @inherits AuthenticatedComponentBase

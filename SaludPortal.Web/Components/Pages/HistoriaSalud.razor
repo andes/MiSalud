@@ -1,6 +1,7 @@
 ﻿@page "/historiasalud"
 @rendermode InteractiveServer
 
+@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
@@ -15,7 +16,7 @@
 @inject AndesServices.Entities.ViewModels.VMHistoriaSalud Model
 @inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
-@inject MiHistoriaSaludService _miHistoriaSaludService 
+@inject IHistoriaSalud _miHistoriaSaludService 
 <h1>Historia de Salud</h1>
 <hr />
 <h2>Categorias</h2>
@@ -42,7 +43,7 @@
             return;
 
         _spinnerService.Show();
-        Model.lstCategoriasHistoriaSalud = await _miHistoriaSaludService.ObtenerCategoriaHistoriaSaludAsync(BackendToken);
+        Model.lstCategoriasHistoriaSalud = await _miHistoriaSaludService.ObtenerCategoriasHistoriaSaludAsync(BackendToken);
         _spinnerService.Hide();
     }
 

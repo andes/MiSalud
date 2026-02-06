@@ -5,10 +5,11 @@
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
 @using AndesServices.Entities
+@using AndesServices.Interfaces
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject SaludPortal.Web.Services.RecetasService _recetasService
+@inject IMisRecetas _recetasService
 
 @inherits AuthenticatedComponentBase
 

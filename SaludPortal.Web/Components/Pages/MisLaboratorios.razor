@@ -6,6 +6,7 @@
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using System.Security.Claims
 @using System.Text
 
@@ -17,7 +18,7 @@
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject AndesServices.Entities.ViewModels.VMMisLaboratorios Model
 @inject ILogger<AndesServices.Services.MisLaboratoriosService> Logger
-@inject SaludPortal.Web.Services.MisLaboratoriosService _misLaboratoriosService
+@inject IMisLaboratorios _misLaboratoriosService
 
 @inherits AuthenticatedComponentBase
 
@@ -400,7 +401,7 @@ else
                 string laboratorioAdjunto = Model.LstMisLaboratoriosCDA.Where(c => c.cda_id == unLaboratorio.idProtocolo).Select(c => c.adjuntos[0]).FirstOrDefault();
                 laboratorioAdjunto = laboratorioAdjunto.Substring(laboratorioAdjunto.LastIndexOf('/') + 1);
                 laboratorioAdjunto = laboratorioAdjunto.Substring(0, laboratorioAdjunto.LastIndexOf('.'));
-                archivoDescargar = await _misLaboratoriosService.DescargarLaboratorioCDA(BackendToken, laboratorioAdjunto);
+                archivoDescargar = await _misLaboratoriosService.DescargarLaboratorioCDAPorIdAsync(BackendToken, laboratorioAdjunto);
 
                 string base64Pdf_CDA = Convert.ToBase64String(archivoDescargar);
                 await JSRuntime.InvokeVoidAsync("openPdfLab", base64Pdf_CDA);
@@ -408,7 +409,7 @@ else
                 break;
 
             default: //rup
-                archivoDescargar = await _misLaboratoriosService.DescargarLaboratorio(BackendToken, idProtocolo, Documento);
+                archivoDescargar = await _misLaboratoriosService.DescargarLaboratorioPorIdAsync(BackendToken, idProtocolo, Documento);
                 if (archivoDescargar == null || archivoDescargar.Length == 0)
                 {
                     _spinnerService.Hide();
