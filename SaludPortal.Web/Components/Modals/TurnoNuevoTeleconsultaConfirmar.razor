@@ -40,82 +40,79 @@
         </p>
         <hr />
         <p>
-    <div><label><strong>Teléfono celular de contacto *</strong></label></div>
-    <div class="mt-2 d-flex gap-2 align-items-start">
-        <div style="flex: 0 0 150px;">
-            <input type="text"
-                   inputmode="numeric"
-                   pattern="[0-9]*"
-                   class="form-control @(errorCodigoArea ? "is-invalid" : "")"
-                   placeholder="Cod. área (sin 0)"
-                   value="@codigoArea"
-                   @oninput="OnCodigoAreaInput"
-                   maxlength="@maxLengthCodigoArea" />
-            @if (errorCodigoArea)
-            {
-                <small class="text-danger">Sin 0 inicial</small>
-            }
-        </div>
-        <div style="flex: 1;">
-            <input type="text"
-                   inputmode="numeric"
-                   pattern="[0-9]*"
-                   class="form-control @(errorTelefono ? "is-invalid" : "")"
-                   placeholder="Número (sin 15)"
-                   value="@telefono"
-                   @oninput="OnTelefonoInput"
-                   maxlength="@maxLengthTelefono" />
-            @if (errorTelefono)
-            {
-                <small class="text-danger">Sin 15 al inicio</small>
-            }
-        </div>
-    </div>
-    <small class="text-muted">Ingrese código de área (ej: 299) y número sin 15 (ej: 4123456). Total: @(codigoArea.Length + telefono.Length)/10 caracteres</small>
-</p>
-<hr />
-<p>
-    <div><label><strong>Confirmar teléfono celular de contacto *</strong></label></div>
-    <div class="mt-2 d-flex gap-2 align-items-start">
-        <div style="flex: 0 0 150px;">
-            <input type="text"
-                   inputmode="numeric"
-                   pattern="[0-9]*"
-                   class="form-control @(errorConfirmarCodigoArea || errorCoincidenciaCodigoArea ? "is-invalid" : (confirmarCodigoArea.Length > 0 && !errorCoincidenciaCodigoArea ? "is-valid" : ""))"
-                   placeholder="Cod. área (sin 0)"
-                   value="@confirmarCodigoArea"
-                   @oninput="OnConfirmarCodigoAreaInput"
-                   maxlength="@maxLengthCodigoArea" />
-            @if (errorConfirmarCodigoArea)
-            {
-                <small class="text-danger">Sin 0 inicial</small>
-            }
-            else if (errorCoincidenciaCodigoArea)
-            {
-                <small class="text-danger">No coincide</small>
-            }
-        </div>
-        <div style="flex: 1;">
-            <input type="text"
-                   inputmode="numeric"
-                   pattern="[0-9]*"
-                   class="form-control @(errorConfirmarTelefono || errorCoincidenciaTelefono ? "is-invalid" : (confirmarTelefono.Length > 0 && !errorCoincidenciaTelefono ? "is-valid" : ""))"
-                   placeholder="Número (sin 15)"
-                   value="@confirmarTelefono"
-                   @oninput="OnConfirmarTelefonoInput"
-                   maxlength="@maxLengthTelefono" />
-            @if (errorConfirmarTelefono)
-            {
-                <small class="text-danger">Sin 15 al inicio</small>
-            }
-            else if (errorCoincidenciaTelefono)
-            {
-                <small class="text-danger">No coincide</small>
-            }
-        </div>
-    </div>
-    <small class="text-muted">Vuelva a ingresar el código de área y número para confirmar</small>
-</p>
+            <div><label><strong>Teléfono celular de contacto *</strong></label></div>
+            <div class="mt-2 d-flex gap-2 align-items-start">
+                <div style="flex: 0 0 150px;">
+                    <input type="tel"
+                           inputmode="numeric"
+                           class="form-control @(errorCodigoArea ? "is-invalid" : "")"
+                           placeholder="Cod. área (sin 0)"
+                           value="@codigoArea"
+                           @oninput="OnCodigoAreaInput"
+                           onkeydown="numericInput.preventNonNumeric(event)"
+                           maxlength="@maxLengthCodigoArea" />
+                    @if (errorCodigoArea)
+                    {
+                        <small class="text-danger">Sin 0 inicial</small>
+                    }
+                </div>
+                <div style="flex: 1;">
+                    <input type="tel"
+                           class="form-control @(errorTelefono ? "is-invalid" : "" )"
+                           placeholder="Número (sin 15)"
+                           value="@telefono"
+                           @oninput="OnTelefonoInput"
+                           onkeydown="numericInput.preventNonNumeric(event)"
+                           maxlength="@maxLengthTelefono" />
+                    @if (errorTelefono)
+                    {
+                    <small class="text-danger">Sin 15 al inicio</small>
+                    }
+                </div>
+            </div>
+            <small class="text-muted">Ingrese código de área (ej: 299) y número sin 15 (ej: 4123456). Total: @(codigoArea.Length + telefono.Length)/10 caracteres</small>
+        </p>
+        <hr />
+        <p>
+            <div><label><strong>Confirmar teléfono celular de contacto *</strong></label></div>
+            <div class="mt-2 d-flex gap-2 align-items-start">
+                <div style="flex: 0 0 150px;">
+                    <input type="tel"
+                           class="form-control @(errorConfirmarCodigoArea || errorCoincidenciaCodigoArea ? "is-invalid" : (confirmarCodigoArea.Length > 0 && !errorCoincidenciaCodigoArea ? "is-valid" : ""))"
+                           placeholder="Cod. área (sin 0)"
+                           value="@confirmarCodigoArea"
+                           @oninput="OnConfirmarCodigoAreaInput"
+                           onkeydown="numericInput.preventNonNumeric(event)"
+                           maxlength="@maxLengthCodigoArea" />
+                    @if (errorConfirmarCodigoArea)
+                    {
+                        <small class="text-danger">Sin 0 inicial</small>
+                    }
+                    else if (errorCoincidenciaCodigoArea)
+                    {
+                        <small class="text-danger">No coincide</small>
+                    }
+                </div>
+                <div style="flex: 1;">
+                    <input type="tel"
+                           class="form-control @(errorConfirmarTelefono || errorCoincidenciaTelefono ? "is-invalid" : (confirmarTelefono.Length > 0 && !errorCoincidenciaTelefono ? "is-valid" : ""))"
+                           placeholder="Número (sin 15)"
+                           value="@confirmarTelefono"
+                           @oninput="OnConfirmarTelefonoInput"
+                           onkeydown="numericInput.preventNonNumeric(event)"
+                           maxlength="@maxLengthTelefono" />
+                    @if (errorConfirmarTelefono)
+                    {
+                        <small class="text-danger">Sin 15 al inicio</small>
+                    }
+                    else if (errorCoincidenciaTelefono)
+                    {
+                        <small class="text-danger">No coincide</small>
+                    }
+                </div>
+            </div>
+            <small class="text-muted">Vuelva a ingresar el código de área y número para confirmar</small>
+        </p>
         <hr />
         <p>
             <div><label><strong>Motivo de la consulta *</strong></label></div>
@@ -155,6 +152,7 @@
 </div>
 
 @code {
+
     [CascadingParameter] BlazoredModalInstance ModalConfirmarTurno { get; set; } = default!;
     [CascadingParameter] IModalService ModalService { get; set; } = default!;
     private Paciente? _unPaciente = new Paciente();
@@ -175,7 +173,7 @@
     private const int LONGITUD_MAXIMA_CODIGO_AREA = 4;
     private const int LONGITUD_MINIMA_TELEFONO = 6;
     private const int LONGITUD_MAXIMA_TELEFONO = 8;
-    
+
     private string motivoSeleccionado = "";
     private string motivoOtros = "";
     private string codigoArea = "";
@@ -200,7 +198,7 @@
     private void OnCodigoAreaInput(ChangeEventArgs e)
     {
         string valor = e.Value?.ToString() ?? "";
-        
+
         // Eliminar cualquier carácter que no sea número
         valor = SoloNumerosRegex.Replace(valor, "");
 
@@ -213,11 +211,11 @@
 
         // Limitar a máximo permitido para código de área
         int maxPermitidoCodigoArea = Math.Min(
-            LONGITUD_MAXIMA_CODIGO_AREA, 
+            LONGITUD_MAXIMA_CODIGO_AREA,
             LONGITUD_MAXIMA_TOTAL - telefono.Length
         );
-        
-        if (maxPermitidoCodigoArea < LONGITUD_MINIMA_CODIGO_AREA) 
+
+        if (maxPermitidoCodigoArea < LONGITUD_MINIMA_CODIGO_AREA)
             maxPermitidoCodigoArea = LONGITUD_MINIMA_CODIGO_AREA;
 
         if (valor.Length > maxPermitidoCodigoArea)
@@ -236,7 +234,7 @@
             LONGITUD_MAXIMA_TELEFONO,
             LONGITUD_MAXIMA_TOTAL - codigoArea.Length
         );
-        
+
         if (telefono.Length > maxLengthTelefono)
         {
             telefono = telefono.Substring(0, maxLengthTelefono);
@@ -249,7 +247,7 @@
     private void OnTelefonoInput(ChangeEventArgs e)
     {
         string valor = e.Value?.ToString() ?? "";
-        
+
         // Eliminar cualquier carácter que no sea número
         valor = SoloNumerosRegex.Replace(valor, "");
 
@@ -265,7 +263,7 @@
             LONGITUD_MAXIMA_TELEFONO,
             LONGITUD_MAXIMA_TOTAL - codigoArea.Length
         );
-        
+
         if (valor.Length > maxPermitidoTelefono)
         {
             valor = valor.Substring(0, maxPermitidoTelefono);
@@ -281,8 +279,8 @@
             LONGITUD_MAXIMA_CODIGO_AREA,
             LONGITUD_MAXIMA_TOTAL - telefono.Length
         );
-        
-        if (maxLengthCodigoArea < LONGITUD_MINIMA_CODIGO_AREA) 
+
+        if (maxLengthCodigoArea < LONGITUD_MINIMA_CODIGO_AREA)
             maxLengthCodigoArea = LONGITUD_MINIMA_CODIGO_AREA;
 
         if (codigoArea.Length > maxLengthCodigoArea)
@@ -297,7 +295,7 @@
     private void OnConfirmarCodigoAreaInput(ChangeEventArgs e)
     {
         string valor = e.Value?.ToString() ?? "";
-        
+
         // Eliminar cualquier carácter que no sea número
         valor = SoloNumerosRegex.Replace(valor, "");
 
@@ -313,8 +311,8 @@
             LONGITUD_MAXIMA_CODIGO_AREA,
             LONGITUD_MAXIMA_TOTAL - confirmarTelefono.Length
         );
-        
-        if (maxPermitidoCodigoArea < LONGITUD_MINIMA_CODIGO_AREA) 
+
+        if (maxPermitidoCodigoArea < LONGITUD_MINIMA_CODIGO_AREA)
             maxPermitidoCodigoArea = LONGITUD_MINIMA_CODIGO_AREA;
 
         if (valor.Length > maxPermitidoCodigoArea)
@@ -334,7 +332,7 @@
     private void OnConfirmarTelefonoInput(ChangeEventArgs e)
     {
         string valor = e.Value?.ToString() ?? "";
-        
+
         // Eliminar cualquier carácter que no sea número
         valor = SoloNumerosRegex.Replace(valor, "");
 
@@ -350,7 +348,7 @@
             LONGITUD_MAXIMA_TELEFONO,
             LONGITUD_MAXIMA_TOTAL - confirmarCodigoArea.Length
         );
-        
+
         if (valor.Length > maxPermitidoTelefono)
         {
             valor = valor.Substring(0, maxPermitidoTelefono);
@@ -401,32 +399,32 @@
     private bool ValidarFormulario()
     {
         // Validar código de área (entre 2 y 4 dígitos)
-        if (string.IsNullOrWhiteSpace(codigoArea) || 
-            codigoArea.Length < LONGITUD_MINIMA_CODIGO_AREA || 
+        if (string.IsNullOrWhiteSpace(codigoArea) ||
+            codigoArea.Length < LONGITUD_MINIMA_CODIGO_AREA ||
             codigoArea.Length > LONGITUD_MAXIMA_CODIGO_AREA)
         {
             return false;
         }
 
         // Validar teléfono (entre 6 y 8 dígitos)
-        if (string.IsNullOrWhiteSpace(telefono) || 
-            telefono.Length < LONGITUD_MINIMA_TELEFONO || 
+        if (string.IsNullOrWhiteSpace(telefono) ||
+            telefono.Length < LONGITUD_MINIMA_TELEFONO ||
             telefono.Length > LONGITUD_MAXIMA_TELEFONO)
         {
             return false;
         }
 
         // Validar confirmación de código de área
-        if (string.IsNullOrWhiteSpace(confirmarCodigoArea) || 
-            confirmarCodigoArea.Length < LONGITUD_MINIMA_CODIGO_AREA || 
+        if (string.IsNullOrWhiteSpace(confirmarCodigoArea) ||
+            confirmarCodigoArea.Length < LONGITUD_MINIMA_CODIGO_AREA ||
             confirmarCodigoArea.Length > LONGITUD_MAXIMA_CODIGO_AREA)
         {
             return false;
         }
 
         // Validar confirmación de teléfono
-        if (string.IsNullOrWhiteSpace(confirmarTelefono) || 
-            confirmarTelefono.Length < LONGITUD_MINIMA_TELEFONO || 
+        if (string.IsNullOrWhiteSpace(confirmarTelefono) ||
+            confirmarTelefono.Length < LONGITUD_MINIMA_TELEFONO ||
             confirmarTelefono.Length > LONGITUD_MAXIMA_TELEFONO)
         {
             return false;
@@ -445,7 +443,7 @@
         }
 
         // Validar que no haya errores
-        if (errorCodigoArea || errorTelefono || errorConfirmarCodigoArea || 
+        if (errorCodigoArea || errorTelefono || errorConfirmarCodigoArea ||
             errorConfirmarTelefono || errorCoincidenciaCodigoArea || errorCoincidenciaTelefono)
         {
             return false;
