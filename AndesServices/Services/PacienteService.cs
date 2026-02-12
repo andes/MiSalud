@@ -1,11 +1,6 @@
 ﻿using AndesServices.Entities;
 using AndesServices.Interfaces;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Net.Http;
-using System.Reflection;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AndesServices.Services
 {
@@ -87,65 +82,120 @@ namespace AndesServices.Services
         }
 
         // Modifica datos personales de un Paciente
-        //public async Task<Paciente> ModificarDatos(string token, string idPaciente, string nombreAutopercibido, string genero, Direccion domicilio, Contacto contacto)
-        //{
-        //    string url = GetServiciosBaseUrl() + "/modules/mobileApp/pacientes/idPaciente";
-        // //“genero”: 'mujer', 'mujer trans', 'varon', 'varon trans', 'no binario', 'travesti', 'masculinidad trans', 'femenino', 'masculino', 'otro'
-        //    try
-        //    {
-        //        using (HttpClient client = _httpClientFactory.CreateClient())
-        //        {
-        //            client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
+        public async Task<Paciente> ModificarDatos(string token, string idPaciente, Paciente paciente)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new ArgumentException("Token no proporcionado.");
+            }
 
-        //            Paciente pacienteModificado = await ObtenerPacientePorIdAsync(token, idPaciente);
-        //            {
-        //                pacienteModificado.nombreCorrectoReportado = nombreAutopercibido;
-        //                pacienteModificado.genero = genero;
+            if (paciente == null)
+            {
+                throw new ArgumentNullException(nameof(paciente));
+            }
 
-        //                if (pacienteModificado.direccion != null)
-        //                {
-        //                    pacienteModificado.direccion.RemoveAll(d => d.id == domicilio.id);
-        //                }
-        //                pacienteModificado.direccion.Add(domicilio);
+            // Validar género si está presente
+            if (!string.IsNullOrEmpty(paciente.genero))
+            {
+                var generosValidos = new List<string> { "mujer", "mujer trans", "varon", "varon trans", "no binario", "travesti", "masculinidad trans", "femenino", "masculino", "otro" };
+                if (!generosValidos.Contains(paciente.genero))
+                {
+                    throw new ArgumentException("Genero no permitido.");
+                }
+            }
+            
+            try
+            {
+                HttpClient client = _httpClientFactory.CreateClient("Andes");
+                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
-        //                pacienteModificado.contacto.Where(c=> c.id == contacto.id);
-                        
-        //                pacienteModificado.contactoTelefono = contactoTelefono;
-        //            }
+                // Obtener el paciente original del servidor para comparar cambios
+                Paciente pacienteOriginal = await ObtenerPacientePorIdAsync(token, idPaciente);
+                if (pacienteOriginal == null)
+                {
+                    throw new Exception("No se pudo obtener el paciente original del servidor.");
+                }
 
-        //            var request = new HttpRequestMessage
-        //            {
-        //                Method = HttpMethod.Patch,
-        //                RequestUri = new Uri(url),
-        //                Content = new StringContent(JsonConvert.SerializeObject(new
-        //                {
-        //                    idAgenda,
-        //                    idBloque,
-        //                    idTurno,
-        //                    paciente,
-        //                    tipoPrestacion,
-        //                    tipoTurno,
-        //                    emitidoPor,
-        //                    nota,
-        //                    motivoConsulta
-        //                }), System.Text.Encoding.UTF8, "application/json")
-        //            };
+                // Obtener fecha/hora actual para ultimaActualizacion
+                DateTime fechaActual = DateTime.UtcNow;
 
-        //            using (HttpResponseMessage res = await client.SendAsync(request))
-        //            {
-        //                if (res.IsSuccessStatusCode)
-        //                {
-        //                    Console.WriteLine("Turno confirmado.");
-        //                    return true;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (Exception exception)
-        //    {
-        //        Console.WriteLine($"Error al registrar el turno: {exception.Message}");
-        //    }
-        //    return false; // Ensure a boolean is returned in case of failure
-        //}
+                // Actualizar ultimaActualizacion en contactos
+                if (paciente.contacto != null)
+                {
+                    foreach (var c in paciente.contacto)
+                    {
+                        var contactoOriginal = pacienteOriginal?.contacto?.FirstOrDefault(co => co.id == c.id);
+                        if (contactoOriginal != null)
+                        {
+                            if (contactoOriginal.valor != c.valor || contactoOriginal.tipo != c.tipo)
+                            {
+                                c.ultimaActualizacion = fechaActual;
+                            }
+                        }
+                    }
+                }
+
+                // Actualizar ultimaActualizacion en direcciones y obtener georeferencia
+                if (paciente.direccion != null)
+                {
+                    foreach (var d in paciente.direccion)
+                    {
+                        var direccionOriginal = pacienteOriginal?.direccion?.FirstOrDefault(di => di.id == d.id);
+                        if (direccionOriginal != null)
+                        {
+                            if (direccionOriginal.valor != d.valor ||
+                                direccionOriginal.codigoPostal != d.codigoPostal ||
+                                direccionOriginal.ranking != d.ranking ||
+                                direccionOriginal.ubicacion?.pais?.nombre != d.ubicacion?.pais?.nombre ||
+                                direccionOriginal.ubicacion?.provincia?.nombre != d.ubicacion?.provincia?.nombre ||
+                                direccionOriginal.ubicacion?.localidad?.nombre != d.ubicacion?.localidad?.nombre)
+                            {
+                                d.ultimaActualizacion = fechaActual;
+
+                                // Obtener georeferencia de la dirección actualizada
+                                if (!string.IsNullOrEmpty(d.valor) && 
+                                    d.ubicacion?.localidad?.nombre != null)
+                                {
+                                    string direccionCompleta = $"{d.valor}, {d.ubicacion.localidad.nombre}";
+                                    userLocation georeferencia = await ObtenerGeoreferenciaPaciente(direccionCompleta);
+                                        
+                                    if (georeferencia != null)
+                                    {
+                                        d.geoReferencia = new List<double> { georeferencia.lat, georeferencia.lng };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Serializar el objeto paciente completo
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Patch,
+                    RequestUri = new Uri($"modules/mobileApp/pacientes/{idPaciente}", UriKind.Relative),
+                    Content = new StringContent(JsonConvert.SerializeObject(paciente), System.Text.Encoding.UTF8, "application/json")
+                };
+
+                using (HttpResponseMessage res = await client.SendAsync(request))
+                {
+                    res.EnsureSuccessStatusCode();
+
+                    Paciente pacienteActualizado = await res.Content.ReadFromJsonAsync<Paciente>();
+
+                    if (pacienteActualizado == null)
+                    {
+                        throw new Exception("No se pudo obtener la respuesta del servidor.");
+                    }
+
+                    return pacienteActualizado;
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Error al modificar los datos del paciente: {exception.Message}");
+                throw;
+            }
+        }
     }
 }

@@ -11,7 +11,9 @@
                     @(userName ?? "Usuario")
                 </button>
                 <ul class="dropdown-menu">
-                    @* <li><a href="#" class="dropdown-item"><Icon Name="mis-datos" Fill="#000" AriaLabel="Mis datos" /> Mis datos</a></li> *@
+                    <li>
+                        <a href="/mis-datos" class="dropdown-item"><Icon Name="mis-datos" Fill="#000" AriaLabel="Mis datos" /> Mis datos</a>
+                    </li>
                     <li>
                         <form action="/logout" method="post">
                             <button type="submit" class="dropdown-item"><Icon Name="logout" Fill="#000" AriaLabel="Cerrar sesión" /> Cerrar Sesión</button>

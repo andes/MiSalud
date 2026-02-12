@@ -67,6 +67,7 @@ builder.Services.AddScoped<IVacunacion, VacunacionService>();
 builder.Services.AddScoped<IMisRecetas, MisRecetasService>();
 builder.Services.AddScoped<IOrganizacion, OrganizacionService>();
 builder.Services.AddScoped<IMisTurnos, MisTurnosService>();
+builder.Services.AddScoped<ITerritorio, TerritorioService>();
 
 builder.Services.AddHttpClient("API", client =>
 {
