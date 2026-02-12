@@ -3,9 +3,9 @@
 
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using AndesServices.Entities.ViewModels
 @using AndesServices.Entities
-@using AndesServices.Interfaces
 @using SaludPortal.Web.Components.Shared
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -60,31 +60,38 @@
     protected override async Task OnAuthenticatedInitializedAsync()
     {
         _spinnerService.Show();
-        Model.LstLocalidad = await _farmaciasTurnoService.ObtenerLocalidadesAsync();
+        lstLocalidades = await _farmaciasTurnoService.ObtenerLocalidadesAsync();
+        Model.LstLocalidad = (lstLocalidades != null && lstLocalidades.Count() > 0 ? lstLocalidades : null);
 
         // obtener la localidad del paciente
         Paciente paciente = await _pacienteService.ObtenerPacientePorIdAsync(BackendToken, PacienteId);
         string localidadPaciente = "";
         if (paciente != null && paciente.direccion != null)
         {
-            if (paciente.direccion[1] != null)
+            if (paciente.direccion.Count() >= 2)
             {
-                localidadPaciente = paciente.direccion[1].ubicacion.localidad.nombre;
+                if (paciente.direccion[1] != null)
+                {
+                    localidadPaciente = paciente.direccion[1].ubicacion.localidad.nombre;
+                }
             }
             else
             {
-                localidadPaciente = paciente.direccion[0].ubicacion.localidad.nombre;
+                if (paciente.direccion.Count() > 0)
+                    localidadPaciente = paciente.direccion[0].ubicacion.localidad.nombre;
             }
         }
 
         string localidadId = null;
-        if (Model.LstLocalidad.Where(loc => loc.nombre.ToLower().Trim() == localidadPaciente.ToLower().Trim()) != null && localidadPaciente!= "")
+        if (Model.LstLocalidad != null)
         {
-            localidadId = Model.LstLocalidad.Where(loc => loc.nombre.ToLower().Trim() == localidadPaciente.ToLower().Trim()).FirstOrDefault().localidadId;
+            if (Model.LstLocalidad.Where(loc => loc.nombre.ToLower().Trim() == localidadPaciente.ToLower().Trim()) != null && localidadPaciente != "")
+            {
+                localidadId = Model.LstLocalidad.Where(loc => loc.nombre.ToLower().Trim() == localidadPaciente.ToLower().Trim()).FirstOrDefault().localidadId;
+            }
+
+            Model.LstFarmaciasTurno = await _farmaciasTurnoService.ObtenerFarmaciasTurnoAsync(localidadId, DateTime.Now.ToString("yyyy-MM-dd"), DateTime.Now.ToString("yyyy-MM-dd"));
         }
-
-        Model.LstFarmaciasTurno = await _farmaciasTurnoService.ObtenerFarmaciasTurnoAsync(localidadId, DateTime.Now.ToString("yyyy-MM-dd"), DateTime.Now.ToString("yyyy-MM-dd"));
-
         _spinnerService.Hide();
     }
 
