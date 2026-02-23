@@ -7,5 +7,6 @@ namespace AndesServices.Interfaces
         Task<Paciente> ObtenerPacientePorIdAsync(string token, string idPaciente);
         Task<userLocation> ObtenerGeoreferenciaPaciente(string direccion);
         Task<Paciente> ModificarDatos(string token, string idPaciente, Paciente paciente);
+        Direccion? ObtenerDireccionPrioritaria(Paciente? paciente);
     }
 }

@@ -1,10 +1,10 @@
 ﻿@page "/turnosnuevo"
 
-@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using System.Security.Claims
 @using AndesServices.Entities
 
@@ -165,17 +165,7 @@ else
             _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
 
             // Verifico que domicilio utilizar para referencia a las organizaciones
-            if (_unPaciente != null)
-            {
-                if (_unPaciente?.direccion?.Count() > 1)
-                {
-                    _direccionGeoreferencia = _unPaciente?.direccion[1];
-                }
-                else
-                {
-                    if (_unPaciente?.direccion?.Count() == 1) _direccionGeoreferencia = _unPaciente?.direccion[0];
-                }
-            }
+            _direccionGeoreferencia = _unPacienteService.ObtenerDireccionPrioritaria(_unPaciente);
             if (_direccionGeoreferencia == null) return;
 
             if (_direccionGeoreferencia.valor == null || _direccionGeoreferencia.ubicacion.localidad == null || _direccionGeoreferencia.ubicacion.provincia == null)

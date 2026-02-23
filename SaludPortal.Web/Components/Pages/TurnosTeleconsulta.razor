@@ -193,7 +193,7 @@
                 // Obtener información del turno
                 var efectorNombre = turnoFuturo.organizacion?.nombre ?? "No especificado";
                 var fechaTurno = DateTimeHelper.ToArgentinaTime(turnoFuturo.horaInicio).Date.ToString("dd/MM/yyyy");
-                
+
                 // Mostrar modal de error
                 var errorOptions = new ModalOptions()
                 {
@@ -263,17 +263,8 @@
             _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
 
             // Verifico que domicilio utilizar para referencia a las organizaciones
-            if (_unPaciente != null)
-            {
-                if (_unPaciente?.direccion?.Count() > 1)
-                {
-                    _direccionGeoreferencia = _unPaciente?.direccion[1];
-                }
-                else
-                {
-                    if (_unPaciente?.direccion?.Count() == 1) _direccionGeoreferencia = _unPaciente?.direccion[0];
-                }
-            }
+            _direccionGeoreferencia = _unPacienteService.ObtenerDireccionPrioritaria(_unPaciente);
+            
             if (_direccionGeoreferencia == null) return;
 
             if (_direccionGeoreferencia.valor == null || _direccionGeoreferencia.ubicacion.localidad == null || _direccionGeoreferencia.ubicacion.provincia == null)

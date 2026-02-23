@@ -65,22 +65,7 @@
 
         // obtener la localidad del paciente
         Paciente paciente = await _pacienteService.ObtenerPacientePorIdAsync(BackendToken, PacienteId);
-        string localidadPaciente = "";
-        if (paciente != null && paciente.direccion != null)
-        {
-            if (paciente.direccion.Count() >= 2)
-            {
-                if (paciente.direccion[1] != null)
-                {
-                    localidadPaciente = paciente.direccion[1].ubicacion.localidad.nombre;
-                }
-            }
-            else
-            {
-                if (paciente.direccion.Count() > 0)
-                    localidadPaciente = paciente.direccion[0].ubicacion.localidad.nombre;
-            }
-        }
+        string localidadPaciente = _pacienteService.ObtenerDireccionPrioritaria(paciente)?.ubicacion?.localidad?.nombre ?? "";
 
         string localidadId = null;
         if (Model.LstLocalidad != null)

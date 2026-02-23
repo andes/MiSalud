@@ -1,175 +1,225 @@
-﻿@page "/mis-datos"
-@page "/misdatos"
+@page "/mis-datos"
+@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
-@using SaludPortal.Web.Components.Icons
-@using SaludPortal.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Forms
 @using SaludPortal.Web.Services
 @using AndesServices.Interfaces
 @using AndesServices.Entities
-@using Newtonsoft.Json
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Models
 
 @inherits AuthenticatedComponentBase
 
-@inject BlazorSpinner.SpinnerService _spinnerService
-@inject IPaciente _pacienteService
-@inject ITerritorio _territorioService
-
 <PageTitle>Mis Datos</PageTitle>
 
-<div class="mis-datos-container p-4">
-    @if (_paciente != null)
-    {
-        <div class="row g-4">
-            <div class="col-12 col-lg-6">
-                <div class="section-container h-100">
-                    <div class="section-header d-flex align-items-center gap-3 p-3">
-                        <Icon Name="mis-datos" Size="42" />
+<h1>Mis Datos</h1>
+<hr />
+
+@if (paciente == null)
+{
+    <p>Cargando datos...</p>
+}
+else
+{
+    <EditForm Model="@formModel" OnValidSubmit="@GuardarDatos">
+        <DataAnnotationsValidator />
+
+        @* Secciones: Datos Personales y Domicilio en la misma fila *@
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4 mb-md-0">
+                @* Sección: Datos Personales *@
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center gap-3 px-4 py-3">
+                        <div class="header-icon d-flex align-items-center justify-content-center">
+                            <i class="fa fa-user-circle" aria-hidden="true"></i>
+                        </div>
                         <div class="flex-grow-1">
-                            <h2 class="section-title mb-0 fw-bold">Datos Personales</h2>
-                            <div class="text-white-100 small">
-                                @(_paciente.apellido?.Trim() + ", " + _paciente.nombre?.Trim())
-                            </div>
+                            <h2 class="m-0 fs-5 fw-medium">Datos Personales</h2>
+                            @if (!string.IsNullOrEmpty(paciente.nombreCompleto))
+                            {
+                                <p class="m-0 mt-1" style="font-size:0.85rem">@paciente.apellido, @paciente.nombre</p>
+                            }
                         </div>
                     </div>
-                    <div class="section-content p-4">
+                    <div class="card-body">
                         <div class="mb-3">
-                            <label for="alias" class="form-label fw-semibold">Nombre Autopercibido</label>
-                            <InputText id="alias" class="form-control" @bind-Value="_paciente.alias" placeholder="¿Cómo querés ser llamado por tu equipo médico?" />
+                            <label for="alias" class="form-label">Nombre autopercibido (alias)</label>
+                            <InputText id="alias" class="form-control" @bind-Value="formModel.Alias" placeholder="¿Cómo querés ser llamado por tu equipo médico?" disabled="@(!modoEdicion)" />
+                            <ValidationMessage For="@(() => formModel.Alias)" />
                         </div>
+
                         <div class="mb-3">
-                            <label for="genero" class="form-label fw-semibold">Género</label>
-                            <InputSelect id="genero" class="form-select" @bind-Value="_paciente.genero">
-                                <option value="">Seleccione un género</option>
-                                @foreach (var genero in _generosPermitidos)
-                                {
-                                    <option value="@genero">@genero</option>
-                                }
+                            <label for="genero" class="form-label">Género <span class="text-danger">*</span></label>
+                            <InputSelect id="genero" class="form-select" @bind-Value="formModel.Genero" disabled="@(!modoEdicion)">
+                                <option value="">-- Seleccione un género --</option>
+                                <option value="mujer">Mujer</option>
+                                <option value="mujer trans">Mujer trans</option>
+                                <option value="varon">Varón</option>
+                                <option value="varon trans">Varón trans</option>
+                                <option value="no binario">No binario</option>
+                                <option value="travesti">Travesti</option>
+                                <option value="masculinidad trans">Masculinidad trans</option>
+                                <option value="femenino">Femenino</option>
+                                <option value="masculino">Masculino</option>
+                                <option value="otro">Otro</option>
                             </InputSelect>
+                            <ValidationMessage For="@(() => formModel.Genero)" />
                         </div>
-                        @if (!string.IsNullOrEmpty(_paciente.documento))
-                        {
-                            <div class="mb-3">
-                                <label for="documento" class="form-label fw-semibold">Documento</label>
-                                <InputText id="documento" class="form-control" @bind-Value="_paciente.documento" readonly aria-readonly="true" />
-                            </div>
-                        }
-                        @if (_paciente.fechaNacimiento.HasValue)
-                        {
-                            <div class="mb-3">
-                                <label for="fechaNacimiento" class="form-label fw-semibold">Fecha de nacimiento</label>
-                                <InputDate id="fechaNacimiento" class="form-control" @bind-Value="_paciente.fechaNacimiento" readonly aria-readonly="true" />
-                            </div>
-                        }
+
+                        <div class="mb-3">
+                            <label for="documento" class="form-label">Documento</label>
+                            <input id="documento" class="form-control" value="@paciente.documento" disabled />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
+                            <input id="fechaNacimiento" class="form-control" value="@(paciente.fechaNacimiento?.ToString("dd/MM/yyyy") ?? "")" disabled />
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-12 col-lg-6">
-                @if (_direccionSeleccionada != null)
-                {
-                    <div class="section-container">
-                        <div class="section-header d-flex align-items-center gap-3 p-3">
-                            <i class="bi bi-house-door-fill" aria-hidden="true"></i>
-                            <h2 class="section-title mb-0 fw-bold flex-grow-1">Domicilio</h2>
+            <div class="col-lg-6">
+                @* Sección: Domicilio *@
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center gap-3 px-4 py-3">
+                        <div class="header-icon d-flex align-items-center justify-content-center">
+                            <i class="fa fa-home" aria-hidden="true"></i>
                         </div>
-                        <div class="section-content p-4">
-                            <div class="mb-3">
-                                <label for="provincia" class="form-label fw-semibold">Provincia</label>
-                                <InputSelect id="provincia" class="form-select" @bind-Value="_provinciaSeleccionadaId" @bind-Value:after="OnProvinciaChanged" aria-describedby="@(!string.IsNullOrEmpty(_errorProvincia) ? "error-provincia" : null)">
-                                    <option value="">Seleccione una provincia</option>
-                                    @foreach (var provincia in _provincias)
-                                    {
-                                        <option value="@(provincia.id ?? provincia._id)">@provincia.nombre</option>
-                                    }
-                                </InputSelect>
-                                @if (!string.IsNullOrEmpty(_errorProvincia))
+                        <div class="flex-grow-1">
+                            <h2 class="m-0 fs-5 fw-medium">Domicilio</h2>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="provincia" class="form-label">Provincia <span class="text-danger">*</span></label>
+                            <InputSelect id="provincia" class="form-select" @bind-Value="formModel.ProvinciaId" @bind-Value:after="OnProvinciaChanged" disabled="@(!modoEdicion)">
+                                <option value="">-- Seleccione una provincia --</option>
+                                @if (provincias != null)
                                 {
-                                    <div id="error-provincia" class="text-danger small mt-1" role="alert" aria-live="polite">@_errorProvincia</div>
-                                }
-                            </div>
-                            <div class="mb-3">
-                                <label for="localidad" class="form-label fw-semibold">Localidad</label>
-                                <InputSelect id="localidad" class="form-select" @bind-Value="_localidadSeleccionadaId" @bind-Value:after="OnLocalidadChanged" disabled="@(_localidades == null || !_localidades.Any() || _cargandoLocalidades)" aria-describedby="@(_cargandoLocalidades ? "loading-localidades" : (!string.IsNullOrEmpty(_errorLocalidad) ? "error-localidad" : null))">
-                                    <option value="">Seleccione una localidad</option>
-                                    @if (_localidades != null)
+                                    @foreach (var provincia in provincias)
                                     {
-                                        @foreach (var localidad in _localidades)
+                                        <option value="@provincia.id">@provincia.nombre</option>
+                                    }
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => formModel.ProvinciaId)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="localidad" class="form-label">Localidad <span class="text-danger">*</span></label>
+                            @if (cargandoLocalidades)
+                            {
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                    <span>Cargando localidades...</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <InputSelect id="localidad" class="form-select" @bind-Value="formModel.LocalidadId" disabled="@(!modoEdicion || cargandoLocalidades)">
+                                    <option value="">-- Seleccione una localidad --</option>
+                                    @if (localidades != null)
+                                    {
+                                        @foreach (var localidad in localidades)
                                         {
-                                            <option value="@(localidad.id ?? localidad._id)">@localidad.nombre</option>
+                                            <option value="@localidad._id">@localidad.nombre</option>
                                         }
                                     }
                                 </InputSelect>
-                                @if (_cargandoLocalidades)
-                                {
-                                    <div id="loading-localidades" class="text-muted small mt-1 d-flex align-items-center gap-2" aria-live="polite">
-                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                        <span>Cargando localidades...</span>
-                                    </div>
-                                }
-                                @if (!string.IsNullOrEmpty(_errorLocalidad))
-                                {
-                                    <div id="error-localidad" class="text-danger small mt-1" role="alert" aria-live="polite">@_errorLocalidad</div>
-                                }
-                            </div>
-                            <div class="mb-3">
-                                <label for="direccion" class="form-label fw-semibold">Dirección</label>
-                                <InputText id="direccion" class="form-control" @bind-Value="_direccionSeleccionada.valor" />
-                            </div>
-                            <div class="mb-3">
-                                <label for="codigopostal" class="form-label fw-semibold">Código Postal</label>
-                                <InputText id="codigopostal" class="form-control" @bind-Value="_direccionSeleccionada.codigoPostal" @bind-Value:after="OnCodigoPostalChanged" aria-describedby="@(!string.IsNullOrEmpty(_errorCodigoPostal) ? "error-codigopostal" : null)" />
-                                @if (!string.IsNullOrEmpty(_errorCodigoPostal))
-                                {
-                                    <div id="error-codigopostal" class="text-danger small mt-1" role="alert" aria-live="polite">@_errorCodigoPostal</div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <div class="row g-4 mt-2">
-            <!-- Sección 3: Contacto -->
-            @if (_paciente.contacto != null && _paciente.contacto.Any())
-            {
-                var email = _paciente.contacto.FirstOrDefault(c => c.tipo == "email");
-                var celular = _paciente.contacto.FirstOrDefault(c => c.tipo == "celular");
-
-                <div class="col">
-                    <div class="section-container">
-                        <div class="section-header d-flex align-items-center gap-3 p-3">
-                            <i class="bi bi-phone-fill" aria-hidden="true"></i>
-                            <h2 class="section-title mb-0 fw-bold flex-grow-1">Contacto</h2>
-                        </div>
-                        <div class="section-content p-4">
-                            @if (email != null)
-                            {
-                                var contactoId = $"contacto-{email.tipo}";
-                                <div class="mb-3">
-                                    <label for="@contactoId" class="form-label fw-semibold text-capitalize">@email.tipo</label>
-                                    <InputText id="@contactoId" class="form-control" @bind-Value="email.valor" />
-                                </div>
+                                <ValidationMessage For="@(() => formModel.LocalidadId)" />
                             }
-                            @if (celular != null)
-                            {
-                                var contactoId = $"contacto-{celular.tipo}";
-                                <div class="mb-3">
-                                    <label for="@contactoId" class="form-label fw-semibold text-capitalize">@celular.tipo</label>
-                                    <InputText id="@contactoId" class="form-control" @bind-Value="celular.valor" />
-                                </div>
-                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
+                            <InputText id="direccion" class="form-control" @bind-Value="formModel.Direccion" disabled="@(!modoEdicion)" />
+                            <ValidationMessage For="@(() => formModel.Direccion)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="codigoPostal" class="form-label">Código postal <span class="text-danger">*</span></label>
+                            <input type="text"
+                                   id="codigoPostal"
+                                   inputmode="numeric"
+                                   class="form-control"
+                                   value="@formModel.CodigoPostal"
+                                   @oninput="OnCodigoPostalInput"
+                                   onkeydown="numericInput.preventNonNumeric(event)"
+                                   maxlength="4"
+                                   disabled="@(!modoEdicion)"
+                                   aria-label="Código postal" />
+                            <ValidationMessage For="@(() => formModel.CodigoPostal)" />
+                            <small class="form-text text-muted">Debe tener exactamente 4 dígitos</small>
                         </div>
                     </div>
                 </div>
-            }
+            </div>
         </div>
 
-        <!-- Botones de acción -->
-        <div class="d-flex gap-2 justify-content-end mt-4">
-            <button class="btn btn-primary px-5" type="button" @onclick="OnActualizarDatosClick" aria-label="Actualizar datos del paciente">Actualizar datos</button>
-            <button class="btn btn-danger px-5" type="button" @onclick="OnCancelarClick" aria-label="Cancelar cambios y restaurar datos originales">Cancelar</button>
+        @* Sección: Contacto *@
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center gap-3 px-4 py-3">
+                <div class="header-icon d-flex align-items-center justify-content-center">
+                    <i class="fa fa-phone" aria-hidden="true"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h2 class="m-0 fs-5 fw-medium">Contacto</h2>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <InputText id="email" type="email" class="form-control" @bind-Value="formModel.Email" disabled="@(!modoEdicion)" />
+                    <ValidationMessage For="@(() => formModel.Email)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="celular" class="form-label">Celular <span class="text-danger">*</span></label>
+                    <input type="tel"
+                           id="celular"
+                           inputmode="numeric"
+                           class="form-control @(errorCelular ? "is-invalid" : "")"
+                           placeholder="Ingrese el número de celular (sin 0 inicial, sin 15)"
+                           @bind="CelularValue"
+                           @bind:event="oninput"
+                           onkeydown="numericInput.preventNonNumeric(event)"
+                           maxlength="@LONGITUD_MAXIMA_CELULAR"
+                           disabled="@(!modoEdicion)"
+                           aria-label="Número de celular" />
+                    <small class="form-text text-muted">Máximo 10 dígitos. No puede empezar con 0 ni con 15.</small>
+                </div>
+            </div>
         </div>
-    }
-</div>
+
+        <ValidationSummary class="alert alert-danger ps-5" />
+
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger" role="alert">
+                @mensajeError
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(mensajeExito))
+        {
+            <div class="alert alert-success" role="alert">
+                @mensajeExito
+            </div>
+        }
+
+        @* Botones de acción *@
+        <div class="mb-4 d-flex justify-content-end w-100">
+            @if (!modoEdicion)
+            {
+                <button type="button" class="btn btn-primary" @onclick="ActivarModoEdicion">Modificar</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-secondary me-2" @onclick="CancelarEdicion">Cancelar</button>
+                <button type="submit" class="btn btn-success">Guardar</button>
+            }
+        </div>
+    </EditForm>
+}

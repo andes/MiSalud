@@ -1,502 +1,450 @@
-using AndesServices.Entities;
-using AndesServices.Interfaces;
-using BlazorSpinner;
-using Newtonsoft.Json;
+using Microsoft.AspNetCore.Components;
 using SaludPortal.Web.Components.Shared;
+using AndesServices.Interfaces;
+using AndesServices.Entities;
+using SaludPortal.Web.Models;
+using BlazorSpinner;
+using System.Text.RegularExpressions;
 
-namespace SaludPortal.Web.Components.Pages;
-
-public partial class MisDatos : AuthenticatedComponentBase
+namespace SaludPortal.Web.Components.Pages
 {
-    private Paciente? _paciente = null;
-    private Paciente? _pacienteOriginal = null;
-    private Direccion? _direccionSeleccionada = null;
-    private string? _provinciaSeleccionadaId = null;
-    private string? _localidadSeleccionadaId = null;
-    private List<Provincia> _provincias = new List<Provincia>();
-    private List<Localidad>? _localidades = null;
-    private string? _errorProvincia = null;
-    private string? _errorLocalidad = null;
-    private string? _errorCodigoPostal = null;
-    private bool _cargandoLocalidades = false;
-    
-    private readonly List<string> _generosPermitidos = new List<string>
+    public partial class MisDatos : AuthenticatedComponentBase
     {
-        "mujer",
-        "mujer trans",
-        "varon",
-        "varon trans",
-        "no binario",
-        "travesti",
-        "masculinidad trans",
-        "femenino",
-        "masculino",
-        "otro"
-    };
+        [Inject] private SpinnerService _spinnerService { get; set; } = default!;
+        [Inject] private IPaciente _pacienteService { get; set; } = default!;
+        [Inject] private ITerritorio _territorioService { get; set; } = default!;
 
-    protected override async Task OnAuthenticatedInitializedAsync()
-    {
-        var token = BackendToken;
-        if (string.IsNullOrEmpty(token))
-            return;
+        private Paciente? paciente;
+        private List<Provincia>? provincias;
+        private List<Localidad>? localidades;
+        private bool modoEdicion = false;
+        private bool cargandoLocalidades = false;
+        private string mensajeExito = string.Empty;
+        private string mensajeError = string.Empty;
+        private string? nombreLocalidadPaciente = null; // Para buscar la localidad por nombre después de cargarla
 
-        var pacienteId = PacienteId;
-        if (string.IsNullOrEmpty(pacienteId))
-            return;
+        private MisDatosFormModel formModel = new();
 
-        _spinnerService.Show();
+        // Variables para celular (un solo campo)
+        private string celular = "";
+        private bool errorCelular = false;
+        private const int LONGITUD_MAXIMA_CELULAR = 10;
 
-        try
+        // Expresiones regulares para validación
+        private static readonly Regex SoloNumerosRegex = new Regex(@"[^\d]", RegexOptions.Compiled);
+        private static readonly Regex IniciaConCeroRegex = new Regex(@"^0+", RegexOptions.Compiled);
+        private static readonly Regex IniciaConQuinceRegex = new Regex(@"^15", RegexOptions.Compiled);
+
+        protected override async Task OnAuthenticatedInitializedAsync()
         {
-            // Cargar provincias desde el servicio
-            _provincias = await _territorioService.ObtenerProvinciasAsync(token);
+            var token = BackendToken;
+            if (string.IsNullOrEmpty(token))
+                return;
 
-            // Obtengo el paciente
-            _paciente = await _pacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+            var pacienteId = PacienteId;
+            if (string.IsNullOrEmpty(pacienteId))
+                return;
 
-            // Guardar copia del paciente original para comparación
-            ActualizarPacienteOriginal(_paciente);
-
-            await MostrarYActualizarPaciente(_paciente);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al obtener los datos del paciente: {ex.Message}");
-        }
-        finally
-        {
-            _spinnerService.Hide();
-        }
-    }
-
-    private async Task MostrarYActualizarPaciente(Paciente? paciente)
-    {
-        var json = JsonConvert.SerializeObject(paciente);
-        _paciente = JsonConvert.DeserializeObject<Paciente>(json);
-
-        // Verifico que domicilio utilizar
-        if (_paciente != null)
-        {
-            if (_paciente?.direccion?.Count() > 1)
+            _spinnerService.Show();
+            try
             {
-                _direccionSeleccionada = _paciente?.direccion[1];
-            }
-            else
-            {
-                if (_paciente?.direccion?.Count() == 1) 
-                    _direccionSeleccionada = _paciente?.direccion[0];
-            }
-            
-            // Inicializar provincia seleccionada si existe
-            if (_direccionSeleccionada?.ubicacion?.provincia != null)
-            {
-                // Buscar la provincia en la lista cargada por id o nombre
-                var provinciaExistente = _provincias.FirstOrDefault(p => 
-                    p.id == _direccionSeleccionada.ubicacion.provincia.id ||
-                    p._id == _direccionSeleccionada.ubicacion.provincia._id ||
-                    p.nombre == _direccionSeleccionada.ubicacion.provincia.nombre);
-                
-                if (provinciaExistente != null)
+                // Cargar paciente
+                paciente = await _pacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+
+                // Cargar provincias
+                provincias = await _territorioService.ObtenerProvinciasAsync(token);
+
+                // Inicializar formulario con datos del paciente
+                if (paciente != null)
                 {
-                    _provinciaSeleccionadaId = provinciaExistente.id ?? provinciaExistente._id;
-                    
-                    // Actualizar la provincia con todos los IDs desde la lista cargada
-                    _direccionSeleccionada.ubicacion.provincia.id = provinciaExistente.id;
-                    _direccionSeleccionada.ubicacion.provincia._id = provinciaExistente._id;
-                    _direccionSeleccionada.ubicacion.provincia.nombre = provinciaExistente.nombre;
-                    
-                    // Cargar localidades de la provincia seleccionada
-                    await CargarLocalidadesAsync(_provinciaSeleccionadaId);
-                    
-                    // Inicializar localidad seleccionada si existe
-                    if (_direccionSeleccionada.ubicacion.localidad != null && _localidades != null)
+                    InicializarFormulario();
+
+                    // Si hay provincia seleccionada, cargar localidades
+                    if (!string.IsNullOrEmpty(formModel.ProvinciaId))
                     {
-                        var localidadExistente = _localidades.FirstOrDefault(l =>
-                            l.id == _direccionSeleccionada.ubicacion.localidad.id ||
-                            l._id == _direccionSeleccionada.ubicacion.localidad._id ||
-                            l.nombre == _direccionSeleccionada.ubicacion.localidad.nombre);
-                        
-                        if (localidadExistente != null)
+                        await CargarLocalidadesIniciales();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                mensajeError = $"Error al cargar los datos: {ex.Message}";
+            }
+            finally
+            {
+                _spinnerService.Hide();
+            }
+        }
+
+        private void InicializarFormulario()
+        {
+            if (paciente == null) return;
+
+            // Datos personales
+            formModel.Alias = paciente.alias ?? string.Empty;
+            formModel.Genero = paciente.genero ?? string.Empty;
+
+            // Domicilio
+            var direccionPrincipal = _pacienteService.ObtenerDireccionPrioritaria(paciente);
+            if (direccionPrincipal != null)
+            {
+                formModel.Direccion = direccionPrincipal.valor ?? string.Empty;
+                formModel.CodigoPostal = direccionPrincipal.codigoPostal ?? string.Empty;
+
+                // Buscar provincia por nombre
+                if (direccionPrincipal.ubicacion?.provincia != null && !string.IsNullOrEmpty(direccionPrincipal.ubicacion.provincia.nombre))
+                {
+                    var provinciaEncontrada = provincias?.FirstOrDefault(p =>
+                        p.nombre?.Equals(direccionPrincipal.ubicacion.provincia.nombre, StringComparison.OrdinalIgnoreCase) == true);
+                    if (provinciaEncontrada != null)
+                    {
+                        formModel.ProvinciaId = provinciaEncontrada.id ?? string.Empty;
+                    }
+                }
+
+                // Guardar el nombre de la localidad para buscarla después cuando se carguen las localidades
+                if (direccionPrincipal.ubicacion?.localidad != null && !string.IsNullOrEmpty(direccionPrincipal.ubicacion.localidad.nombre))
+                {
+                    nombreLocalidadPaciente = direccionPrincipal.ubicacion.localidad.nombre;
+                }
+            }
+
+            // Contacto
+            if (paciente.contacto != null)
+            {
+                var emailContacto = paciente.contacto.FirstOrDefault(c => c.tipo == "email");
+                if (emailContacto != null)
+                {
+                    formModel.Email = emailContacto.valor ?? string.Empty;
+                }
+
+                var celularContacto = paciente.contacto.FirstOrDefault(c => c.tipo == "celular");
+                if (celularContacto != null && !string.IsNullOrWhiteSpace(celularContacto.valor))
+                {
+                    // Normalizar: eliminar caracteres no numéricos, eliminar 0 inicial y prefijo 15
+                    var celularNormalizado = SoloNumerosRegex.Replace(celularContacto.valor, "");
+                    celularNormalizado = IniciaConCeroRegex.Replace(celularNormalizado, "");
+                    celularNormalizado = IniciaConQuinceRegex.Replace(celularNormalizado, "");
+
+                    celular = celularNormalizado;
+                }
+            }
+        }
+
+        private async Task OnProvinciaChanged()
+        {
+            if (string.IsNullOrEmpty(formModel.ProvinciaId))
+            {
+                localidades = null;
+                formModel.LocalidadId = string.Empty;
+                return;
+            }
+
+            cargandoLocalidades = true;
+            StateHasChanged();
+
+            try
+            {
+                var token = BackendToken;
+                if (!string.IsNullOrEmpty(token))
+                {
+                    localidades = await _territorioService.ObtenerLocalidadesPorProvinciaAsync(token, formModel.ProvinciaId);
+                    formModel.LocalidadId = string.Empty; // Reset localidad al cambiar provincia
+                }
+            }
+            catch (Exception ex)
+            {
+                mensajeError = $"Error al cargar las localidades: {ex.Message}";
+            }
+            finally
+            {
+                cargandoLocalidades = false;
+                StateHasChanged();
+            }
+        }
+
+        private async Task CargarLocalidadesIniciales()
+        {
+            if (string.IsNullOrEmpty(formModel.ProvinciaId))
+                return;
+
+            cargandoLocalidades = true;
+            try
+            {
+                var token = BackendToken;
+                if (!string.IsNullOrEmpty(token))
+                {
+                    localidades = await _territorioService.ObtenerLocalidadesPorProvinciaAsync(token, formModel.ProvinciaId);
+
+                    // Buscar la localidad por nombre si tenemos el nombre guardado
+                    if (localidades != null && !string.IsNullOrEmpty(nombreLocalidadPaciente))
+                    {
+                        var localidadEncontrada = localidades.FirstOrDefault(l =>
+                            l.nombre?.Equals(nombreLocalidadPaciente, StringComparison.OrdinalIgnoreCase) == true);
+                        if (localidadEncontrada != null)
                         {
-                            _localidadSeleccionadaId = localidadExistente.id ?? localidadExistente._id;
-                            
-                            // Actualizar la localidad con todos los IDs desde la lista cargada
-                            _direccionSeleccionada.ubicacion.localidad.id = localidadExistente.id;
-                            _direccionSeleccionada.ubicacion.localidad._id = localidadExistente._id;
-                            _direccionSeleccionada.ubicacion.localidad.nombre = localidadExistente.nombre;
-                            _direccionSeleccionada.ubicacion.localidad.localidadId = localidadExistente.localidadId;
+                            formModel.LocalidadId = localidadEncontrada._id ?? string.Empty;
                         }
                     }
                 }
             }
-            else if (_direccionSeleccionada?.ubicacion != null)
+            catch (Exception ex)
             {
-                _direccionSeleccionada.ubicacion.provincia = new Provincia();
+                mensajeError = $"Error al cargar las localidades: {ex.Message}";
+            }
+            finally
+            {
+                cargandoLocalidades = false;
             }
         }
-    }
 
-    private async Task OnProvinciaChanged()
-    {
-        // Limpiar mensaje de error de provincia
-        _errorProvincia = null;
-        
-        // Limpiar localidad seleccionada cuando cambia la provincia
-        _localidadSeleccionadaId = null;
-        _localidades = null;
-        _errorLocalidad = null;
-        
-        if (string.IsNullOrEmpty(_provinciaSeleccionadaId))
+        private void ActivarModoEdicion()
         {
-            if (_direccionSeleccionada?.ubicacion != null)
+            modoEdicion = true;
+            mensajeExito = string.Empty;
+            mensajeError = string.Empty;
+
+            // Si hay provincia seleccionada pero no localidades cargadas, cargarlas
+            if (!string.IsNullOrEmpty(formModel.ProvinciaId) && (localidades == null || localidades.Count == 0))
             {
-                _direccionSeleccionada.ubicacion.provincia = null;
-                _direccionSeleccionada.ubicacion.localidad = null;
+                _ = CargarLocalidadesIniciales();
             }
-            return;
         }
 
-        // Cargar localidades de la provincia seleccionada
-        await CargarLocalidadesAsync(_provinciaSeleccionadaId);
-
-        // Actualizar la provincia en la dirección
-        if (_direccionSeleccionada?.ubicacion != null)
+        private async Task CancelarEdicion()
         {
-            var provinciaSeleccionada = _provincias.FirstOrDefault(p => 
-                p.id == _provinciaSeleccionadaId || p._id == _provinciaSeleccionadaId);
-            
-            if (provinciaSeleccionada != null)
+            modoEdicion = false;
+            mensajeExito = string.Empty;
+            mensajeError = string.Empty;
+            InicializarFormulario(); // Restaurar valores originales
+
+            // Recargar localidades de la provincia original si hay una seleccionada
+            await CargarLocalidadesIniciales();
+        }
+
+        // Propiedad para el celular con setter personalizado
+        private string CelularValue
+        {
+            get => celular;
+            set
             {
-                _direccionSeleccionada.ubicacion.provincia = new Provincia
+                string valor = value ?? "";
+
+                // Eliminar cualquier carácter que no sea número
+                valor = SoloNumerosRegex.Replace(valor, "");
+
+                // Si empieza con 0 o 15, dejarlo vacío
+                if (IniciaConCeroRegex.IsMatch(valor))
                 {
-                    id = provinciaSeleccionada.id,
+                    celular = IniciaConCeroRegex.Replace(valor, "");
+                    errorCelular = false;
+                    return;
+                }
+                if (IniciaConQuinceRegex.IsMatch(valor))
+                {
+                    celular = IniciaConQuinceRegex.Replace(valor, "");
+                    errorCelular = false;
+                    return;
+                }
+
+                // Limitar a máximo 10 dígitos
+                if (valor.Length > LONGITUD_MAXIMA_CELULAR)
+                {
+                    valor = valor.Substring(0, LONGITUD_MAXIMA_CELULAR);
+                }
+
+                celular = valor;
+                errorCelular = false;
+            }
+        }
+
+        // Método para manejar el input del código postal
+        private void OnCodigoPostalInput(ChangeEventArgs e)
+        {
+            string valor = e.Value?.ToString() ?? "";
+
+            // Eliminar cualquier carácter que no sea número
+            valor = SoloNumerosRegex.Replace(valor, "");
+
+            // Limitar a máximo 4 dígitos
+            if (valor.Length > 4)
+            {
+                valor = valor.Substring(0, 4);
+            }
+
+            formModel.CodigoPostal = valor;
+            StateHasChanged();
+        }
+
+        private async Task GuardarDatos()
+        {
+            if (paciente == null) return;
+
+            mensajeExito = string.Empty;
+            mensajeError = string.Empty;
+
+            var token = BackendToken;
+            if (string.IsNullOrEmpty(token))
+            {
+                mensajeError = "No se pudo obtener el token de autenticación.";
+                return;
+            }
+
+            _spinnerService.Show();
+            try
+            {
+                // Crear copia del paciente para modificar
+                var pacienteActualizado = await _pacienteService.ObtenerPacientePorIdAsync(token, paciente.id);
+                if (pacienteActualizado == null)
+                {
+                    mensajeError = "No se pudo obtener los datos del paciente.";
+                    return;
+                }
+
+                // Actualizar datos personales
+                pacienteActualizado.alias = string.IsNullOrWhiteSpace(formModel.Alias) ? null : formModel.Alias.Trim();
+                pacienteActualizado.genero = formModel.Genero;
+
+                // Actualizar domicilio - buscar por nombre en lugar de ID
+                var provinciaSeleccionada = provincias?.FirstOrDefault(p => p.id == formModel.ProvinciaId);
+                if (provinciaSeleccionada == null)
+                {
+                    mensajeError = "Debe seleccionar una provincia válida.";
+                    return;
+                }
+
+                var localidadSeleccionada = localidades?.FirstOrDefault(l => l._id == formModel.LocalidadId);
+                if (localidadSeleccionada == null)
+                {
+                    mensajeError = "Debe seleccionar una localidad válida.";
+                    return;
+                }
+
+                // Obtener o crear dirección principal
+                Direccion? direccionPrincipal = pacienteActualizado?.direccion?.Count > 1 ? pacienteActualizado.direccion[1] : null;
+                if (direccionPrincipal == null)
+                {
+                    direccionPrincipal = new Direccion
+                    {
+                        activo = true,
+                        ranking = 1,
+                        geoReferencia = new List<double>()
+                    };
+                    if (pacienteActualizado.direccion == null)
+                    {
+                        pacienteActualizado.direccion = new List<Direccion>();
+                    }
+                    pacienteActualizado.direccion.Add(direccionPrincipal);
+                }
+
+                direccionPrincipal.valor = formModel.Direccion?.Trim();
+                direccionPrincipal.codigoPostal = formModel.CodigoPostal?.Trim();
+
+                if (direccionPrincipal.ubicacion == null)
+                {
+                    direccionPrincipal.ubicacion = new Ubicacion();
+                }
+
+                direccionPrincipal.ubicacion.provincia = new Provincia
+                {
                     _id = provinciaSeleccionada._id,
+                    id = provinciaSeleccionada.id,
                     nombre = provinciaSeleccionada.nombre
                 };
-            }
-            
-            // Limpiar localidad cuando cambia la provincia
-            _direccionSeleccionada.ubicacion.localidad = null;
-        }
-    }
 
-    private async Task OnLocalidadChanged()
-    {
-        // Limpiar mensaje de error de localidad
-        _errorLocalidad = null;
-        
-        if (string.IsNullOrEmpty(_localidadSeleccionadaId) || _localidades == null)
-        {
-            if (_direccionSeleccionada?.ubicacion != null)
-            {
-                _direccionSeleccionada.ubicacion.localidad = null;
-            }
-            return;
-        }
-
-        // Actualizar la localidad en la dirección
-        if (_direccionSeleccionada?.ubicacion != null)
-        {
-            var localidadSeleccionada = _localidades.FirstOrDefault(l => 
-                l.id == _localidadSeleccionadaId || l._id == _localidadSeleccionadaId);
-            
-            if (localidadSeleccionada != null)
-            {
-                _direccionSeleccionada.ubicacion.localidad = new Localidad
+                direccionPrincipal.ubicacion.localidad = new Localidad
                 {
-                    id = localidadSeleccionada.id,
                     _id = localidadSeleccionada._id,
                     nombre = localidadSeleccionada.nombre,
-                    localidadId = localidadSeleccionada.localidadId
+                    id = localidadSeleccionada.id ?? localidadSeleccionada._id
                 };
-            }
-        }
-    }
 
-    private bool ValidarCodigoPostal()
-    {
-        _errorCodigoPostal = null;
-        
-        if (_direccionSeleccionada == null)
-        {
-            return true;
-        }
-        
-        // Validar que no esté vacío
-        if (string.IsNullOrWhiteSpace(_direccionSeleccionada.codigoPostal))
-        {
-            _errorCodigoPostal = "El código postal es obligatorio.";
-            return false;
-        }
-        
-        // Validar formato: debe tener 4 dígitos numéricos
-        string codigoPostal = _direccionSeleccionada.codigoPostal.Trim();
-        if (codigoPostal.Length != 4 || !codigoPostal.All(char.IsDigit))
-        {
-            _errorCodigoPostal = "El código postal debe tener 4 dígitos numéricos.";
-            return false;
-        }
-        
-        return true;
-    }
-
-    private void OnCodigoPostalChanged()
-    {
-        ValidarCodigoPostal();
-    }
-
-    private async Task CargarLocalidadesAsync(string? idProvincia)
-    {
-        if (string.IsNullOrEmpty(idProvincia))
-        {
-            _localidades = null;
-            _cargandoLocalidades = false;
-            return;
-        }
-
-        var token = BackendToken;
-        if (string.IsNullOrEmpty(token))
-        {
-            _localidades = new List<Localidad>();
-            _cargandoLocalidades = false;
-            return;
-        }
-
-        _cargandoLocalidades = true;
-        StateHasChanged();
-
-        try
-        {
-            _localidades = await _territorioService.ObtenerLocalidadesPorProvinciaAsync(token, idProvincia);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al cargar localidades: {ex.Message}");
-            _localidades = new List<Localidad>();
-        }
-        finally
-        {
-            _cargandoLocalidades = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task OnActualizarDatosClick()
-    {
-        if (_paciente == null)
-        {
-            Console.WriteLine("Error: No hay datos del paciente para actualizar.");
-            return;
-        }
-
-        if (_direccionSeleccionada == null && _paciente.direccion != null && _paciente.direccion.Any())
-        {
-            Console.WriteLine("Error: No hay domicilio seleccionado para actualizar.");
-            return;
-        }
-
-        // Validar que se haya seleccionado una provincia
-        if (string.IsNullOrEmpty(_provinciaSeleccionadaId))
-        {
-            _errorProvincia = "Debe seleccionar una provincia.";
-            StateHasChanged();
-            return;
-        }
-        else
-        {
-            _errorProvincia = null;
-        }
-
-        // Validar que se haya seleccionado una localidad
-        if (string.IsNullOrEmpty(_localidadSeleccionadaId))
-        {
-            _errorLocalidad = "Debe seleccionar una localidad.";
-            StateHasChanged();
-            return;
-        }
-        else
-        {
-            _errorLocalidad = null;
-        }
-
-        // Validar código postal si está presente
-        if (!ValidarCodigoPostal())
-        {
-            StateHasChanged();
-            return;
-        }
-
-        var token = BackendToken;
-        if (string.IsNullOrEmpty(token))
-        {
-            Console.WriteLine("Error: Token no disponible.");
-            return;
-        }
-
-        var pacienteId = PacienteId;
-        if (string.IsNullOrEmpty(pacienteId))
-        {
-            Console.WriteLine("Error: ID de paciente no disponible.");
-            return;
-        }
-
-        _spinnerService.Show();
-
-        try
-        {
-            // Sincronizar el domicilio modificado en _direccionSeleccionada con _paciente.direccion
-            if (_direccionSeleccionada != null && _paciente.direccion != null)
-            {
-                var direccionEnPaciente = _paciente.direccion.FirstOrDefault(d => 
-                    (d.id != null && d.id == _direccionSeleccionada.id) || 
-                    (d._id != null && d._id == _direccionSeleccionada._id));
-
-                if (direccionEnPaciente != null)
+                // Obtener georeferencia de la dirección actualizada
+                string direccionCompleta = $"{direccionPrincipal.valor}, {direccionPrincipal.ubicacion.localidad.nombre}";
+                userLocation georeferencia = await _pacienteService.ObtenerGeoreferenciaPaciente(direccionCompleta);
+                if (georeferencia != null)
                 {
-                    // Actualizar la dirección en el array del paciente con los cambios de _direccionSeleccionada
-                    direccionEnPaciente.valor = _direccionSeleccionada.valor;
-                    direccionEnPaciente.codigoPostal = _direccionSeleccionada.codigoPostal;
-                    direccionEnPaciente.ranking = _direccionSeleccionada.ranking;
-                    direccionEnPaciente.activo = _direccionSeleccionada.activo;
-                    direccionEnPaciente.geoReferencia = _direccionSeleccionada.geoReferencia;
-                    
-                    if (_direccionSeleccionada.ubicacion != null)
-                    {
-                        if (direccionEnPaciente.ubicacion == null)
-                        {
-                            direccionEnPaciente.ubicacion = new Ubicacion();
-                        }
-                        
-                        if (_direccionSeleccionada.ubicacion.pais != null)
-                        {
-                            if (direccionEnPaciente.ubicacion.pais == null)
-                            {
-                                direccionEnPaciente.ubicacion.pais = new Pais();
-                            }
-                            direccionEnPaciente.ubicacion.pais.nombre = _direccionSeleccionada.ubicacion.pais.nombre;
-                        }
-                        
-                        if (_direccionSeleccionada.ubicacion.provincia != null)
-                        {
-                            if (direccionEnPaciente.ubicacion.provincia == null)
-                            {
-                                direccionEnPaciente.ubicacion.provincia = new Provincia();
-                            }
-                            direccionEnPaciente.ubicacion.provincia.id = _direccionSeleccionada.ubicacion.provincia.id;
-                            direccionEnPaciente.ubicacion.provincia._id = _direccionSeleccionada.ubicacion.provincia._id;
-                            direccionEnPaciente.ubicacion.provincia.nombre = _direccionSeleccionada.ubicacion.provincia.nombre;
-                        }
-                        
-                        if (_direccionSeleccionada.ubicacion.localidad != null)
-                        {
-                            if (direccionEnPaciente.ubicacion.localidad == null)
-                            {
-                                direccionEnPaciente.ubicacion.localidad = new Localidad();
-                            }
-                            direccionEnPaciente.ubicacion.localidad.id = _direccionSeleccionada.ubicacion.localidad.id;
-                            direccionEnPaciente.ubicacion.localidad._id = _direccionSeleccionada.ubicacion.localidad._id;
-                            direccionEnPaciente.ubicacion.localidad.nombre = _direccionSeleccionada.ubicacion.localidad.nombre;
-                            direccionEnPaciente.ubicacion.localidad.localidadId = _direccionSeleccionada.ubicacion.localidad.localidadId;
-                        }
-                        
-                        direccionEnPaciente.ubicacion.barrio = null;
-                    }
-                }
-            }
-
-            // Llamar al servicio para actualizar
-            var pacienteActualizado = await _pacienteService.ModificarDatos(token, pacienteId, _paciente);
-
-            if (pacienteActualizado != null)
-            {
-                // Actualizar el paciente con la respuesta del servidor
-                _paciente = pacienteActualizado;
-
-                // Actualizar _direccionSeleccionada con el domicilio actualizado de la respuesta
-                if (_direccionSeleccionada != null && _paciente.direccion != null)
-                {
-                    var direccionActualizada = _paciente.direccion.FirstOrDefault(d => 
-                        (d.id != null && d.id == _direccionSeleccionada.id) || 
-                        (d._id != null && d._id == _direccionSeleccionada._id));
-
-                    if (direccionActualizada != null)
-                    {
-                        _direccionSeleccionada = direccionActualizada;
-                        
-                        // Actualizar provincia seleccionada
-                        if (_direccionSeleccionada.ubicacion?.provincia != null)
-                        {
-                            var provinciaExistente = _provincias.FirstOrDefault(p => 
-                                p.id == _direccionSeleccionada.ubicacion.provincia.id ||
-                                p._id == _direccionSeleccionada.ubicacion.provincia._id ||
-                                p.nombre == _direccionSeleccionada.ubicacion.provincia.nombre);
-                            
-                            if (provinciaExistente != null)
-                            {
-                                _provinciaSeleccionadaId = provinciaExistente.id ?? provinciaExistente._id;
-                                
-                                // Asegurar que los IDs de la provincia estén actualizados
-                                _direccionSeleccionada.ubicacion.provincia.id = provinciaExistente.id;
-                                _direccionSeleccionada.ubicacion.provincia._id = provinciaExistente._id;
-                                _direccionSeleccionada.ubicacion.provincia.nombre = provinciaExistente.nombre;
-                                
-                                await CargarLocalidadesAsync(_provinciaSeleccionadaId);
-                                
-                                // Actualizar localidad seleccionada
-                                if (_direccionSeleccionada.ubicacion.localidad != null && _localidades != null)
-                                {
-                                    var localidadExistente = _localidades.FirstOrDefault(l =>
-                                        l.id == _direccionSeleccionada.ubicacion.localidad.id ||
-                                        l._id == _direccionSeleccionada.ubicacion.localidad._id ||
-                                        l.nombre == _direccionSeleccionada.ubicacion.localidad.nombre);
-                                    
-                                    if (localidadExistente != null)
-                                    {
-                                        _localidadSeleccionadaId = localidadExistente.id ?? localidadExistente._id;
-                                        
-                                        // Asegurar que los IDs de la localidad estén actualizados
-                                        _direccionSeleccionada.ubicacion.localidad.id = localidadExistente.id;
-                                        _direccionSeleccionada.ubicacion.localidad._id = localidadExistente._id;
-                                        _direccionSeleccionada.ubicacion.localidad.nombre = localidadExistente.nombre;
-                                        _direccionSeleccionada.ubicacion.localidad.localidadId = localidadExistente.localidadId;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    direccionPrincipal.geoReferencia = new List<double> { georeferencia.lat, georeferencia.lng };
                 }
 
-                // Actualizar la copia original para futuras comparaciones
-                ActualizarPacienteOriginal(_paciente);
+                // Actualizar contactos
+                if (pacienteActualizado.contacto == null)
+                {
+                    pacienteActualizado.contacto = new List<Contacto>();
+                }
+
+                // Actualizar o crear email
+                var emailContacto = pacienteActualizado.contacto.FirstOrDefault(c => c.tipo == "email");
+                if (!string.IsNullOrWhiteSpace(formModel.Email))
+                {
+                    if (emailContacto == null)
+                    {
+                        emailContacto = new Contacto
+                        {
+                            tipo = "email",
+                            activo = true,
+                            ranking = 0
+                        };
+                        pacienteActualizado.contacto.Add(emailContacto);
+                    }
+                    emailContacto.valor = formModel.Email.Trim();
+                }
+                else if (emailContacto != null)
+                {
+                    // Si el email está vacío, mantener el contacto pero con valor vacío o eliminarlo según lógica de negocio
+                    // Por ahora lo dejamos con valor vacío
+                    emailContacto.valor = string.Empty;
+                }
+
+                // Validar celular antes de guardar
+                if (string.IsNullOrWhiteSpace(celular))
+                {
+                    mensajeError = "El celular es obligatorio.";
+                    return;
+                }
+
+                if (celular.Length != LONGITUD_MAXIMA_CELULAR)
+                {
+                    mensajeError = $"El celular debe tener exactamente {LONGITUD_MAXIMA_CELULAR} dígitos.";
+                    return;
+                }
+
+                // Actualizar o crear celular
+                var celularContacto = pacienteActualizado.contacto.FirstOrDefault(c => c.tipo == "celular");
+                if (celularContacto == null)
+                {
+                    celularContacto = new Contacto
+                    {
+                        tipo = "celular",
+                        activo = true,
+                        ranking = 1
+                    };
+                    pacienteActualizado.contacto.Add(celularContacto);
+                }
+                celularContacto.valor = celular;
+
+                // Guardar cambios
+                var pacienteGuardado = await _pacienteService.ModificarDatos(token, paciente.id, pacienteActualizado);
+
+                if (pacienteGuardado != null)
+                {
+                    paciente = pacienteGuardado;
+                    mensajeExito = "Los datos se han actualizado correctamente.";
+                    modoEdicion = false;
+                }
+                else
+                {
+                    mensajeError = "No se pudo guardar los cambios. Por favor, intente nuevamente.";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Error: No se recibió respuesta del servidor.");
+                mensajeError = $"Error al guardar los datos";
+            }
+            finally
+            {
+                _spinnerService.Hide();
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al actualizar los datos del paciente: {ex.Message}");
-        }
-        finally
-        {
-            _spinnerService.Hide();
-        }
-    }
-
-    private void ActualizarPacienteOriginal(Paciente? unPaciente)
-    {
-        if (unPaciente != null)
-        {
-            var json = JsonConvert.SerializeObject(unPaciente);
-            _pacienteOriginal = JsonConvert.DeserializeObject<Paciente>(json);
-        }
-    }
-
-    private async Task OnCancelarClick()
-    {
-        _spinnerService.Show();
-        await MostrarYActualizarPaciente(_pacienteOriginal);
-        _spinnerService.Hide();
     }
 }

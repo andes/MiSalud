@@ -151,19 +151,6 @@ namespace AndesServices.Services
                                 direccionOriginal.ubicacion?.localidad?.nombre != d.ubicacion?.localidad?.nombre)
                             {
                                 d.ultimaActualizacion = fechaActual;
-
-                                // Obtener georeferencia de la dirección actualizada
-                                if (!string.IsNullOrEmpty(d.valor) && 
-                                    d.ubicacion?.localidad?.nombre != null)
-                                {
-                                    string direccionCompleta = $"{d.valor}, {d.ubicacion.localidad.nombre}";
-                                    userLocation georeferencia = await ObtenerGeoreferenciaPaciente(direccionCompleta);
-                                        
-                                    if (georeferencia != null)
-                                    {
-                                        d.geoReferencia = new List<double> { georeferencia.lat, georeferencia.lng };
-                                    }
-                                }
                             }
                         }
                     }
@@ -196,6 +183,21 @@ namespace AndesServices.Services
                 Console.WriteLine($"Error al modificar los datos del paciente: {exception.Message}");
                 throw;
             }
+        }
+
+        public Direccion? ObtenerDireccionPrioritaria(Paciente? paciente)
+        {
+            List<Direccion>? direccion = paciente?.direccion;
+
+            if (direccion?.Count == 1)
+            {
+                return direccion[0];
+            }
+            if (direccion?.Count > 1)
+            {
+                return direccion[1];
+            }
+            return null;
         }
     }
 }
