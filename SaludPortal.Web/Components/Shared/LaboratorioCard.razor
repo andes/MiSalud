@@ -1,0 +1,51 @@
+@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+
+<div class="laboratorio-card" @onclick="HandleDownloadClick" title="Descargar" tabindex="0">
+    <div class="laboratorio-header">
+        @if (!string.IsNullOrWhiteSpace(Laboratorio.fecha))
+        {
+            <span class="laboratorio-fecha">@Laboratorio.fecha</span>
+        }
+        <span class="laboratorio-tipo">Informe De Laboratorio</span>
+    </div>
+    <div class="laboratorio-body">
+        @if (!string.IsNullOrWhiteSpace(Laboratorio.Laboratorio))
+        {
+            <div class="laboratorio-info">
+                <span class="laboratorio-label">
+                    <Icon Name="hospital" Size="16" Fill="#666" class="me-1" AriaLabel="Institución" />
+                    Institución:
+                </span>
+                <span class="laboratorio-value">@Laboratorio.Laboratorio</span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Laboratorio.medicoSolicitante))
+        {
+            <div class="laboratorio-info">
+                <span class="laboratorio-label">Solicitante:</span>
+                <span class="laboratorio-value">@Laboratorio.medicoSolicitante</span>
+            </div>
+        }
+    </div>
+    <div class="laboratorio-footer">
+        <Icon Name="cloud-download" Size="24" Fill="#00374c" class="download-icon" AriaLabel="Descargar" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public AndesServices.Entities.MisLaboratorios Laboratorio { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<AndesServices.Entities.MisLaboratorios> OnDownload { get; set; }
+
+    private async Task HandleDownloadClick()
+    {
+        if (OnDownload.HasDelegate && !string.IsNullOrEmpty(Laboratorio.idProtocolo))
+        {
+            await OnDownload.InvokeAsync(Laboratorio);
+        }
+    }
+}

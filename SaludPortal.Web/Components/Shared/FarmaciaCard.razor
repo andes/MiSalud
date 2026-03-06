@@ -1,0 +1,58 @@
+@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+
+<div class="farmacia-card">
+    <div class="farmacia-header">
+        @if (!string.IsNullOrWhiteSpace(Farmacia.Nombre))
+        {
+            <span class="farmacia-nombre">@Farmacia.Nombre</span>
+        }
+    </div>
+    <div class="farmacia-body">
+        @if (!string.IsNullOrWhiteSpace(Farmacia.Direccion))
+        {
+            <div class="farmacia-info">
+                <span class="farmacia-label">Dirección:</span>
+                <span class="farmacia-value">@Farmacia.Direccion</span>
+                @if (Farmacia.Latitud.HasValue && Farmacia.Longitud.HasValue)
+                {
+                    <a href="@GetGoogleMapsUrl()" target="_blank" class="farmacia-map-link" title="Ver en mapa">
+                        <Icon Name="geo-alt" Size="16" Fill="#00374c" class="me-1" AriaLabel="Ver en mapa" />
+                        Ver en mapa
+                    </a>
+                }
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Farmacia.Telefono))
+        {
+            <div class="farmacia-info">
+                <span class="farmacia-label">Teléfono:</span>
+                <span class="farmacia-value">@Farmacia.Telefono</span>
+            </div>
+        }
+        @if (Farmacia.Fecha != default(DateTime))
+        {
+            <div class="farmacia-info">
+                <span class="farmacia-label">Fecha:</span>
+                <span class="farmacia-value">@Farmacia.Fecha.ToString("dd/MM/yyyy")</span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public FarmaciasTurno Farmacia { get; set; } = new();
+
+    private string GetGoogleMapsUrl()
+    {
+        if (Farmacia.Latitud.HasValue && Farmacia.Longitud.HasValue)
+        {
+            var lat = Farmacia.Latitud.Value.ToString().Replace(",", ".");
+            var lng = Farmacia.Longitud.Value.ToString().Replace(",", ".");
+            return $"https://maps.google.com/?q={lat},{lng}";
+        }
+        return "#";
+    }
+}

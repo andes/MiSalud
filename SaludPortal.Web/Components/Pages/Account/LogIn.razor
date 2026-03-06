@@ -1,0 +1,162 @@
+﻿@page "/user/login"
+@page "/login"
+@layout LoginLayout
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+
+@using SaludPortal.Web.Models.AccountViewModels
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Linq
+@inject NavigationManager Nav
+@inject CustomAuthenticationStateProvider AuthProvider
+@inject ILogger<LogIn> Logger
+@inject IJSRuntime JS
+
+<PageTitle>Ingresar</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2 class="login-title">Login</h2>
+        </div>
+
+        <div class="login-body">
+            <EditForm Model="_model" OnValidSubmit="DoLogin" class="login-form" @ref="_editForm">
+                <DataAnnotationsValidator />
+                @* <ValidationSummary class="login-validation-summary" /> *@
+
+                <InputTextField @bind-Value="_model.Email"
+                                Id="txtUsuario"
+                                Type="email"
+                                IconName="envelope"
+                                Placeholder="Ingresa tu email"
+                                AriaLabel="Usuario"
+                                HasError="@HasFieldError(nameof(_model.Email))"
+                                ValidationFor="@(() => _model.Email)" />
+
+                <InputTextField @bind-Value="_model.Password"
+                                Id="txtPassword"
+                                Type="password"
+                                IconName="lock"
+                                Placeholder="Contraseña"
+                                AriaLabel="Contraseña"
+                                HasError="@HasFieldError(nameof(_model.Password))"
+                                ValidationFor="@(() => _model.Password)" />
+
+                <div class="login-remember">
+                    <InputCheckbox @bind-Value="_model.RememberMe" id="rememberMe" class="login-checkbox" />
+                    <label for="rememberMe" class="login-checkbox-label">Recordarme</label>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <div class="login-error" role="alert">
+                        <Icon Name="exclamation-triangle" Size="18" Fill="#dc3545" class="me-2" AriaLabel="Error" />
+                        <span>@_error</span>
+                    </div>
+                }
+
+                <ButtonPrimary Text="@(_busy ? "Iniciando..." : "Iniciar sesión")" 
+                               Disabled="@_busy"
+                               AriaLabel="@(_busy ? "Iniciando sesión..." : "Iniciar sesión")" />
+            </EditForm>
+        </div>
+
+        <div class="login-footer">
+            <div class="login-footer-link">
+                <span class="login-footer-text">No tenés cuenta?</span>
+                <a href="#" @onclick="Register" @onclick:preventDefault class="login-link">Crear cuenta</a>
+            </div>
+            <div class="login-footer-link">
+                <a href="/olvidocontrasenia" class="login-link">Olvidaste tu contraseña?</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly LoginViewModel _model = new();
+    private string? _error;
+    private bool _busy;
+    private EditForm? _editForm;
+
+    [Parameter, SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    private bool HasFieldError(string fieldName)
+    {
+        return _editForm?.EditContext?.GetValidationMessages(new FieldIdentifier(_model, fieldName)).Any() ?? false;
+    }
+
+
+    private async Task DoLogin()
+    {
+        _busy = true; _error = null;
+        try
+        {
+            var result = await JS.InvokeAsync<LoginResult>("authApi.login", new
+            {
+                Email = _model.Email,
+                Password = _model.Password,
+                RememberMe = _model.RememberMe
+            });
+
+            if (result.Ok)
+            {
+                Nav.NavigateTo(ReturnUrl ?? "/home", forceLoad: true);
+            }
+            else
+            {
+                _error = ExtractMessage(result.Data) ?? "Credenciales inválidas";
+                // throw new Exception(_error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally { _busy = false; }
+    }
+    private class LoginResult
+    {
+        public bool Ok { get; set; }
+        public int Status { get; set; }
+        public dynamic? Data { get; set; }
+    }
+
+    private static string? ExtractMessage(System.Text.Json.JsonElement data)
+    {
+        if (data.ValueKind == System.Text.Json.JsonValueKind.Object &&
+            data.TryGetProperty("message", out var msgProp))
+            return msgProp.GetString();
+
+        if (data.ValueKind == System.Text.Json.JsonValueKind.String)
+        {
+            var raw = data.GetString();
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+
+            if (raw.TrimStart().StartsWith("{"))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(raw);
+                    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                        doc.RootElement.TryGetProperty("message", out var inner))
+                        return inner.GetString();
+                }
+                catch { }
+            }
+            return raw;
+        }
+
+        return null;
+    }
+
+    private async Task Register()
+    {
+        Nav.NavigateTo("/registerqr", true);
+    }
+}
+<script src="../js/auth.js"></script>

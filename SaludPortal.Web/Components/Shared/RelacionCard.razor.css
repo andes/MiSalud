@@ -1,0 +1,76 @@
+.relacion-card {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.relacion-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #00374c 0%, #87b867 100%);
+    transition: width 0.3s ease;
+}
+
+.relacion-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    border-color: #00374c;
+}
+
+.relacion-card:hover::before {
+    width: 6px;
+}
+
+.relacion-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.relacion-tipo {
+    display: inline-block;
+    background: linear-gradient(135deg, #00374c 0%, #2b3e4c 100%);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
+}
+
+.relacion-body {
+    padding-top: 0.5rem;
+}
+
+.relacion-nombre {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.relacion-label {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.relacion-value {
+    font-size: 1.125rem;
+    color: #00374c;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .relacion-card {
+        padding: 1.25rem;
+    }
+}

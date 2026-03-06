@@ -1,15 +1,16 @@
 ﻿@page "/historiasalud/categoria/{expresionSnomed}/"
 @rendermode InteractiveServer
 
-@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using AndesServices.Entities.ViewModels
 @using AndesServices.Entities
 @using System.Text.Json
+@using System.Linq
 
 @inject IHttpClientFactory HttpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
@@ -18,111 +19,42 @@
 @inherits AuthenticatedComponentBase
 @inject IHistoriaSalud _miHistoriaSaludService
 
-<style>
-    .prestaciones p {
-        margin: 0px;
-    }
+<div class="prestaciones-container">
+    <PageHeader Title="@TituloMostrar" Subtitle="Historial de prestaciones médicas" />
 
-    .prestaciones {
-        cursor: pointer;
-        box-shadow: 2px 2px 4px #000000;
-        margin-bottom: 5px;
-    }
-</style>
-
-
-<h1>@TituloMostrar</h1>
-<hr />
-
-@if (cargando)
-{
-    <p>Cargando...</p>
-}
-else if (error != null)
-{
-    <div class="alert alert-danger">@error</div>
-}
-else if (prestaciones == null || prestaciones.Count == 0)
-{
-    <p>No se encontraron prestaciones.</p>
-}
-else
-{
-    @foreach (var p in prestaciones.OrderByDescending(p => p.ejecucion?.fecha))
+    @if (cargando)
     {
-        string archivo = "";
-        if (p.paciente.adjuntos != null && p.paciente.adjuntos[0] != null && p.paciente.adjuntos[0] != "")
-        {
-            archivo = p.paciente.adjuntos[0];
-            archivo = p.paciente.adjuntos[0]?.Substring(p.paciente.adjuntos[0].LastIndexOf('/') + 1, p.paciente.adjuntos[0].LastIndexOf('.') - p.paciente.adjuntos[0].LastIndexOf('/') - 1);
-        }
-
-        <div class="form-control d-flex justify-content-between prestaciones" title="Descargar">
-            <div @onclick="@(() => DownloadPrestacion(archivo))" tabindex="0">
-                <div>
-                    <strong>@(p.solicitud?.tipoPrestacion?.term ?? "Prestación")</strong><br />
-                </div>
-                <div>
-                    <strong><Icon Name="hospital" Size="16" Fill="#fff" class="text-secondary me-1" AriaLabel="Institución" /></strong>@(p.solicitud?.organizacion?.nombre ?? "Organización")<br />
-                </div>
-                <div>
-                    <strong>Fecha: </strong>
-                    @(p.ejecucion?.fecha != null 
-                        ? DateTimeHelper.ToArgentinaTime(p.ejecucion.fecha)?.ToString("dd/MM/yyyy") + " " + DateTimeHelper.ToArgentinaTime(p.ejecucion.fecha)?.ToString("HH:mm") 
-                        : "")
-                </div>
-                <div>
-                    <strong>Profesional: </strong>
-                    @(p.solicitud?.profesional?.nombre ?? "Sin datos") @(p.solicitud?.profesional?.apellido ?? "Sin datos")
-                </div>
-                <div>
-                    <strong>Documento: </strong> @(p.solicitud?.profesional?.documento ?? "Sin datos")<br />
-                </div>
-                <div>
-                    @if (p.solicitud?.registros != null && p.solicitud?.registros.Count() > 0)
-                    {
-                        foreach (var registro in p.solicitud?.registros ?? Enumerable.Empty<Registro>())
-                        @* @foreach (var registro in p.solicitud.registros!) *@
-                        {
-                            if (registro.valor is { } ve && ve.ValueKind == JsonValueKind.Object)
-                            {
-                                if (ve.TryGetProperty("solicitudPrestacion", out _))
-                                {
-                                    var sol = ve.Deserialize<WrapperSolicitudPrestacion>();
-
-                                    <div>
-                                        <div>
-                                            <strong> Solicitud: </strong> @sol.solicitudPrestacion?.prestacionSolicitada?.term
-                                        </div>
-                                        <div>
-                                            <strong>Motivo: </strong> @sol.solicitudPrestacion?.motivo
-                                        </div>
-                                        <div>
-                                            <strong>Indicaciones: </strong> @sol.solicitudPrestacion?.indicaciones
-                                        </div>
-                                    </div>
-                                }
-                                @* else if (ve.TryGetProperty("solicitudPrestacion", out _))
-                            {
-                                var sol = ve.Deserialize<WrapperSolicitudPrestacion>();
-                            } *@
-                            }
-
-                        }
-                    }
-                </div>
-            </div>
-            @if (esCda)
-            {
-                <div class="align-content-center">
-                    <Icon Name="cloud-download" Size="32" Fill="#fff" class="text-secondary me-1" AriaLabel="Descargar" />
-                </div>
-            }
+        <div class="text-center my-4">
+            <p>Cargando...</p>
         </div>
     }
-}
-<br />
-<a href="historiaSalud" title="Historia de salud" class="btn btn-celeste"> Volver</a>
+    else if (error != null)
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+    else if (prestaciones == null || prestaciones.Count == 0)
+    {
+        <EmptyState Message="No se encontraron prestaciones." />
+    }
+    else
+    {
+        <div class="prestaciones-section">
+            <SectionTitle Title="Prestaciones" Icon="bi bi-clipboard2-heart" />
+            <div class="prestaciones-grid">
+                @foreach (var p in prestaciones.OrderByDescending(p => p.ejecucion?.fecha))
+                {
+                    <PrestacionCard Prestacion="p" EsCda="esCda" OnDownload="HandleDownload" />
+                }
+            </div>
+        </div>
+    }
+
+    <div class="prestaciones-actions">
+        <a href="historiaSalud" title="Historia de salud" class="btn btn-celeste">
+            <span class="bi bi-arrow-left me-2"></span>Volver
+        </a>
+    </div>
+</div>
 
 <script type="text/javascript">
 
@@ -193,7 +125,7 @@ else
         _spinnerService.Show();
         try
         {
-            prestaciones = await _miHistoriaSaludService.ObtenerPrestacionesAsync(token, expresionSnomed, pacienteId);
+            prestaciones = await _miHistoriaSaludService.ObtenerPrestacionesAsync(expresionSnomed, pacienteId);
         }
         catch (Exception ex)
         {
@@ -206,6 +138,11 @@ else
         }
     }
 
+    private async Task HandleDownload(string idPrestacion)
+    {
+        await DownloadPrestacion(idPrestacion);
+    }
+
     async Task DownloadPrestacion(string idPrestacion)
     {
         _spinnerService.Show();
@@ -213,7 +150,7 @@ else
         if (esCda)
         {
             var token = BackendToken;
-            archivoDescargar = await _miHistoriaSaludService.DescargarCDAFilePorIdAsync(token, idPrestacion);
+            archivoDescargar = await _miHistoriaSaludService.DescargarCDAFilePorIdAsync(idPrestacion);
             if (archivoDescargar == null || archivoDescargar.Length == 0)
             {
                 _spinnerService.Hide();

@@ -1,12 +1,15 @@
 ﻿@page "/turnosnuevo"
+@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Services
 @using AndesServices.Interfaces
 @using System.Security.Claims
 @using AndesServices.Entities
+@using System.Linq
 
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -17,97 +20,52 @@
 
 @inherits AuthenticatedComponentBase
 
-<h1>Nuevo turno</h1>
-<hr />
-<h2>Agendas disponibles</h2>
+<div class="turnos-nuevo-container">
+    <PageHeader Title="Nuevo turno" Subtitle="Agendas disponibles" />
 
-@if (lstAgendas != null && lstAgendas.Count > 0)
-{
-    var tipoPrestacionIndex = 0;
-    <div class="accordion" id="accAgendas">
-        @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
-        {
-            var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
-            var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
-            var accOrgId = $"accOrganizaciones_{tipoPrestacionIndex}";
-            var organizacionIndex = 0;
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="@tipoId">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
-                        @tipoPrestaciones.term
-                    </button>
-                </h2>
-                <div id="@collapseTipoId" class="accordion-collapse collapse" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
-                    <div class="accordion-body">
-                        <div class="accordion" id="@accOrgId">
-                            @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
-                            {
-                                var orgId = $"Organizacion_{tipoPrestacionIndex}_{organizacionIndex}";
-                                var collapseOrgId = $"collapseOrg_{tipoPrestacionIndex}_{organizacionIndex}";
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="@orgId">
-                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseOrgId" aria-expanded="true" aria-controls="@collapseOrgId">
-                                            <div>
-                                                <i class="fa fa-h-square" aria-hidden="true" style="max-width:16px;"></i> @efectores.Efector.nombre
-                                                <br />
-                                                <i class="fa fa-map-marker" aria-hidden="true" style="max-width:16px;"></i> @efectores.Domicilio
-                                            </div>
-                                        </button>
-                                    </h2>
-                                    <div id="@collapseOrgId" class="accordion-collapse collapse" aria-labelledby="@orgId" data-bs-parent="#@accOrgId">
-                                        <div class="accordion-body">
-                                            @foreach (var bloque in RecuperarAgendas(tipoPrestaciones.id, efectores.Efector._id))
-                                            {
-                                                var turnosPorFecha = bloque.turnos
-                                                .GroupBy(t => t.horaInicio.Date)
-                                                .OrderBy(g => g.Key);
-
-                                                foreach (var grupo in turnosPorFecha)
-                                                {
-                                                    <div>
-                                                        <strong>@grupo.Key.ToString("dd/MM/yyyy") (@bloque.restantesMobile disponibles)</strong>
-                                                        <div>
-                                                            @foreach (var turno in grupo)
-                                                            {
-                                                                if (turno.estado == "disponible")
-                                                                {
-                                                                    <button class="btn btn-info" style="margin:3px;" title="Seleccionar"
-                                                                            @onclick="() => ShowModalConfirmar(
-                                                                                                grupo.Key, DateTimeHelper.ToArgentinaTime(turno.horaInicio), 
-                                                                                                tipoPrestaciones.term, 
-                                                                                                efectores.Efector.nombre,
-                                                                                                efectores.Domicilio, 
-                                                                                                tipoPrestaciones.id, 
-                                                                                                turno._id, 
-                                                                                                bloque._id
-                                                                                            )">
-                                                                        <i class="fa fa-calendar" aria-hidden="true" style="max-width:16px;"></i> @DateTimeHelper.ToArgentinaTime(turno.horaInicio).ToString("HH:mm")
-                                                                    </button>
-                                                                }
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                }
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                                <hr />
-                                organizacionIndex++;
-                            }
+    @if (lstAgendas != null && lstAgendas.Count > 0)
+    {
+        var tipoPrestacionIndex = 0;
+        <div class="turnos-nuevo-accordion" id="accAgendas">
+            @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
+            {
+                var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
+                var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
+                tipoPrestacionIndex++;
+                <div class="turnos-nuevo-accordion-item">
+                    <h2 class="turnos-nuevo-accordion-header" id="@tipoId">
+                        <button class="turnos-nuevo-accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
+                            <Icon Name="calendar-check" Size="20" Fill="#87b867" class="me-2" AriaLabel="Prestación" />
+                            @tipoPrestaciones.term
+                        </button>
+                    </h2>
+                    <div id="@collapseTipoId" class="turnos-nuevo-accordion-collapse collapse show" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
+                        <div class="turnos-nuevo-accordion-body">
+                            <div class="turnos-nuevo-efectores-list">
+                                @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
+                                {
+                                    var efectorId = efectores.Efector._id;
+                                    var turnosAgrupados = ObtenerTurnosAgrupadosPorFecha(tipoPrestaciones.id, efectorId);
+                                    <EfectorCard EfectorNombre="@efectores.Efector.nombre" Domicilio="@efectores.Domicilio">
+                                        @if (turnosAgrupados.Any())
+                                        {
+                                            <TurnoHorarioGrid TurnosPorFecha="@turnosAgrupados" 
+                                                               OnTurnoSeleccionado="@(async (turno) => await HandleTurnoSeleccionado(turno, tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, efectorId))" />
+                                        }
+                                    </EfectorCard>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <hr />
-            tipoPrestacionIndex++;
-        }
-    </div>
-}
-else
-{
-    <p>No hay turnos disponibles.</p>
-}
+            }
+        </div>
+    }
+    else
+    {
+        <EmptyState Message="No hay turnos disponibles." />
+    }
+</div>
 
 @code {
     private List<OrganizacionAgenda> lstAgendas = new List<OrganizacionAgenda>();
@@ -162,7 +120,7 @@ else
         try
         {
             // Obtengo el paciente
-            _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+            _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(pacienteId);
 
             // Verifico que domicilio utilizar para referencia a las organizaciones
             _direccionGeoreferencia = _unPacienteService.ObtenerDireccionPrioritaria(_unPaciente);
@@ -177,7 +135,7 @@ else
 
             if (_userLocation != null)
             {
-                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(token, pacienteId, _userLocation, esTeleconsulta: false);
+                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(pacienteId, _userLocation, esTeleconsulta: false);
 
                 // Obtener todos los IDs de organizaciones únicos
                 var orgIds = lstAgendas
@@ -189,7 +147,7 @@ else
                 // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
                 foreach (var orgId in orgIds)
                 {
-                    var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(token, orgId);
+                    var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(orgId);
                     if (organizacion != null && !_domiciliosOrganizaciones.ContainsKey(orgId))
                     {
                         // Asume que organizacion.direccion?.valor es el domicilio
@@ -279,5 +237,58 @@ else
             )
         )
         ?? Enumerable.Empty<Bloque>();
+    }
+
+    private List<TurnoHorarioGrid.TurnoFechaGrupo> ObtenerTurnosAgrupadosPorFecha(string tipoPrestacionId, string efectorId)
+    {
+        var grupos = new List<TurnoHorarioGrid.TurnoFechaGrupo>();
+        var bloques = RecuperarAgendas(tipoPrestacionId, efectorId).ToList();
+
+        foreach (var bloque in bloques)
+        {
+            var turnosDisponibles = bloque.turnos?
+                .Where(t => t.estado == "disponible")
+                .ToList() ?? new List<MisTurnos>();
+
+            if (!turnosDisponibles.Any())
+                continue;
+
+            var turnosPorFecha = turnosDisponibles
+                .GroupBy(t => t.horaInicio.Date)
+                .OrderBy(g => g.Key);
+
+            foreach (var grupoFecha in turnosPorFecha)
+            {
+                var fechaGrupo = grupos.FirstOrDefault(g => g.Fecha.Date == grupoFecha.Key.Date);
+                if (fechaGrupo == null)
+                {
+                    fechaGrupo = new TurnoHorarioGrid.TurnoFechaGrupo
+                    {
+                        Fecha = grupoFecha.Key,
+                        Disponibles = bloque.restantesMobile,
+                        Turnos = new List<MisTurnos>()
+                    };
+                    grupos.Add(fechaGrupo);
+                }
+
+                fechaGrupo.Turnos.AddRange(grupoFecha.OrderBy(t => t.horaInicio));
+            }
+        }
+
+        return grupos.OrderBy(g => g.Fecha).ToList();
+    }
+
+    private async Task HandleTurnoSeleccionado(MisTurnos turno, string tipoPrestacion, string efectorNombre, string efectorDomicilio, string tipoPrestacionId, string efectorId)
+    {
+        // Encontrar el bloque que contiene este turno
+        var bloques = RecuperarAgendas(tipoPrestacionId, efectorId).ToList();
+        var bloqueEncontrado = bloques.FirstOrDefault(b => b.turnos?.Any(t => t._id == turno._id) == true);
+
+        if (bloqueEncontrado != null)
+        {
+            var fecha = turno.horaInicio.Date;
+            var hora = DateTimeHelper.ToArgentinaTime(turno.horaInicio);
+            await ShowModalConfirmar(fecha, hora, tipoPrestacion, efectorNombre, efectorDomicilio, tipoPrestacionId, turno._id, bloqueEncontrado._id);
+        }
     }
 }

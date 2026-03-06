@@ -11,12 +11,11 @@ namespace AndesServices.Services
         {
             _httpClientFactory = httpClientFactory;
         }
-        public async Task<Organizacion> ObtenerOrganizacionPorIdAsync(string token, string id)
+        public async Task<Organizacion> ObtenerOrganizacionPorIdAsync(string id)
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 using (HttpResponseMessage res = await client.GetAsync($"core/tm/organizaciones/{id}"))
                 {

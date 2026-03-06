@@ -1,0 +1,135 @@
+@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Utils
+@using System.Text.Json
+@using System.Linq
+
+<div class="prestacion-card" @onclick="HandleDownload" title="@(EsCda ? "Descargar" : "")" tabindex="0">
+    <div class="prestacion-header">
+        <span class="prestacion-tipo">@(Prestacion.solicitud?.tipoPrestacion?.term ?? "Prestación")</span>
+        @if (EsCda)
+        {
+            <div class="prestacion-download">
+                <Icon Name="cloud-download" Size="24" Fill="#00374c" class="download-icon" AriaLabel="Descargar" />
+            </div>
+        }
+    </div>
+    
+    <div class="prestacion-body">
+        @if (Prestacion.solicitud?.organizacion != null && !string.IsNullOrWhiteSpace(Prestacion.solicitud.organizacion.nombre))
+        {
+            <div class="prestacion-info">
+                <span class="prestacion-label">
+                    <Icon Name="hospital" Size="16" Fill="#666" class="me-1" AriaLabel="Institución" />
+                    Institución:
+                </span>
+                <span class="prestacion-value">@Prestacion.solicitud.organizacion.nombre</span>
+            </div>
+        }
+
+        @if (Prestacion.ejecucion?.fecha != null)
+        {
+            <div class="prestacion-info">
+                <span class="prestacion-label">Fecha:</span>
+                <span class="prestacion-value">@GetFechaFormateada()</span>
+            </div>
+        }
+
+        @if (Prestacion.solicitud?.profesional != null)
+        {
+            <div class="prestacion-info">
+                <span class="prestacion-label">Profesional:</span>
+                <span class="prestacion-value">@(Prestacion.solicitud.profesional.nombre ?? "Sin datos") @(Prestacion.solicitud.profesional.apellido ?? "Sin datos")</span>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Prestacion.solicitud.profesional.documento))
+            {
+                <div class="prestacion-info">
+                    <span class="prestacion-label">Documento:</span>
+                    <span class="prestacion-value">@Prestacion.solicitud.profesional.documento</span>
+                </div>
+            }
+        }
+
+        @if (Prestacion.solicitud?.registros != null && Prestacion.solicitud.registros.Any())
+        {
+            <div class="prestacion-section">
+                <h4 class="prestacion-section-title">Detalles de Solicitud</h4>
+                @foreach (var registro in Prestacion.solicitud.registros)
+                {
+                    @if (registro.valor is { } ve && ve.ValueKind == JsonValueKind.Object)
+                    {
+                        @if (ve.TryGetProperty("solicitudPrestacion", out _))
+                        {
+                            var sol = ve.Deserialize<WrapperSolicitudPrestacion>();
+                            @if (sol?.solicitudPrestacion != null)
+                            {
+                                <div class="prestacion-details">
+                                    @if (!string.IsNullOrWhiteSpace(sol.solicitudPrestacion.prestacionSolicitada?.term))
+                                    {
+                                        <div class="prestacion-detail-item">
+                                            <span class="prestacion-detail-label">Solicitud:</span>
+                                            <span class="prestacion-detail-value">@sol.solicitudPrestacion.prestacionSolicitada.term</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(sol.solicitudPrestacion.motivo))
+                                    {
+                                        <div class="prestacion-detail-item">
+                                            <span class="prestacion-detail-label">Motivo:</span>
+                                            <span class="prestacion-detail-value">@sol.solicitudPrestacion.motivo</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(sol.solicitudPrestacion.indicaciones))
+                                    {
+                                        <div class="prestacion-detail-item">
+                                            <span class="prestacion-detail-label">Indicaciones:</span>
+                                            <span class="prestacion-detail-value">@sol.solicitudPrestacion.indicaciones</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public PrestacionHistoriaSalud Prestacion { get; set; } = new();
+
+    [Parameter]
+    public bool EsCda { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnDownload { get; set; }
+
+    private string GetFechaFormateada()
+    {
+        if (Prestacion.ejecucion?.fecha != null)
+        {
+            var fecha = DateTimeHelper.ToArgentinaTime(Prestacion.ejecucion.fecha);
+            if (fecha.HasValue)
+            {
+                return $"{fecha.Value:dd/MM/yyyy} {fecha.Value:HH:mm}";
+            }
+        }
+        return "-";
+    }
+
+    private async Task HandleDownload()
+    {
+        if (EsCda && OnDownload.HasDelegate)
+        {
+            string archivo = "";
+            if (Prestacion.paciente?.adjuntos != null && Prestacion.paciente.adjuntos.Count > 0 && !string.IsNullOrEmpty(Prestacion.paciente.adjuntos[0]))
+            {
+                var adjunto = Prestacion.paciente.adjuntos[0];
+                archivo = adjunto.Substring(adjunto.LastIndexOf('/') + 1, adjunto.LastIndexOf('.') - adjunto.LastIndexOf('/') - 1);
+            }
+            await OnDownload.InvokeAsync(archivo);
+        }
+    }
+}

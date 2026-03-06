@@ -4,6 +4,6 @@ namespace AndesServices.Interfaces
 {
     public interface IOrganizacion
     {
-        Task<Organizacion> ObtenerOrganizacionPorIdAsync(string token, string id);
+        Task<Organizacion> ObtenerOrganizacionPorIdAsync(string id);
     }
 }

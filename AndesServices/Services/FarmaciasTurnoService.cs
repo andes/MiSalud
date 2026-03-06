@@ -18,7 +18,7 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
+                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 string url = $"modules/mobileApp/farmacias/turnos?localidad={localidadId}&desde={fechaDesde}&hasta={fechaHasta}";
 
                 using (HttpResponseMessage res = await client.GetAsync(url))
@@ -48,7 +48,7 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
+                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/farmacias/localidades"))
                 {
                     if (res.IsSuccessStatusCode)

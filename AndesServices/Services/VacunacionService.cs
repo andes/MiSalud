@@ -17,22 +17,21 @@ namespace AndesServices.Services
             _httpClientFactory = httpClientFactory;
         }
 
-        public Task<bool> ActualizarVacunacionAsync(string token, string idVacunacion, string vacuna, string fechaVacuna, string dosis)
+        public Task<bool> ActualizarVacunacionAsync(string idVacunacion, string vacuna, string fechaVacuna, string dosis)
         {
             throw new NotImplementedException();
         }
 
-        public Task<bool> EliminarVacunacionAsync(string token, string idVacunacion)
+        public Task<bool> EliminarVacunacionAsync(string idVacunacion)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<List<Vacunacion>> ObtenerCampañasVacunacion(string token)
+        public async Task<List<Vacunacion>> ObtenerCampañasVacunacion()
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/vacunas"))
                 {
@@ -57,12 +56,12 @@ namespace AndesServices.Services
             return null;
         }
 
-        public Task<List<Vacunacion>> ObtenerVacunacionesPorDocumentoAsync(string token, string documento)
+        public Task<List<Vacunacion>> ObtenerVacunacionesPorDocumentoAsync(string documento)
         {
             throw new NotImplementedException();
         }
 
-        public Task<bool> RegistrarVacunacionAsync(string token, string documento, string vacuna, string fechaVacuna, string dosis)
+        public Task<bool> RegistrarVacunacionAsync(string documento, string vacuna, string fechaVacuna, string dosis)
         {
             throw new NotImplementedException();
         }

@@ -1,0 +1,158 @@
+.turno-card {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.turno-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #00374c 0%, #87b867 100%);
+    transition: width 0.3s ease;
+}
+
+.turno-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    border-color: #00374c;
+}
+
+.turno-card:hover::before {
+    width: 6px;
+}
+
+.turno-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.turno-numero {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #00374c;
+}
+
+.turno-tipo-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #00374c 0%, #2b3e4c 100%);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
+}
+
+.turno-body {
+    padding-top: 0.5rem;
+}
+
+.turno-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.turno-info-item:last-child {
+    margin-bottom: 0;
+}
+
+.turno-label {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.turno-value {
+    font-size: 1.125rem;
+    color: #00374c;
+    font-weight: 600;
+}
+
+.turno-asistencia {
+    margin-bottom: 1rem;
+}
+
+.turno-badge {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    max-width: 300px;
+}
+
+.turno-badge.asistencia {
+    border: solid 2px #06bc06;
+    color: #06bc06;
+    background-color: #f0fdf0;
+}
+
+.turno-badge.inasistencia {
+    border: solid 2px #ccc;
+    color: #999;
+    background-color: #f9f9f9;
+}
+
+.turno-profesionales {
+    margin-bottom: 1rem;
+}
+
+.turno-profesionales-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.95rem;
+}
+
+.turno-profesionales-list li {
+    padding: 0.25rem 0;
+    color: #00374c;
+    font-weight: 500;
+}
+
+.turno-profesionales-list li::before {
+    content: "• ";
+    color: #87b867;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.turno-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .turno-card {
+        padding: 1.25rem;
+    }
+
+    .turno-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

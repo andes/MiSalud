@@ -81,11 +81,11 @@
 
         _spinnerService.Show();
         // Obtengo el paciente
-        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(pacienteId);
 
         if (_unPaciente != null)
         {
-            bool resultado = await _unTurnoService.RegistrarTurnoAsync(token, IdTurno, IdBloque, IdAgenda, _unPaciente, _unTipoPrestacion);
+            bool resultado = await _unTurnoService.RegistrarTurnoAsync(IdTurno, IdBloque, IdAgenda, _unPaciente, _unTipoPrestacion);
             _spinnerService.Hide();
 
             if (resultado)

@@ -1,0 +1,95 @@
+.teleconsulta-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Contenido principal */
+.teleconsulta-content {
+    margin-top: 2rem;
+}
+
+.teleconsulta-alert {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+    color: #0c5460;
+    margin-bottom: 2rem;
+}
+
+/* Acordeón de prestaciones */
+.teleconsulta-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.teleconsulta-accordion-item {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.teleconsulta-accordion-header {
+    margin: 0;
+}
+
+.teleconsulta-accordion-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background-color: #f8f9fa;
+    border: none;
+    text-align: left;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #00374c;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.teleconsulta-accordion-button:hover {
+    background-color: #e9ecef;
+}
+
+.teleconsulta-accordion-button:not(.collapsed) {
+    background-color: #00374c;
+    color: #fff;
+}
+
+.teleconsulta-accordion-button:not(.collapsed) Icon {
+    fill: #87b867;
+}
+
+.teleconsulta-accordion-collapse {
+    transition: all 0.3s ease;
+}
+
+.teleconsulta-accordion-body {
+    padding: 1.5rem;
+}
+
+/* Lista de efectores */
+.teleconsulta-efectores-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .teleconsulta-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .teleconsulta-efectores-list {
+        grid-template-columns: 1fr;
+    }
+}

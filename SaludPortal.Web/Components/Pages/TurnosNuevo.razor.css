@@ -1,0 +1,93 @@
+.turnos-nuevo-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Acordeón de prestaciones */
+.turnos-nuevo-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.turnos-nuevo-accordion-item {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.turnos-nuevo-accordion-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.turnos-nuevo-accordion-header {
+    margin: 0;
+}
+
+.turnos-nuevo-accordion-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background-color: #f8f9fa;
+    border: none;
+    text-align: left;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #00374c;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.turnos-nuevo-accordion-button:hover {
+    background-color: #e9ecef;
+}
+
+.turnos-nuevo-accordion-button:not(.collapsed) {
+    background-color: #00374c;
+    color: #fff;
+}
+
+.turnos-nuevo-accordion-button:not(.collapsed) Icon {
+    fill: #87b867;
+}
+
+.turnos-nuevo-accordion-collapse {
+    transition: all 0.3s ease;
+}
+
+.turnos-nuevo-accordion-body {
+    padding: 1.5rem;
+}
+
+/* Lista de efectores */
+.turnos-nuevo-efectores-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .turnos-nuevo-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .turnos-nuevo-accordion-button {
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+    }
+
+    .turnos-nuevo-accordion-body {
+        padding: 1rem;
+    }
+
+    .turnos-nuevo-efectores-list {
+        grid-template-columns: 1fr;
+    }
+}

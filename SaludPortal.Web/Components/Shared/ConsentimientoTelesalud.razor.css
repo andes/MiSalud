@@ -1,0 +1,131 @@
+.consentimiento-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 1rem;
+}
+
+.consentimiento-modal {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-width: 850px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.consentimiento-header {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 2px solid #e0e0e0;
+    background: linear-gradient(135deg, #00374c 0%, #2b3e4c 100%);
+    color: #fff;
+}
+
+.consentimiento-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.consentimiento-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.consentimiento-section {
+    margin-bottom: 1.5rem;
+}
+
+.consentimiento-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.consentimiento-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.consentimiento-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #495057;
+}
+
+.consentimiento-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #00374c;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.consentimiento-divider {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 1.5rem 0;
+}
+
+.consentimiento-warning {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    color: #856404;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
+.consentimiento-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 2px solid #e0e0e0;
+    background-color: #f8f9fa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .consentimiento-modal {
+        max-height: 95vh;
+    }
+
+    .consentimiento-header {
+        padding: 1rem;
+    }
+
+    .consentimiento-body {
+        padding: 1rem;
+    }
+
+    .consentimiento-footer {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .consentimiento-footer .btn {
+        width: 100%;
+    }
+}

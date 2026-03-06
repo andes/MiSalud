@@ -3,9 +3,10 @@
 
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Services
-@using AndesServices.Entities
 @using AndesServices.Interfaces
+@using AndesServices.Entities
 @using SaludPortal.Web.Components.Shared
+@using System.Linq
 
 @inherits AuthenticatedComponentBase
 @* @inject NavigationManager Nav *@
@@ -13,38 +14,41 @@
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject IPaciente _pacienteService
 
-<h1>Mis Datos</h1>
-<hr />
-@if (unPaciente != null)
-{
-    <div class="form-control paciente">
-        <p>DNI: @unPaciente.documento</p>
-        <p>Apellido y nombre: @unPaciente.nombreCompleto</p>
-        <p>Edad: @unPaciente.edad</p>
-        <p>Sexo: @unPaciente.sexo</p>
-        <p>Género: @unPaciente.genero</p>
-        <p>Fecha nacimiento: @unPaciente.fechaNacimiento?.ToString("dd/MM/yyyy")</p>
-    </div>
-    <p style="text-decoration:underline;margin-top:10px;"><strong>Relaciones</strong></p>
-    @if (unPaciente.relaciones != null)
-    {
-        @foreach (var relacion in unPaciente.relaciones)
-        {
-            <div class="form-control" style="box-shadow: 2px 2px 4px #000000;">
-                @if (relacion != null)
-                {
-                    <p><strong>@relacion.relacion.nombre</strong></p>
+<div class="grupo-familiar-container">
+    <PageHeader Title="Grupo Familiar" Subtitle="Información personal y relaciones familiares" />
 
-                    @if (relacion.nombre != null)
+    @if (unPaciente != null)
+    {
+        <div class="paciente-section">
+            <SectionTitle Title="Mis Datos" />
+            <PacienteInfoCard Paciente="unPaciente" />
+        </div>
+
+        <div class="relaciones-section">
+            <SectionTitle Title="Relaciones Familiares" />
+            @if (unPaciente.relaciones != null && unPaciente.relaciones.Any())
+            {
+                <div class="relaciones-grid">
+                    @foreach (var relacion in unPaciente.relaciones)
                     {
-                        <p><strong>Nombre: </strong>@relacion.apellido @relacion.nombre</p>
+                        @if (relacion != null)
+                        {
+                            <RelacionCard Relacion="relacion" />
+                        }
                     }
-                }
-            </div>
-            <hr />
-        }
+                </div>
+            }
+            else
+            {
+                <EmptyState Message="No se encontraron relaciones familiares registradas." />
+            }
+        </div>
     }
-}
+    else
+    {
+        <EmptyState Message="No se pudo cargar la información del paciente." />
+    }
+</div>
 
 @code {
     private AndesServices.Entities.Paciente unPaciente = new AndesServices.Entities.Paciente();
@@ -60,7 +64,7 @@
             return;
 
         _spinnerService.Show();
-        unPaciente = await _pacienteService.ObtenerPacientePorIdAsync(BackendToken, pacienteId);
+        unPaciente = await _pacienteService.ObtenerPacientePorIdAsync(pacienteId);
         _spinnerService.Hide();
     }
 }

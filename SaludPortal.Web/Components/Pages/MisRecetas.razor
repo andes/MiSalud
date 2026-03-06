@@ -4,8 +4,9 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
-@using AndesServices.Entities
 @using AndesServices.Interfaces
+@using AndesServices.Entities
+@using System.Linq
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
@@ -13,53 +14,26 @@
 
 @inherits AuthenticatedComponentBase
 
-<h1>Mis recetas</h1>
-<hr />
-@if (lstRecetas != null)
-{
-    @foreach (var receta in lstRecetas.OrderByDescending(r=> r.fechaRegistro))
-    {
-        <div class="form-control" style="box-shadow: 2px 2px 4px #000000;">
-            <p><strong>Fecha de registro: </strong>@receta.fechaRegistro.ToString("dd/MM/yyyy HH:mm:ss")</p>
-            <hr />
-            @if (receta.profesional != null)
-            {
-                <p>Profesional: <strong>@receta.profesional.apellido @receta.profesional.nombre</strong></p>
-                <p>MÉDICA - MP: <strong>@receta.profesional.matricula</strong></p>
-                @if (receta.profesional.especialidad.Length > 0)
-                {
-                    <p>Especialidad: @receta.profesional.especialidad</p>
-                }
-            }
-            <hr />
-            @if (receta.medicamento != null)
-            {
-                <table class="table receta" style="width:100%;">
-                    <thead>
-                        <tr>
-                            <th style="width:60%">Medicamento</th>
-                            <th>Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>@receta.medicamento.concepto.term</td>
-                            <td>@receta.medicamento.cantEnvases envase(s) de @receta.medicamento.cantidad @receta.medicamento.presentacion</td>
-                        </tr>
-                    </tbody>
-                </table>
-            }
-            <hr />
-            <p>
-                Diagnóstico: <strong>@receta.diagnostico.term</strong>
-            </p>
+<div class="recetas-container">
+    <PageHeader Title="Mis Recetas" Subtitle="Historial de recetas médicas" />
 
-            <hr />
-            Estado dispensa: @receta.estadoDispensaActual?.tipo
+    @if (lstRecetas != null && lstRecetas.Any())
+    {
+        <div class="recetas-section">
+            <SectionTitle Title="Recetas Médicas" Icon="bi bi-file-medical" />
+            <div class="recetas-grid">
+                @foreach (var receta in lstRecetas.OrderByDescending(r => r.fechaRegistro))
+                {
+                    <RecetaCard Receta="receta" />
+                }
+            </div>
         </div>
-        <hr />
     }
-}
+    else
+    {
+        <EmptyState Message="No se encontraron recetas registradas." />
+    }
+</div>
 
 @code {
     private List<AndesServices.Entities.MisReceta> lstRecetas = new List<AndesServices.Entities.MisReceta>();
@@ -71,7 +45,7 @@
             return;
 
         _spinnerService.Show();
-        lstRecetas = await _recetasService.ObtenerRecetasPacienteAsync(token, PacienteId);
+        lstRecetas = await _recetasService.ObtenerRecetasPacienteAsync(PacienteId);
         _spinnerService.Hide();
     }
 }

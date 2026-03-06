@@ -1,9 +1,11 @@
 @page "/turnosteleconsulta"
 @page "/turnostelesalud"
+@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Services
 @using AndesServices.Interfaces
 @using System.Security.Claims
@@ -19,129 +21,76 @@
 
 @inherits AuthenticatedComponentBase
 
-<h1>Telesalud</h1>
-<hr />
+<div class="teleconsulta-container">
+    <PageHeader Title="Telesalud" Subtitle="Solicite atención médica a distancia" />
 
 @if (!consentimientoAceptado)
 {
-    <div class="modal fade show d-block" tabindex="-1" style="background-color:rgba(0,0,0,0.5);--bs-modal-width:850px;" aria-modal="true" role="dialog">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Consentimiento de Telesalud</h5>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Al seleccionar Telesalud Ud. está accediendo a un espacio en constante evolución.</strong></p>
-                    <p><strong>La información con respecto a su salud es información sensible que está protegida por la Ley Provincial de Derechos de los Pacientes 2611 y la Ley Nacional de protección de datos personales 23.526.</strong></p>
-                    <hr />
-                    <p><strong>Importante:</strong></p>
-                    <p>NO es un canal de resolución de urgencias ni emergencias médicas.</p>
-                    <p>NO reemplaza la atención presencial.</p>
-                    <hr />
-                    <p>Ud. va a ser contactado al número de teléfono que indique por personal de Gestión de Pacientes, que le solicitará información adicional que puede ser necesaria para resolver su consulta en un plazo estimado de 24-48 horas.</p>
-                    <p>Una vez que Ud. completó los datos solicitados podrá visualizar en el Portal Mi Salud: “solicitud de telesalud realizada”, y podrá cancelarla en cualquier momento. </p>
-                    <p>Su consulta podrá ser resuelta vía contacto de personal de salud que tendrá acceso a su Historia Clínica. De corresponder receta o certificado podrá visualizarlos una vez emitido en <strong>Portal Mi Salud</strong>. De ser necesario ampliar la evaluación se le podrá asignar un turno presencial en caso de ser necesario o un turno para videoconsulta con un profesional.</p>
-                    <p><span style="color:red;">Su consulta puede ser rechazada, y se le informará el motivo.</span></p>
-
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="RechazarConsentimiento">
-                        <i class="fa fa-times" aria-hidden="true"></i> Rechazar
-                    </button>
-                    <button type="button" class="btn btn-success" @onclick="AceptarConsentimiento">
-                        <i class="fa fa-check" aria-hidden="true"></i> Aceptar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <ConsentimientoTelesalud OnAceptar="AceptarConsentimiento" OnRechazar="RechazarConsentimiento" />
 }
 
 @if (consentimientoAceptado)
 {
-    <h2>Agendas disponibles para telesalud</h2>
-    
-    <div class="alert alert-info" role="alert">
-        <i class="fa fa-info-circle" aria-hidden="true"></i>
-        <strong>Importante:</strong> Solo puede tener un turno de telesalud asignado.
-    </div>
+    <div class="teleconsulta-content">
+        <div class="teleconsulta-alert">
+            <Icon Name="info-circle" Size="20" Fill="#0dcaf0" class="me-2" AriaLabel="Información" />
+            <strong>Importante:</strong> Solo puede tener un turno de telesalud asignado.
+        </div>
 
-    @if (lstAgendas != null && lstAgendas.Count > 0)
-    {
-        var tipoPrestacionIndex = 0;
-        <div class="accordion" id="accAgendas">
-            @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
-            {
-                var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
-                var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
-                var accOrgId = $"accOrganizaciones_{tipoPrestacionIndex}";
-                var organizacionIndex = 0;
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="@tipoId">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
-                            @tipoPrestaciones.term
-                        </button>
-                    </h2>
-                    <div id="@collapseTipoId" class="accordion-collapse collapse show" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
-                        <div class="accordion-body">
-                            <div class="accordion" id="@accOrgId">
-                                @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
-                                {
-                                    var (primerTurnoDisponible, bloqueId) = ObtenerPrimerTurnoDisponible(tipoPrestaciones.id, efectores.Efector._id);
-                                    
-                                    var orgId = $"Organizacion_{tipoPrestacionIndex}_{organizacionIndex}";
-                                    var collapseOrgId = $"collapseOrg_{tipoPrestacionIndex}_{organizacionIndex}";
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="@orgId">
-                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseOrgId" aria-expanded="true" aria-controls="@collapseOrgId">
-                                                <div>
-                                                    <i class="fa fa-video-camera" aria-hidden="true" style="max-width:16px;"></i> @efectores.Efector.nombre
-                                                    <br />
-                                                    <span class="badge bg-success">Telesalud</span>
-                                                </div>
-                                            </button>
-                                        </h2>
-                                        <div id="@collapseOrgId" class="accordion-collapse collapse show" aria-labelledby="@orgId" data-bs-parent="#@accOrgId">
-                                            <div class="accordion-body">
-                                                @if (primerTurnoDisponible != null && bloqueId != null)
-                                                {
-                                                    <div style="margin-bottom: 10px;">
-                                                        <button class="btn btn-success" title="Seleccionar"
-                                                                @onclick="() => ShowModalConfirmar(
-                                                                    primerTurnoDisponible.horaInicio.Date, 
-                                                                    DateTimeHelper.ToArgentinaTime(primerTurnoDisponible.horaInicio), 
-                                                                    tipoPrestaciones.term, 
-                                                                    efectores.Efector.nombre, 
-                                                                    efectores.Domicilio, 
-                                                                    tipoPrestaciones.id, 
-                                                                    primerTurnoDisponible._id, 
-                                                                    bloqueId)"
-                                                        >
-                                                            <i class="fa fa-video-camera" aria-hidden="true" style="max-width:16px;"></i> Solicitar atención
-                                                        </button>
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <hr />
-                                    organizacionIndex++;
-                                }
+        @if (lstAgendas != null && lstAgendas.Count > 0)
+        {
+            var tipoPrestacionIndex = 0;
+            <div class="teleconsulta-accordion" id="accAgendas">
+                @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
+                {
+                    var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
+                    var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
+                    var accOrgId = $"accOrganizaciones_{tipoPrestacionIndex}";
+                    var organizacionIndex = 0;
+                    <div class="teleconsulta-accordion-item">
+                        <h2 class="teleconsulta-accordion-header" id="@tipoId">
+                            <button class="teleconsulta-accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
+                                <Icon Name="calendar-check" Size="20" Fill="#87b867" class="me-2" AriaLabel="Prestación" />
+                                @tipoPrestaciones.term
+                            </button>
+                        </h2>
+                        <div id="@collapseTipoId" class="teleconsulta-accordion-collapse collapse show" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
+                            <div class="teleconsulta-accordion-body">
+                                <div class="teleconsulta-efectores-list">
+                                    @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
+                                    {
+                                        var (primerTurnoDisponible, bloqueId) = ObtenerPrimerTurnoDisponible(tipoPrestaciones.id, efectores.Efector._id);
+                                        var tieneTurno = primerTurnoDisponible != null && bloqueId != null;
+                                        
+                                        <EfectorTelesaludCard 
+                                            EfectorNombre="@efectores.Efector.nombre"
+                                            TieneTurnoDisponible="@tieneTurno"
+                                            OnSolicitar="@(tieneTurno ? EventCallback.Factory.Create(this, async () => await ShowModalConfirmar(
+                                                primerTurnoDisponible!.horaInicio.Date, 
+                                                DateTimeHelper.ToArgentinaTime(primerTurnoDisponible.horaInicio), 
+                                                tipoPrestaciones.term, 
+                                                efectores.Efector.nombre, 
+                                                efectores.Domicilio, 
+                                                tipoPrestaciones.id, 
+                                                primerTurnoDisponible._id, 
+                                                bloqueId!)) : default(EventCallback))" />
+                                        organizacionIndex++;
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <hr />
-                tipoPrestacionIndex++;
-            }
-        </div>
-    }
-    else
-    {
-        <p>No hay turnos de telesalud disponibles.</p>
-    }
+                    tipoPrestacionIndex++;
+                }
+            </div>
+        }
+        else
+        {
+            <EmptyState Message="No hay turnos de telesalud disponibles." />
+        }
+    </div>
 }
+</div>
 
 @code {
     private bool consentimientoAceptado = false;
@@ -253,14 +202,14 @@
         try
         {
             // Obtengo los conceptos de teleconsulta
-            var conceptosTurneables = await _misTurnosService.ObtenerConceptosTurneablesAsync(token, true);
+            var conceptosTurneables = await _misTurnosService.ObtenerConceptosTurneablesAsync(true);
             if (conceptosTurneables != null && conceptosTurneables.Count > 0)
             {
                 conceptosTeleconsulta = new HashSet<string>(conceptosTurneables.Select(c => c.conceptId));
             }
 
             // Obtengo el paciente
-            _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+            _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(pacienteId);
 
             // Verifico que domicilio utilizar para referencia a las organizaciones
             _direccionGeoreferencia = _unPacienteService.ObtenerDireccionPrioritaria(_unPaciente);
@@ -277,10 +226,10 @@
             if (_userLocation != null)
             {
                 // Obtener los turnos del paciente para validar si ya tiene uno con fecha mayor a hoy
-                lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token, Documento ?? "") ?? new List<MisTurnos>();
+                lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(Documento ?? "") ?? new List<MisTurnos>();
 
                 // La diferencia principal: esTeleconsulta: true
-                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(token, pacienteId, _userLocation, esTeleconsulta: true);
+                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(pacienteId, _userLocation, esTeleconsulta: true);
 
                 // Obtener todos los IDs de organizaciones únicos
                 var orgIds = lstAgendas
@@ -292,7 +241,7 @@
                 // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
                 foreach (var orgId in orgIds)
                 {
-                    var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(token, orgId);
+                    var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(orgId);
                     if (organizacion != null && !_domiciliosOrganizaciones.ContainsKey(orgId))
                     {
                         // Asume que organizacion.direccion?.valor es el domicilio

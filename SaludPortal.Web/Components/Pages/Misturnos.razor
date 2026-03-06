@@ -1,131 +1,83 @@
 ﻿@page "/misturnos"
-
+@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Components.Icons
-@* @using SaludPortal.Web.Services *@
+@using SaludPortal.Web.Services
 @using AndesServices.Interfaces
 @using System.Security.Claims
 @using AndesServices.Entities
 @using System.Linq
+
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject IMisTurnos _misTurnosService
-@* @rendermode InteractiveServer *@
+
 @inherits AuthenticatedComponentBase
 
-<h1>Mis turnos</h1>
-<hr />
-<br />
-@if (lstMisTurnos != null)
-{
-    @foreach (var misTurnos in lstMisTurnos)
+<div class="misturnos-container">
+    <PageHeader Title="Mis turnos" Subtitle="Turnos programados y próximos" />
+    
+
+    @if (lstMisTurnos != null)
     {
-        @if (misTurnos != null)
+        var turnosFuturosList = lstMisTurnos
+            .Where(t => t != null && t.horaInicio >= DateTime.Now)
+            .OrderBy(t => t.horaInicio)
+            .ToList();
+
+        @if (turnosFuturosList.Any())
         {
-            @if (misTurnos.horaInicio >= DateTime.Now)
-            {
-                turnosFuturos = true;
-
-                <div class="form-control" style="box-shadow: 2px 2px 4px #000000;">
-                    @if (misTurnos.tipoPrestacion != null)
+            <div class="turnos-futuros-section">
+                <div class="section-title-wrapper">
+                    <h2 class="section-title">
+                        <Icon Name="calendar-check" Size="24" Fill="#87b867" class="me-2" AriaLabel="Turnos" />
+                        Turnos Programados
+                    </h2>
+                </div>
+                <div class="turnos-futuros-grid">
+                    @foreach (var turno in turnosFuturosList)
                     {
-                        <div class="d-flex align-items-stretch justify-content-between">
-                            <div>
-                                <h4>
-
-                                    @if (EsTeleconsulta(misTurnos.tipoPrestacion.conceptId))
-                                    {
-                                        <strong>Fecha de solicitud: </strong>
-                                        @misTurnos.horaInicio.ToString("dd/MM/yyyy")
-                                    }
-                                    else
-                                    {
-                                        <strong>Fecha: </strong>
-                                        @DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio).ToString("dd/MM/yyyy HH:mm")
-                                    }
-                                </h4>
-                                @if (misTurnos.tipoPrestacion.term != null)
-                                {
-                                    <div>
-                                        <strong>Prestación: </strong>
-                                        @misTurnos.tipoPrestacion.term
-                                    </div>
-                                }
-                                <div>
-                                    @if (!EsTeleconsulta(misTurnos.tipoPrestacion.conceptId))
-                                    {
-                                        <strong>Lugar: </strong>
-                                        @misTurnos.organizacion.nombre
-                                    }
-                                </div>
-                            </div>
-
-                            @if (EsTeleconsulta(misTurnos.tipoPrestacion.conceptId))
-                            {
-                                <button @onclick="async () => await ShowModalCancelarConfirmar(misTurnos.horaInicio,
-                                                                        DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio),
-                                                                        misTurnos.tipoPrestacion.term,
-                                                                        misTurnos.organizacion?.nombre ?? string.Empty,
-                                                                        misTurnos.agenda_id,
-                                                                        misTurnos._id,
-                                                                        misTurnos.bloque_id, esTeleconsulta: true)"
-                                        class=" d-flex flex-wrap align-items-center justify-content-center gap-2 text-white align-self-stretch"
-                                        style="cursor:pointer; background-color:red;border-radius:10px;padding:6px 10px;"
-                                        title="Cancelar turno">
-                                    <span>Cancelar</span>
-                                    <Icon Name="cancelar-turno" Size="32" Fill="#fff" AriaLabel="Cancelar" />
-                                </button>
-                            }
-                            else
-                            {
-                                <button @onclick="async () => await ShowModalCancelarConfirmar(misTurnos.horaInicio,
-                                                                        DateTimeHelper.ToArgentinaTime(misTurnos.horaInicio),
-                                                                        misTurnos.tipoPrestacion.term,
-                                                                        misTurnos.organizacion?.nombre ?? string.Empty,
-                                                                        misTurnos.agenda_id,
-                                                                        misTurnos._id,
-                                                                        misTurnos.bloque_id, esTeleconsulta: false)"
-                                        class=" d-flex flex-wrap align-items-center justify-content-center gap-2 text-white align-self-stretch"
-                                        style="cursor:pointer; background-color:red;border-radius:10px;padding:6px 10px;"
-                                        title="Cancelar turno">
-                                    <span>Cancelar</span>
-                                    <Icon Name="cancelar-turno" Size="32" Fill="#fff" AriaLabel="Cancelar" />
-                                </button>
-                            }
-                        </div>
+                        <TurnoFuturoCard 
+                            Turno="turno" 
+                            EsTeleconsulta="EsTeleconsulta(turno.tipoPrestacion?.conceptId)" 
+                            OnCancel="HandleCancelarTurno" />
                     }
                 </div>
-            }
+            </div>
+        }
+        else
+        {
+            <div class="calendar-icon-wrapper">
+                <Icon Name="calendar2-heart" Fill="#c33995" Size="32" />
+            </div>
+            <EmptyState Message="No tienes ningún turno programado" />
         }
     }
-    @if (!turnosFuturos)
-    {
-        <div>
-            <p style="border:solid #c33995 2px;border-radius:25px; padding:7px; max-width:50px;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="#c33995" width="32" height="32" class="bi bi-calendar2-heart" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4zM1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm2 .5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V4a.5.5 0 0 0-.5-.5zm5 4.493c1.664-1.711 5.825 1.283 0 5.132-5.825-3.85-1.664-6.843 0-5.132" />
-                </svg>
-            </p>
-            No tienes ningún turno programado
-        </div>
-    }
-    <hr />
 
-    <a href="/turnosNuevo" class="btn btn-verde" title="Solicitar turno">SOLICITAR TURNO</a>
-    <a href="/turnosHistorial" class="btn btn-celeste" title="Historial de turnos">HISTORIAL DE TURNOS</a>
-    <a href="/turnosTelesalud" class="btn btn-naranja" title="Telesalud">TELESALUD</a>
-}
+    <div class="misturnos-actions">
+        <a href="/turnosNuevo" class="btn btn-success">
+            <Icon Name="calendar-plus" Size="20" Fill="#fff" class="me-2" AriaLabel="Solicitar" />
+            Solicitar turno
+        </a>
+        <a href="/turnosHistorial" class="btn btn-primary">
+            <Icon Name="clock-history" Size="20" Fill="#fff" class="me-2" AriaLabel="Historial" />
+            Historial de turnos
+        </a>
+        <a href="/turnosTelesalud" class="btn btn-secondary">
+            <Icon Name="camera-video" Size="20" Fill="#fff" class="me-2" AriaLabel="Telesalud" />
+            Telesalud
+        </a>
+    </div>
+</div>
 
 @code {
-    private bool turnosFuturos = false;
     private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
-    private Paciente? _unPaciente = new Paciente();
-    private Direccion _direccionGeoreferencia = new Direccion();
-    private long idAgenda = 0;
     private HashSet<string> conceptosTeleconsulta = new HashSet<string>();
+
+    [CascadingParameter] IModalService Modal { get; set; } = default!;
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -133,22 +85,18 @@
         if (string.IsNullOrEmpty(token))
             return;
 
-        // var pacienteId = PacienteId;
-        // if (string.IsNullOrEmpty(pacienteId))
-        //     return;
-
         _spinnerService.Show();
         try
         {
             // Obtengo los conceptos de teleconsulta
-            var conceptosTurneables = await _misTurnosService.ObtenerConceptosTurneablesAsync(token, true);
+            var conceptosTurneables = await _misTurnosService.ObtenerConceptosTurneablesAsync(true);
             if (conceptosTurneables != null && conceptosTurneables.Count > 0)
             {
                 conceptosTeleconsulta = new HashSet<string>(conceptosTurneables.Select(c => c.conceptId));
             }
 
             // Obtengo los turnos
-            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(token, Documento ?? "");
+            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(Documento ?? "");
         }
         catch (Exception ex)
         {
@@ -167,7 +115,20 @@
         return conceptosTeleconsulta.Contains(conceptId);
     }
 
-    [CascadingParameter] IModalService Modal { get; set; } = default!;
+    private async Task HandleCancelarTurno(MisTurnos turno)
+    {
+        var esTeleconsulta = EsTeleconsulta(turno.tipoPrestacion?.conceptId);
+        await ShowModalCancelarConfirmar(
+            turno.horaInicio,
+            DateTimeHelper.ToArgentinaTime(turno.horaInicio),
+            turno.tipoPrestacion?.term ?? string.Empty,
+            turno.organizacion?.nombre ?? string.Empty,
+            turno.agenda_id,
+            turno._id,
+            turno.bloque_id,
+            esTeleconsulta
+        );
+    }
 
     private async Task ShowModalCancelarConfirmar(DateTime Fecha, DateTime Hora, string TipoPrestacion, string EfectorNombre, string IdAgenda, string IdTurno, string IdBloque, bool esTeleconsulta)
     {
@@ -179,10 +140,7 @@
             HideHeader = true
         };
 
-        // string Paciente = _unPaciente.nombre + " " + _unPaciente.apellido;
-
         var parameters = new ModalParameters()
-        // .Add(nameof(MisTurnosCancelarConfirmar.Paciente), Paciente)
         .Add(nameof(MisTurnosCancelarConfirmar.FechaHoraTurno), Fecha.ToString("dd/MM/yyyy") + " " + Hora.ToString("HH:mm"))
         .Add(nameof(MisTurnosCancelarConfirmar.EfectorNombre), EfectorNombre)
         .Add(nameof(TurnoNuevoConfirmar.TipoPrestacion), TipoPrestacion)

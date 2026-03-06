@@ -1,0 +1,39 @@
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+@using AndesServices.Entities
+
+<div class="teleconsulta-efector-card">
+    <div class="teleconsulta-efector-header">
+        <Icon Name="camera-video" Size="20" Fill="#87b867" class="me-2" AriaLabel="Telesalud" />
+        <span class="teleconsulta-efector-name">@EfectorNombre</span>
+        <span class="teleconsulta-badge">Telesalud</span>
+    </div>
+    @if (TieneTurnoDisponible)
+    {
+        <div class="teleconsulta-efector-actions">
+            <button class="btn btn-success teleconsulta-solicitar-btn" @onclick="HandleSolicitar">
+                <Icon Name="camera-video" Size="18" Fill="#fff" class="me-2" AriaLabel="Solicitar" />
+                Solicitar atención
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string EfectorNombre { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool TieneTurnoDisponible { get; set; }
+
+    [Parameter]
+    public EventCallback OnSolicitar { get; set; }
+
+    private async Task HandleSolicitar()
+    {
+        if (OnSolicitar.HasDelegate)
+        {
+            await OnSolicitar.InvokeAsync();
+        }
+    }
+}

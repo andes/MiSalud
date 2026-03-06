@@ -1,0 +1,97 @@
+.farmacia-card {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.farmacia-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #00374c 0%, #87b867 100%);
+    transition: width 0.3s ease;
+}
+
+.farmacia-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    border-color: #00374c;
+}
+
+.farmacia-card:hover::before {
+    width: 6px;
+}
+
+.farmacia-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.farmacia-nombre {
+    display: inline-block;
+    background: linear-gradient(135deg, #00374c 0%, #2b3e4c 100%);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
+}
+
+.farmacia-body {
+    padding-top: 0.5rem;
+}
+
+.farmacia-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.farmacia-info:last-child {
+    margin-bottom: 0;
+}
+
+.farmacia-label {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.farmacia-value {
+    font-size: 1.125rem;
+    color: #00374c;
+    font-weight: 600;
+}
+
+.farmacia-map-link {
+    display: inline-flex;
+    align-items: center;
+    color: #00374c;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+    transition: color 0.2s ease;
+}
+
+.farmacia-map-link:hover {
+    color: #87b867;
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .farmacia-card {
+        padding: 1.25rem;
+    }
+}

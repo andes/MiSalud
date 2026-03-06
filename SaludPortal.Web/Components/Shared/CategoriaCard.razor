@@ -1,0 +1,28 @@
+@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+
+<div class="categoria-card" @onclick="HandleClick" tabindex="0">
+    <div class="categoria-content">
+        <span class="categoria-titulo">@Categoria.Titulo</span>
+        <span class="categoria-icon">
+            <Icon Name="chevron-right" Size="20" Fill="#00374c" AriaLabel="Ver categoría" />
+        </span>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CategoriaHistoriaSalud Categoria { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<(string? expresionSnomed, string? titulo)> OnClick { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (OnClick.HasDelegate && !string.IsNullOrWhiteSpace(Categoria.ExpresionSnomed))
+        {
+            await OnClick.InvokeAsync((Categoria.ExpresionSnomed, Categoria.Titulo));
+        }
+    }
+}

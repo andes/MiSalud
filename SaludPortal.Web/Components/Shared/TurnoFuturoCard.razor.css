@@ -1,0 +1,138 @@
+.turno-futuro-card {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.turno-futuro-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #00374c 0%, #87b867 100%);
+    transition: width 0.3s ease;
+}
+
+.turno-futuro-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.turno-futuro-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #00374c 0%, #2b3e4c 100%);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
+}
+
+.turno-futuro-tipo {
+    display: inline-block;
+    background: linear-gradient(135deg, #87b867 0%, #6a9a4f 100%);
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 4px rgba(135, 184, 103, 0.2);
+}
+
+.turno-futuro-body {
+    padding-top: 0.5rem;
+}
+
+.turno-futuro-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.turno-futuro-info-item:last-child {
+    margin-bottom: 0;
+}
+
+.turno-futuro-label {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.turno-futuro-value {
+    font-size: 1.125rem;
+    color: #00374c;
+    font-weight: 600;
+}
+
+.turno-futuro-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.turno-futuro-cancel-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.turno-futuro-cancel-button:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.turno-futuro-cancel-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.turno-futuro-cancel-button Icon {
+    flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .turno-futuro-card {
+        padding: 1.25rem;
+    }
+
+    .turno-futuro-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .turno-futuro-cancel-button {
+        width: 100%;
+        justify-content: center;
+    }
+}

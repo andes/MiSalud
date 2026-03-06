@@ -14,16 +14,11 @@ namespace AndesServices.Services
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<List<Provincia>> ObtenerProvinciasAsync(string token)
+        public async Task<List<Provincia>> ObtenerProvinciasAsync()
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                throw new ArgumentException("Token no proporcionado.");
-            }
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 using (HttpResponseMessage res = await client.GetAsync("core/tm/provincias"))
                 {
@@ -53,12 +48,8 @@ namespace AndesServices.Services
             }
         }
 
-        public async Task<List<Localidad>> ObtenerLocalidadesPorProvinciaAsync(string token, string idProvincia, string? nombre = null)
+        public async Task<List<Localidad>> ObtenerLocalidadesPorProvinciaAsync(string idProvincia, string? nombre = null)
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                throw new ArgumentException("Token no proporcionado.");
-            }
             if (string.IsNullOrEmpty(idProvincia))
             {
                 return new List<Localidad>();
@@ -67,7 +58,6 @@ namespace AndesServices.Services
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
                 var url = $"core/tm/localidades?provincia={Uri.EscapeDataString(idProvincia)}";
                 
                 if (!string.IsNullOrEmpty(nombre))

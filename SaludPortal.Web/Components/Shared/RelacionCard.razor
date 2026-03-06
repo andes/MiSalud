@@ -1,0 +1,22 @@
+@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
+
+<div class="relacion-card">
+    <div class="relacion-header">
+        <span class="relacion-tipo">@Relacion.relacion.nombre</span>
+    </div>
+    <div class="relacion-body">
+        @if (!string.IsNullOrWhiteSpace(Relacion.nombre) || !string.IsNullOrWhiteSpace(Relacion.apellido))
+        {
+            <div class="relacion-nombre">
+                <span class="relacion-label">Nombre completo:</span>
+                <span class="relacion-value">@Relacion.apellido @Relacion.nombre</span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Relacion Relacion { get; set; } = new();
+}

@@ -21,23 +21,16 @@ namespace AndesServices.Services
         }
 
 
-        public Task<bool> ActualizarTurnoAsync(string token, string idTurno, string motivoConsulta, string profesional, DateTime fechaHoraDacion)
+        public Task<bool> ActualizarTurnoAsync(string idTurno, string motivoConsulta, string profesional, DateTime fechaHoraDacion)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<bool> CancelarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente)
+        public async Task<bool> CancelarTurnoAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente)
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                Console.WriteLine("Token no proporcionado.");
-                return false;
-            }
-
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 string jsonCancelarTurno = $@"{{
                         ""agenda_id"": ""{idAgenda}"",
@@ -77,18 +70,11 @@ namespace AndesServices.Services
             return false;
         }
 
-        public async Task<List<MisTurnos>> ObtenerMisTurnosAsync(string token, string? documento = "")
+        public async Task<List<MisTurnos>> ObtenerMisTurnosAsync(string? documento = "")
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                Console.WriteLine("Token no proporcionado.");
-                return null;
-            }
-
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/turnos"))
                 {
@@ -113,23 +99,16 @@ namespace AndesServices.Services
             return null;
         }
 
-        public Task<MisTurnos> ObtenerTurnoPorIdAsync(string token, string idTurno)
+        public Task<MisTurnos> ObtenerTurnoPorIdAsync(string idTurno)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<bool> RegistrarTurnoAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion)
+        public async Task<bool> RegistrarTurnoAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion)
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                Console.WriteLine("Token no proporcionado.");
-                return false;
-            }
-
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 string tipoTurno = "programado";
                 string emitidoPor = "misalud";
@@ -168,18 +147,11 @@ namespace AndesServices.Services
             return false;
         }
 
-        public async Task<bool> RegistrarTurnoTeleConsultaAsync(string token, string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta = "", string estado = "")
+        public async Task<bool> RegistrarTurnoTeleConsultaAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta = "", string estado = "")
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                Console.WriteLine("Token no proporcionado.");
-                return false;
-            }
-
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 string tipoTurno = "programado";
                 string emitidoPor = "misalud";
@@ -220,27 +192,20 @@ namespace AndesServices.Services
             return false;
         }
 
-        public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string token, string idPaciente, userLocation userLocation, bool esTeleConsulta)
+        public async Task<List<OrganizacionAgenda>> ObtenerAgendasOrganizaciones(string idPaciente, userLocation userLocation, bool esTeleConsulta)
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                Console.WriteLine("Token no proporcionado.");
-                return null;
-            }
-
             string estado = "disponible";
 
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 var userLocationJson = JsonConvert.SerializeObject(userLocation);
                 var queryParams = new Dictionary<string, string?>
                 {
                     ["estado"] = estado,
                     ["userLocation"] = userLocationJson,
-                    ["teleConsulta"] = "true"
+                    ["teleConsulta"] = esTeleConsulta.ToString().ToLower(),
                 };
 
                 string finalUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("modules/mobileApp/agendasDisponibles", queryParams);
@@ -262,7 +227,10 @@ namespace AndesServices.Services
                             return null;
                         }
 
-                        organizacionAgendas = await filtrarAgendasOrganizacionesTeleConsultaAsync(token, organizacionAgendas, esTeleConsulta);
+                        if (esTeleConsulta)
+                        {
+                            organizacionAgendas = await filtrarAgendasOrganizacionesTeleConsultaAsync(organizacionAgendas);
+                        }
 
                         return organizacionAgendas;
                     }
@@ -276,9 +244,9 @@ namespace AndesServices.Services
             return null;
         }
 
-        private async Task<List<OrganizacionAgenda>> filtrarAgendasOrganizacionesTeleConsultaAsync(string token, List<OrganizacionAgenda> organizacionAgendas, bool esTeleConsulta = false)
+        private async Task<List<OrganizacionAgenda>> filtrarAgendasOrganizacionesTeleConsultaAsync(List<OrganizacionAgenda> organizacionAgendas)
         {
-            List<ConceptoTurneable> conceptosTurneables = await ObtenerConceptosTurneablesAsync(token, esTeleConsulta);
+            List<ConceptoTurneable> conceptosTurneables = await ObtenerConceptosTurneablesAsync(true);
 
             if (conceptosTurneables != null && conceptosTurneables.Count > 0)
             {
@@ -349,12 +317,11 @@ namespace AndesServices.Services
             return organizacionAgendas;
         }
 
-        public async Task<List<ConceptoTurneable>> ObtenerConceptosTurneablesAsync(string token, bool esTeleConsulta = false)
+        public async Task<List<ConceptoTurneable>> ObtenerConceptosTurneablesAsync(bool esTeleConsulta = false)
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 var queryParams = new Dictionary<string, string?>
                 {

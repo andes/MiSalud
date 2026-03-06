@@ -1,0 +1,17 @@
+@using Microsoft.AspNetCore.Components
+
+<h2 class="section-title">
+    @if (!string.IsNullOrWhiteSpace(Icon))
+    {
+        <span class="@Icon section-icon"></span>
+    }
+    @Title
+</h2>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Icon { get; set; }
+}

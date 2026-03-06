@@ -1,0 +1,84 @@
+.turno-horario-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.turno-fecha-section {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.turno-fecha-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.turno-fecha-text {
+    color: #00374c;
+    font-size: 1rem;
+    flex: 1;
+}
+
+.turno-disponibles-badge {
+    display: inline-block;
+    background-color: #d1ecf1;
+    color: #0c5460;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.turno-horarios-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.turno-horario-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.625rem 1.25rem;
+    background-color: #0dcaf0;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(13, 202, 240, 0.2);
+}
+
+.turno-horario-button:hover {
+    background-color: #0aa2c0;
+    box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
+}
+
+.turno-horario-button:active {
+    box-shadow: 0 2px 4px rgba(13, 202, 240, 0.2);
+}
+
+.turno-horario-button:focus {
+    outline: 2px solid #0dcaf0;
+    outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .turno-horarios-container {
+        gap: 0.5rem;
+    }
+
+    .turno-horario-button {
+        flex: 1;
+        min-width: calc(50% - 0.25rem);
+        justify-content: center;
+    }
+}

@@ -1,0 +1,10 @@
+@using Microsoft.AspNetCore.Components
+
+<div class="empty-state">
+    <p>@Message</p>
+</div>
+
+@code {
+    [Parameter]
+    public string Message { get; set; } = "No hay información disponible.";
+}

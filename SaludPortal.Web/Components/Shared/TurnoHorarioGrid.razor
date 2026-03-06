@@ -1,0 +1,47 @@
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Utils
+@using AndesServices.Entities
+@using System.Linq
+
+<div class="turno-horario-grid">
+    @foreach (var fechaGrupo in TurnosPorFecha)
+    {
+        <div class="turno-fecha-section">
+            <div class="turno-fecha-header">
+                <Icon Name="calendar-check" Size="18" Fill="#00374c" class="me-2" AriaLabel="Fecha" />
+                <strong class="turno-fecha-text">@fechaGrupo.Fecha.ToString("dd/MM/yyyy")</strong>
+                @if (fechaGrupo.Disponibles > 0)
+                {
+                    <span class="turno-disponibles-badge">@fechaGrupo.Disponibles disponibles</span>
+                }
+            </div>
+            <div class="turno-horarios-container">
+                @foreach (var turno in fechaGrupo.Turnos)
+                {
+                    <button class="turno-horario-button" 
+                            title="Seleccionar turno @DateTimeHelper.ToArgentinaTime(turno.horaInicio).ToString("HH:mm")"
+                            @onclick="() => OnTurnoSeleccionado.InvokeAsync(turno)">
+                        <Icon Name="clock-history" Size="16" Fill="currentColor" class="me-1" AriaLabel="Hora" />
+                        @DateTimeHelper.ToArgentinaTime(turno.horaInicio).ToString("HH:mm")
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<TurnoFechaGrupo> TurnosPorFecha { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<MisTurnos> OnTurnoSeleccionado { get; set; }
+
+    public class TurnoFechaGrupo
+    {
+        public DateTime Fecha { get; set; }
+        public int Disponibles { get; set; }
+        public List<MisTurnos> Turnos { get; set; } = new();
+    }
+}

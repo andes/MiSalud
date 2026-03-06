@@ -1,0 +1,65 @@
+@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
+
+<div class="receta-card">
+    <div class="receta-header">
+        <span class="receta-fecha">@Receta.fechaRegistro.ToString("dd/MM/yyyy HH:mm:ss")</span>
+        @if (Receta.estadoDispensaActual != null && !string.IsNullOrWhiteSpace(Receta.estadoDispensaActual.tipo))
+        {
+            <span class="receta-estado">@Receta.estadoDispensaActual.tipo</span>
+        }
+    </div>
+    
+    <div class="receta-body">
+        @if (Receta.profesional != null)
+        {
+            <div class="receta-section">
+                <h4 class="receta-section-title">Profesional</h4>
+                <div class="receta-info">
+                    <span class="receta-label">Nombre:</span>
+                    <span class="receta-value">@Receta.profesional.apellido @Receta.profesional.nombre</span>
+                </div>
+                <div class="receta-info">
+                    <span class="receta-label">MÉDICA - MP:</span>
+                    <span class="receta-value">@(Receta.profesional.matricula.HasValue ? Receta.profesional.matricula.Value.ToString() : "-")</span>
+                </div>
+                <div class="receta-info">
+                    <span class="receta-label">Especialidad:</span>
+                    <span class="receta-value">@(Receta.profesional.especialidad == null || Receta.profesional.especialidad.Length == 0 ? "-" : Receta.profesional.especialidad)</span>
+                </div>
+            </div>
+        }
+
+        @if (Receta.medicamento != null)
+        {
+            <div class="receta-section">
+                <h4 class="receta-section-title">Medicamento</h4>
+                <div class="receta-medicamento-table">
+                    <div class="receta-medicamento-row">
+                        <div class="receta-medicamento-label">Medicamento:</div>
+                        <div class="receta-medicamento-value">@Receta.medicamento.concepto.term</div>
+                    </div>
+                    <div class="receta-medicamento-row">
+                        <div class="receta-medicamento-label">Cantidad:</div>
+                        <div class="receta-medicamento-value">@Receta.medicamento.cantEnvases envase(s) de @Receta.medicamento.cantidad @Receta.medicamento.presentacion</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Receta.diagnostico != null && !string.IsNullOrWhiteSpace(Receta.diagnostico.term))
+        {
+            <div class="receta-section">
+                <h4 class="receta-section-title">Diagnóstico</h4>
+                <div class="receta-info">
+                    <span class="receta-value">@Receta.diagnostico.term</span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public MisReceta Receta { get; set; } = new();
+}

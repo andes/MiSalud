@@ -73,7 +73,7 @@
             return;
 
         // Obtengo el paciente
-        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(pacienteId);
 
     }
 
@@ -96,7 +96,7 @@
 
         if (_unPaciente != null)
         {
-            bool resultado = await _unTurnoService.CancelarTurnoAsync(token, IdTurno, IdBloque, IdAgenda, _unPaciente);
+            bool resultado = await _unTurnoService.CancelarTurnoAsync(IdTurno, IdBloque, IdAgenda, _unPaciente);
             _spinnerService.Hide();
 
             if (resultado)

@@ -19,12 +19,11 @@ namespace AndesServices.Services
         }
 
         // Implementación de los métodos de la interfaz IHistoriaSalud
-        public async Task<List<CategoriaHistoriaSalud>> ObtenerCategoriasHistoriaSaludAsync(string token)
+        public async Task<List<CategoriaHistoriaSalud>> ObtenerCategoriasHistoriaSaludAsync()
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/categoria"))
                 {
@@ -52,12 +51,11 @@ namespace AndesServices.Services
             return null;
         }
 
-        public async Task<List<PrestacionHistoriaSalud>> ObtenerPrestacionesAsync(string token, string tipoPrestaciones, string idPaciente, string estado = "validada")
+        public async Task<List<PrestacionHistoriaSalud>> ObtenerPrestacionesAsync(string tipoPrestaciones, string idPaciente, string estado = "validada")
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
                 
                 bool esCda = (tipoPrestaciones == "90226004" || tipoPrestaciones == "86273004");
                 string url;
@@ -123,14 +121,13 @@ namespace AndesServices.Services
             return null;
         }
 
-        public async Task<Byte[]> DescargarCDAFilePorIdAsync(string token, string id)
+        public async Task<Byte[]> DescargarCDAFilePorIdAsync(string id)
         {
             byte[] unByte = null;
 
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
                 //var parametrosBody = new StringContent("{\"protocolo\":{\"data\":{\"idProtocolo\":" + idProtocolo + ",\"documento\":" + documento + "}}}", System.Text.Encoding.UTF8, "application/json");
                 using (HttpResponseMessage res = await client.GetAsync($"modules/cda/{id}"))
                 {

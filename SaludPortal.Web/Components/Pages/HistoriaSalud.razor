@@ -1,12 +1,13 @@
 ﻿@page "/historiasalud"
 @rendermode InteractiveServer
 
-@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using AndesServices.Entities.ViewModels
 @using AndesServices.Entities
+@using System.Linq
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager Nav
@@ -16,22 +17,28 @@
 @inject AndesServices.Entities.ViewModels.VMHistoriaSalud Model
 @inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
-@inject IHistoriaSalud _miHistoriaSaludService 
-<h1>Historia de Salud</h1>
-<hr />
-<h2>Categorias</h2>
+@inject IHistoriaSalud _miHistoriaSaludService
 
-@if (Model.lstCategoriasHistoriaSalud != null)
-{
-    @foreach (var categoria in Model.lstCategoriasHistoriaSalud)
+<div class="historia-salud-container">
+    <PageHeader Title="Historia de Salud" Subtitle="Categorías de prestaciones médicas" />
+
+    @if (Model.lstCategoriasHistoriaSalud != null && Model.lstCategoriasHistoriaSalud.Any())
     {
-        <button class="btn btn-azul btn-icon-right" style="width:90%" @onclick="@(() => IrACategoria(categoria.ExpresionSnomed, categoria.Titulo))">
-            <span>@categoria.Titulo</span>
-            <i class="fa fa-chevron-right" aria-hidden="true"></i>
-        </button>
-        <br />
+        <div class="categorias-section">
+            <SectionTitle Title="Categorías" Icon="bi bi-clipboard2-heart" />
+            <div class="categorias-grid">
+                @foreach (var categoria in Model.lstCategoriasHistoriaSalud)
+                {
+                    <CategoriaCard Categoria="categoria" OnClick="HandleCategoriaClick" />
+                }
+            </div>
+        </div>
     }
-}
+    else
+    {
+        <EmptyState Message="No se encontraron categorías disponibles." />
+    }
+</div>
 @code {
     private VMHistoriaSalud vmHistoriaSalud = new VMHistoriaSalud();
     private List<AndesServices.Entities.CategoriaHistoriaSalud> lstCategorias = new List<AndesServices.Entities.CategoriaHistoriaSalud>();
@@ -43,7 +50,7 @@
             return;
 
         _spinnerService.Show();
-        Model.lstCategoriasHistoriaSalud = await _miHistoriaSaludService.ObtenerCategoriasHistoriaSaludAsync(BackendToken);
+        Model.lstCategoriasHistoriaSalud = await _miHistoriaSaludService.ObtenerCategoriasHistoriaSaludAsync();
         _spinnerService.Hide();
     }
 
@@ -58,11 +65,16 @@
             return;
 
         _spinnerService.Show();
-        Model.lstPrestacionesHistoriaSalud = await _miHistoriaSaludService.ObtenerPrestacionesAsync(token, idTipoPrestacion, pacienteId);
+        Model.lstPrestacionesHistoriaSalud = await _miHistoriaSaludService.ObtenerPrestacionesAsync(idTipoPrestacion, pacienteId);
         _spinnerService.Hide();
     }
 
-    private async void IrACategoria(string? expresionSnomed, string? titulo)
+    private async Task HandleCategoriaClick((string? expresionSnomed, string? titulo) data)
+    {
+        await IrACategoria(data.expresionSnomed, data.titulo);
+    }
+
+    private async Task IrACategoria(string? expresionSnomed, string? titulo)
     {
         if (string.IsNullOrWhiteSpace(expresionSnomed))
             return;

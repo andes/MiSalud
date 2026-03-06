@@ -1,0 +1,26 @@
+.recetas-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.recetas-section {
+    margin-bottom: 3rem;
+}
+
+.recetas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .recetas-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .recetas-grid {
+        grid-template-columns: 1fr;
+    }
+}

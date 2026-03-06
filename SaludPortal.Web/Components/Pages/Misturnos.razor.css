@@ -1,0 +1,74 @@
+.misturnos-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.calendar-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid #c33995;
+    background-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.turnos-futuros-section {
+    margin-bottom: 3rem;
+}
+
+.section-title-wrapper {
+    margin-bottom: 1.5rem;
+}
+
+.section-title-wrapper .section-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00374c;
+    margin: 0;
+}
+
+.turnos-futuros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.misturnos-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e0e0e0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.misturnos-actions .btn {
+    display: flex;
+    align-items: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .misturnos-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .turnos-futuros-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .misturnos-actions {
+        flex-direction: column;
+    }
+
+    .misturnos-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

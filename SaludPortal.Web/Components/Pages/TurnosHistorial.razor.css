@@ -1,0 +1,88 @@
+.turnos-historial-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.turnos-section {
+    margin-bottom: 2rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.turnos-section-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.turnos-collapse-button {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.turnos-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #00374c;
+}
+
+.turnos-section-title Icon {
+    flex-shrink: 0;
+}
+
+.turnos-collapse-button:hover {
+    background-color: #f0f0f0;
+}
+
+.collapse-icon-collapsed {
+    opacity: 1;
+}
+
+.collapse-icon-expanded {
+    opacity: 0;
+}
+
+.turnos-collapse-button[aria-expanded="true"] .collapse-icon-collapsed {
+    opacity: 0;
+}
+
+.turnos-collapse-button[aria-expanded="true"] .collapse-icon-expanded {
+    opacity: 1;
+}
+
+.turnos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .turnos-historial-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .turnos-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+
+    .turnos-collapse-button {
+        padding: 0.75rem 1rem;
+    }
+}

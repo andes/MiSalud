@@ -1,0 +1,44 @@
+@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
+@using System.Globalization
+
+<div class="vacunacion-card">
+    <div class="vacunacion-header">
+        @if (!string.IsNullOrWhiteSpace(Vacunacion.vacuna))
+        {
+            <span class="vacunacion-tipo">@Vacunacion.vacuna</span>
+        }
+    </div>
+    <div class="vacunacion-body">
+        @if (!string.IsNullOrWhiteSpace(Vacunacion.efector))
+        {
+            <div class="vacunacion-info">
+                <span class="vacunacion-label">Lugar de vacunación:</span>
+                <span class="vacunacion-value">@Vacunacion.efector</span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Vacunacion.dosis))
+        {
+            <div class="vacunacion-info">
+                <span class="vacunacion-label">Dosis:</span>
+                <span class="vacunacion-value">@Vacunacion.dosis</span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Vacunacion.fechaAplicacion))
+        {
+            
+            var fechaAplicacion = DateTime.Parse(Vacunacion.fechaAplicacion.Substring(0, 10), new CultureInfo("es-ES"));
+            var fechaFormateada = $"{fechaAplicacion.ToString("dd")} de {fechaAplicacion.ToString("MMMM", new CultureInfo("es-ES"))} de {fechaAplicacion.ToString("yyyy")}";
+            
+            <div class="vacunacion-info">
+                <span class="vacunacion-label">Fecha de aplicación:</span>
+                <span class="vacunacion-value">@fechaFormateada</span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Vacunacion Vacunacion { get; set; } = new();
+}

@@ -1,0 +1,43 @@
+@using Microsoft.AspNetCore.Components
+@using AndesServices.Entities
+
+<div class="paciente-card">
+    <div class="paciente-info-grid">
+        @if (Paciente != null)
+        {
+            @if (!string.IsNullOrWhiteSpace(Paciente.documento))
+            {
+                <InfoItem Label="DNI" Value="@Paciente.documento" />
+            }
+            @if (!string.IsNullOrWhiteSpace(Paciente.nombreCompleto))
+            {
+                <InfoItem Label="Apellido y Nombre" Value="@Paciente.nombreCompleto" />
+            }
+            @if (Paciente.edad.HasValue)
+            {
+                <InfoItem Label="Edad" Value="@($"{Paciente.edad} años")" />
+            }
+            @if (!string.IsNullOrWhiteSpace(Paciente.sexo))
+            {
+                <InfoItem Label="Sexo" Value="@Paciente.sexo" />
+            }
+            @if (!string.IsNullOrWhiteSpace(Paciente.genero))
+            {
+                <InfoItem Label="Género" Value="@Paciente.genero" />
+            }
+            @if (Paciente.fechaNacimiento.HasValue)
+            {
+                <InfoItem Label="Fecha de Nacimiento" Value="@Paciente.fechaNacimiento.Value.ToString("dd/MM/yyyy")" />
+            }
+        }
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Paciente? Paciente { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

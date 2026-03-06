@@ -1,4 +1,5 @@
-﻿using AndesServices.Entities;
+﻿using AndesServices.DTOs.LaboratoriosRania;
+using AndesServices.Entities;
 using AndesServices.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
@@ -28,29 +29,28 @@ namespace AndesServices.Services
             _logger = logger;
         }
 
-        public Task<bool> ActualizarLaboratorioAsync(string token, string idProtocolo, string documento, string apellido, string nombre, string codigoHIV, string fechanacimiento, string sexobiologico, string numero, string fecha, string laboratorio, string medicoSolicitante, string efectorSolicitante, string origen, string tipoMuestra)
+        public Task<bool> ActualizarLaboratorioAsync(string idProtocolo, string documento, string apellido, string nombre, string codigoHIV, string fechanacimiento, string sexobiologico, string numero, string fecha, string laboratorio, string medicoSolicitante, string efectorSolicitante, string origen, string tipoMuestra)
         {
             throw new NotImplementedException();
         }
 
-        public Task<bool> EliminarLaboratorioAsync(string token, string idProtocolo)
+        public Task<bool> EliminarLaboratorioAsync(string idProtocolo)
         {
             throw new NotImplementedException();
         }
 
-        public Task<MisLaboratorios> ObtenerLaboratorioPorIdAsync(string token, string idProtocolo)
+        public Task<MisLaboratorios> ObtenerLaboratorioPorIdAsync(string idProtocolo)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<Byte[]> DescargarLaboratorioPorIdAsync(string token, string idProtocolo, string documento)
+        public async Task<Byte[]> DescargarLaboratorioPorIdAsync(string idProtocolo, string documento)
         {
             byte[] unByte = null;
 
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
                 var parametrosBody = new StringContent("{\"protocolo\":{\"data\":{\"idProtocolo\":" + idProtocolo + ",\"documento\":" + documento + "}}}", System.Text.Encoding.UTF8, "application/json");
                 using (HttpResponseMessage res = await client.PostAsync("modules/descargas/laboratorio", parametrosBody))
                 {
@@ -75,14 +75,13 @@ namespace AndesServices.Services
             return await Task.FromResult(unByte);
         }
 
-        public async Task<Byte[]> DescargarLaboratorioCDAPorIdAsync(string token, string documento)
+        public async Task<Byte[]> DescargarLaboratorioCDAPorIdAsync(string documento)
         {
             byte[] unByte = null;
         
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
                 using (HttpResponseMessage res = await client.GetAsync($"modules/cda/{documento}"))
                 {
                     if (res.IsSuccessStatusCode)
@@ -166,12 +165,11 @@ namespace AndesServices.Services
             }
         }
 
-        public async Task<List<MisLaboratorios>> ObtenerMisLaboratoriosAsync(string token, string pacienteId, string fechaDde, string fechaHta)
+        public async Task<List<MisLaboratorios>> ObtenerMisLaboratoriosAsync(string pacienteId, string fechaDde, string fechaHta)
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 using (HttpResponseMessage res = await client.GetAsync($"modules/rup/protocolosLab?pacienteId={pacienteId}&fechaDde={fechaDde}&fechaHta={fechaHta}"))
                 {
@@ -268,12 +266,11 @@ namespace AndesServices.Services
             }
         }
 
-        public async Task<List<MisLaboratoriosCDA>> ObtenerMisLaboratoriosCDAAsync(string token, string pacienteId, string fechaDde, string fechaHta)
+        public async Task<List<MisLaboratoriosCDA>> ObtenerMisLaboratoriosCDAAsync(string pacienteId, string fechaDde, string fechaHta)
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 //string queryParams = "?pacienteId=" + pacienteId + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
 
@@ -399,14 +396,146 @@ namespace AndesServices.Services
             return new AuthenticationHeaderValue("Basic", base64);
         }
 
-        public Task<List<MisLaboratorios>> ObtenerMisLaboratoriosAsync(string token, string documento)
+        public Task<List<MisLaboratorios>> ObtenerMisLaboratoriosAsync(string documento)
         {
             throw new NotImplementedException();
         }
 
-        public Task<bool> RegistrarLaboratorioAsync(string token, string idProtocolo, string documento, string apellido, string nombre, string codigoHIV, string fechanacimiento, string sexobiologico, string numero, string fecha, string laboratorio, string medicoSolicitante, string efectorSolicitante, string origen, string tipoMuestra)
+        public Task<bool> RegistrarLaboratorioAsync(string idProtocolo, string documento, string apellido, string nombre, string codigoHIV, string fechanacimiento, string sexobiologico, string numero, string fecha, string laboratorio, string medicoSolicitante, string efectorSolicitante, string origen, string tipoMuestra)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<List<ProtocoloRaniaResponseDto>> ObtenerProtocolosRania(string dni)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
+
+                using (HttpResponseMessage res = await client.GetAsync($"r1/OPTIC/COM/COM00007/GP-LABRANIA/protocolo?dni={dni}"))
+                {
+                    if (res.IsSuccessStatusCode)
+                    {
+                        var lista = await res.Content.ReadFromJsonAsync<List<ProtocoloRaniaResponseDto>>(JsonOpts);
+
+                        if (lista == null)
+                        {
+                            Console.WriteLine("No se encontraron laboratorios.");
+                            return [];
+                        }
+
+                        // Normalizar fechas a formato dd/MM/yyyy
+                        foreach (var protocolo in lista)
+                        {
+                            if (!string.IsNullOrEmpty(protocolo.Fecha))
+                            {
+                                protocolo.Fecha = NormalizarFecha(protocolo.Fecha);
+                            }
+                        }
+
+                        return lista;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Error al obtener los laboratorios: {exception.Message}");
+                return [];
+            }
+            return [];
+        }
+
+        public async Task<InformeRaniaResponseDto?> ObtenerInformeRania(string protocoloId)
+        {
+            if (string.IsNullOrWhiteSpace(protocoloId))
+            {
+                _logger.LogWarning("Protocolo ID no proporcionado en ObtenerInformeRania");
+                return null;
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
+
+                using (HttpResponseMessage res = await client.GetAsync($"r1/OPTIC/COM/COM00007/GP-LABRANIA/informe?protocolo_id={protocoloId}"))
+                {
+                    if (res.IsSuccessStatusCode)
+                    {
+                        var informe = await res.Content.ReadFromJsonAsync<InformeRaniaResponseDto>(JsonOpts);
+
+                        if (informe == null)
+                        {
+                            _logger.LogInformation("No se encontró informe para el protocolo {ProtocoloId}", protocoloId);
+                            return null;
+                        }
+
+                        return informe;
+                    }
+                    else
+                    {
+                        var body = await res.Content.ReadAsStringAsync();
+                        _logger.LogWarning("Error al obtener informe Rania. Status: {StatusCode} Body: {Body} para protocolo {ProtocoloId}", 
+                            res.StatusCode, body, protocoloId);
+                        return null;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Error al obtener el informe Rania para protocolo {ProtocoloId}", protocoloId);
+                return null;
+            }
+        }
+
+        public async Task<Byte[]> DescargarInformeRaniaPorIdAsync(string protocoloId)
+        {
+            if (string.IsNullOrWhiteSpace(protocoloId))
+            {
+                _logger.LogWarning("Protocolo ID no proporcionado en DescargarInformeRaniaPorIdAsync");
+                return null;
+            }
+
+            try
+            {
+                // Obtener la URL del informe
+                var informeResponse = await ObtenerInformeRania(protocoloId);
+
+                if (informeResponse == null || string.IsNullOrWhiteSpace(informeResponse.InformeUrl))
+                {
+                    _logger.LogWarning("No se pudo obtener la URL del informe para protocolo {ProtocoloId}", protocoloId);
+                    return null;
+                }
+
+                // Descargar el contenido desde la URL
+                var client = _httpClientFactory.CreateClient();
+
+                using (HttpResponseMessage res = await client.GetAsync(informeResponse.InformeUrl))
+                {
+                    if (res.IsSuccessStatusCode)
+                    {
+                        byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
+
+                        if (fileResponse == null)
+                        {
+                            _logger.LogWarning("El contenido del archivo es null para protocolo {ProtocoloId}", protocoloId);
+                            return null;
+                        }
+
+                        return fileResponse;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Error al descargar informe Rania. Status: {StatusCode} para protocolo {ProtocoloId}", 
+                            res.StatusCode, protocoloId);
+                        return null;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Error al descargar el informe Rania para protocolo {ProtocoloId}", protocoloId);
+                return null;
+            }
         }
     }
 }

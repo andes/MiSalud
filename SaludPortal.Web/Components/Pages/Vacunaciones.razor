@@ -2,59 +2,42 @@
 @page "/misvacunas"
 
 @attribute [Authorize]
-@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
+@using AndesServices.Interfaces
 @using System.Security.Claims
 @using AndesServices.Entities
 @using System.Globalization
+@using System.Linq
 @inherits AuthenticatedComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject IVacunacion _vacunacionService
 
-<h1>Mis vacunas</h1>
-<hr />
-<br />
-@if (lstVacunaciones != null)
-{
-    @foreach (var vacunacion in lstVacunaciones)
+<div class="vacunaciones-container">
+    <PageHeader Title="Mis Vacunas" Subtitle="Historial de vacunaciones aplicadas" />
+
+    @if (lstVacunaciones != null && lstVacunaciones.Any())
     {
-        <div class="form-control" style="box-shadow: 2px 2px 4px #414141;margin-bottom:5px;">
-            @if (vacunacion.vacuna != null)
-            {
-                <p><strong>Vacuna: </strong>@vacunacion.vacuna</p>
-            }
-            @if (vacunacion.efector != null)
-            {
-                <p><strong>Lugar de vacunación: </strong>@vacunacion.efector</p>
-            }
-            @if (vacunacion.dosis != null)
-            {
-                <p><strong>Dosis: </strong>@vacunacion.dosis</p>
-            }
-            @if (vacunacion.fechaAplicacion != null)
-            {
+        <div class="vacunaciones-section">
+            <SectionTitle Title="Vacunaciones" Icon="bi bi-syringe" />
+            <div class="vacunaciones-grid">
+                @foreach (var vacunacion in lstVacunaciones)
                 {
-
-
-                    fechaAplicacion = DateTime.Parse(@vacunacion.fechaAplicacion.Substring(0, 10), new CultureInfo("es-ES"));
+                    <VacunacionCard Vacunacion="vacunacion" />
                 }
-
-                <p><strong>Fecha de aplicación: </strong>@fechaAplicacion.ToString("dd") de @fechaAplicacion.ToString("MMMM", new CultureInfo("es-ES")) de @fechaAplicacion.ToString("yyyy")</p>
-                
-            }
+            </div>
         </div>
     }
-}
+    else
+    {
+        <EmptyState Message="No se encontraron vacunaciones registradas." />
+    }
+</div>
 
 @code {
     private List<Vacunacion> lstVacunaciones = new List<Vacunacion>();
-    private DateTime fechaAplicacion;
-    private string diaAplicacion;
-    private string mesAplicacion;
-    private string anioAplicacion;
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -65,7 +48,7 @@
         _spinnerService.Show();
         try
         {
-            lstVacunaciones = await _vacunacionService.ObtenerCampañasVacunacion(token);
+            lstVacunaciones = await _vacunacionService.ObtenerCampañasVacunacion();
         }
         finally
         {

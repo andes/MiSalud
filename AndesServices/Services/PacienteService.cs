@@ -13,16 +13,11 @@ namespace AndesServices.Services
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<Paciente> ObtenerPacientePorIdAsync(string token, string idPaciente)
+        public async Task<Paciente> ObtenerPacientePorIdAsync(string idPaciente)
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                throw new ArgumentException("Token no proporcionado.");
-            }
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 using (HttpResponseMessage res = await client.GetAsync($"modules/mobileApp/paciente/{idPaciente}"))
                 {
@@ -51,7 +46,7 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
+                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
@@ -82,13 +77,8 @@ namespace AndesServices.Services
         }
 
         // Modifica datos personales de un Paciente
-        public async Task<Paciente> ModificarDatos(string token, string idPaciente, Paciente paciente)
+        public async Task<Paciente> ModificarDatos(string idPaciente, Paciente paciente)
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                throw new ArgumentException("Token no proporcionado.");
-            }
-
             if (paciente == null)
             {
                 throw new ArgumentNullException(nameof(paciente));
@@ -107,10 +97,9 @@ namespace AndesServices.Services
             try
             {
                 HttpClient client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 // Obtener el paciente original del servidor para comparar cambios
-                Paciente pacienteOriginal = await ObtenerPacientePorIdAsync(token, idPaciente);
+                Paciente pacienteOriginal = await ObtenerPacientePorIdAsync(idPaciente);
                 if (pacienteOriginal == null)
                 {
                     throw new Exception("No se pudo obtener el paciente original del servidor.");

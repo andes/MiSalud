@@ -14,22 +14,21 @@ namespace AndesServices.Services
             _httpClientFactory = httpClientFactory;
         }
 
-        public Task<bool> ActualizarEstadoRecetaAsync(string token, string recetaId, Estado nuevoEstado)
+        public Task<bool> ActualizarEstadoRecetaAsync(string recetaId, Estado nuevoEstado)
         {
             throw new NotImplementedException();
         }
 
-        public Task<MisReceta> ObtenerRecetaPorIdAsync(string token, string recetaId)
+        public Task<MisReceta> ObtenerRecetaPorIdAsync(string recetaId)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<List<MisReceta>> ObtenerRecetasPacienteAsync(string token, string pacienteId)
+        public async Task<List<MisReceta>> ObtenerRecetasPacienteAsync(string pacienteId)
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-                client.DefaultRequestHeaders.Add("Authorization", "JWT " + token);
 
                 string estado = "sin-dispensa,dispensada,dispensa-parcial";
                 //string queryParams = "?estado=" + estado + "&dni=" + dni + "&fecNac=" + fecNac + "&apellido=" + apellido + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;

@@ -49,10 +49,10 @@ namespace SaludPortal.Web.Components.Pages
             try
             {
                 // Cargar paciente
-                paciente = await _pacienteService.ObtenerPacientePorIdAsync(token, pacienteId);
+                paciente = await _pacienteService.ObtenerPacientePorIdAsync(pacienteId);
 
                 // Cargar provincias
-                provincias = await _territorioService.ObtenerProvinciasAsync(token);
+                provincias = await _territorioService.ObtenerProvinciasAsync();
 
                 // Inicializar formulario con datos del paciente
                 if (paciente != null)
@@ -148,7 +148,7 @@ namespace SaludPortal.Web.Components.Pages
                 var token = BackendToken;
                 if (!string.IsNullOrEmpty(token))
                 {
-                    localidades = await _territorioService.ObtenerLocalidadesPorProvinciaAsync(token, formModel.ProvinciaId);
+                    localidades = await _territorioService.ObtenerLocalidadesPorProvinciaAsync(formModel.ProvinciaId);
                     formModel.LocalidadId = string.Empty; // Reset localidad al cambiar provincia
                 }
             }
@@ -174,7 +174,7 @@ namespace SaludPortal.Web.Components.Pages
                 var token = BackendToken;
                 if (!string.IsNullOrEmpty(token))
                 {
-                    localidades = await _territorioService.ObtenerLocalidadesPorProvinciaAsync(token, formModel.ProvinciaId);
+                    localidades = await _territorioService.ObtenerLocalidadesPorProvinciaAsync(formModel.ProvinciaId);
 
                     // Buscar la localidad por nombre si tenemos el nombre guardado
                     if (localidades != null && !string.IsNullOrEmpty(nombreLocalidadPaciente))
@@ -258,22 +258,25 @@ namespace SaludPortal.Web.Components.Pages
             }
         }
 
-        // Método para manejar el input del código postal
-        private void OnCodigoPostalInput(ChangeEventArgs e)
+        // Propiedad para el código postal con setter personalizado
+        private string CodigoPostalValue
         {
-            string valor = e.Value?.ToString() ?? "";
-
-            // Eliminar cualquier carácter que no sea número
-            valor = SoloNumerosRegex.Replace(valor, "");
-
-            // Limitar a máximo 4 dígitos
-            if (valor.Length > 4)
+            get => formModel.CodigoPostal;
+            set
             {
-                valor = valor.Substring(0, 4);
-            }
+                string valor = value ?? "";
 
-            formModel.CodigoPostal = valor;
-            StateHasChanged();
+                // Eliminar cualquier carácter que no sea número
+                valor = SoloNumerosRegex.Replace(valor, "");
+
+                // Limitar a máximo 4 dígitos
+                if (valor.Length > 4)
+                {
+                    valor = valor.Substring(0, 4);
+                }
+
+                formModel.CodigoPostal = valor;
+            }
         }
 
         private async Task GuardarDatos()
@@ -294,7 +297,7 @@ namespace SaludPortal.Web.Components.Pages
             try
             {
                 // Crear copia del paciente para modificar
-                var pacienteActualizado = await _pacienteService.ObtenerPacientePorIdAsync(token, paciente.id);
+                var pacienteActualizado = await _pacienteService.ObtenerPacientePorIdAsync(paciente.id);
                 if (pacienteActualizado == null)
                 {
                     mensajeError = "No se pudo obtener los datos del paciente.";
@@ -424,7 +427,7 @@ namespace SaludPortal.Web.Components.Pages
                 celularContacto.valor = celular;
 
                 // Guardar cambios
-                var pacienteGuardado = await _pacienteService.ModificarDatos(token, paciente.id, pacienteActualizado);
+                var pacienteGuardado = await _pacienteService.ModificarDatos(paciente.id, pacienteActualizado);
 
                 if (pacienteGuardado != null)
                 {

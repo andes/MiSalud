@@ -1,0 +1,131 @@
+﻿@page "/olvidocontrasenia"
+@page "/recuperocontrasenia"
+@using System.ComponentModel.DataAnnotations
+@using AndesServices.DTOs.Login
+@using AndesServices.Interfaces
+@using AndesServices.Entities
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+@layout LoginLayout
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+@inject ILoginService<User> LoginService
+@inject NavigationManager Nav
+@inject ILogger<OlvidoContrasenia> _logger
+
+<PageTitle>Recuperar Contraseña - Mi Salud</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2 class="login-title">Recuperar Contraseña</h2>
+        </div>
+
+        <div class="login-body">
+            @if (mensajeExito)
+            {
+                <div class="login-success" role="alert">
+                    <Icon Name="check-circle" Size="20" Fill="#28a745" class="me-2" AriaLabel="Éxito" />
+                    <span>Se envió el código de activación de su cuenta al correo @_model.Email</span>
+                </div>
+                <button type="button" 
+                        class="login-button" 
+                        @onclick="@(() => Nav.NavigateTo("/reestablecer-password"))">
+                    <span>Ingresar Código de Activación</span>
+                </button>
+            }
+            else
+            {
+                <p class="login-description">
+                    Ingrese su correo electrónico y le enviaremos un código para restablecer su contraseña.
+                </p>
+
+                <EditForm Model="_model" OnValidSubmit="OnSubmit" class="login-form" @ref="_editForm">
+                    <DataAnnotationsValidator />
+
+                    <InputTextField @bind-Value="_model.Email"
+                                    Id="txtEmail"
+                                    Type="email"
+                                    IconName="envelope"
+                                    Placeholder="Ingresa tu email"
+                                    AriaLabel="Correo Electrónico"
+                                    Disabled="@_busy"
+                                    HasError="@HasFieldError(nameof(_model.Email))"
+                                    ValidationFor="@(() => _model.Email)" />
+
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="login-error" role="alert">
+                            <Icon Name="exclamation-triangle" Size="18" Fill="#dc3545" class="me-2" AriaLabel="Error" />
+                            <span>@_error</span>
+                        </div>
+                    }
+
+                    <ButtonPrimary Text="@(_busy ? "Enviando..." : "Enviar")" 
+                                   Disabled="@_busy"
+                                   AriaLabel="@(_busy ? "Enviando..." : "Enviar")" />
+                </EditForm>
+            }
+        </div>
+
+        <div class="login-footer">
+            <div class="login-footer-link">
+                <a href="/login" class="login-link">Volver al inicio de sesión</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly OlvidoContraseniaViewModel _model = new();
+    private string? _error;
+    private bool _busy;
+    private bool mensajeExito = false;
+    private EditForm? _editForm;
+
+    private bool HasFieldError(string fieldName)
+    {
+        return _editForm?.EditContext?.GetValidationMessages(new FieldIdentifier(_model, fieldName)).Any() ?? false;
+    }
+
+    private async Task OnSubmit()
+    {
+        _error = null;
+        _busy = true;
+
+        try
+        {
+            var result = await LoginService.OlvideContrasenia(new OlvideContraseniaRequestDto
+            {
+                Email = _model.Email
+            });
+
+
+            if (result != null && result.Valid)
+            {
+                mensajeExito = true;
+            }
+            else if (result != null && !result.Valid && !string.IsNullOrWhiteSpace(result.Error))
+            {
+                _error = result.Error;
+            }
+            else
+            {
+                _logger.LogWarning("El servicio de olvide contraseña devolvió un resultado nulo para el email: {Email}", _model.Email);
+                _error = "No se pudo procesar su solicitud en este momento. Por favor, intente nuevamente más tarde.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Se produjo un error al procesar la solicitud de olvide contraseña");
+            _error = "Ocurrió un error al procesar su solicitud. Por favor, intente nuevamente más tarde.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

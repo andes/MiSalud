@@ -7,6 +7,7 @@
 @using AndesServices.Entities.ViewModels
 @using AndesServices.Entities
 @using SaludPortal.Web.Components.Shared
+@using System.Linq
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IFarmaciasTurno _farmaciasTurnoService
@@ -15,44 +16,46 @@
 @inject AndesServices.Entities.ViewModels.VMFarmaciasTurno Model
 @inherits AuthenticatedComponentBase
 
-<h1>Farmacias de turno</h1>
-<hr />
-<br />
-@* <div class="form-control"> *@
-<p>
-    Localidad:
-    <InputSelect id="localidades" @bind-Value="Model.LocalidadId" @bind-Value:after="BuscarFarmacias" aria-label="Seleccione una localidad">
-        <option value="">(Seleccione una localidad)</option>
-        @if (Model.LstLocalidad != null)
-        {
-            @foreach (var localidad in Model.LstLocalidad)
-            {
-                <option value="@localidad.localidadId">@localidad.nombre</option>
-            }
-        }
-    </InputSelect>
-</p>
-@* <p>Fecha desde: <InputText type="date" id="fechaDesde" @bind-value="Model.FechaDesde" aria-label="Fecha desde" /></p>
-    <p>Fecha hasta: <InputText type="date" id="fechaHasta" @bind-Value="Model.FechaHasta" aria-label="Fecha hasta" /></p> *@
+<div class="farmacias-container">
+    <PageHeader Title="Farmacias de Turno" Subtitle="Farmacias disponibles por localidad" />
 
-@* <p><button class="btn btn-verde" @onclick="BuscarFarmacias">Buscar</button></p> *@
+    <div class="farmacias-filters">
+        <div class="filter-group">
+            <label for="localidades" class="filter-label">Localidad:</label>
+            <InputSelect id="localidades" @bind-Value="Model.LocalidadId" @bind-Value:after="BuscarFarmacias" class="form-select" aria-label="Seleccione una localidad">
+                <option value="">(Seleccione una localidad)</option>
+                @if (Model.LstLocalidad != null)
+                {
+                    @foreach (var localidad in Model.LstLocalidad)
+                    {
+                        <option value="@localidad.localidadId">@localidad.nombre</option>
+                    }
+                }
+            </InputSelect>
+        </div>
+    </div>
 
-<div>
-
-    @if (Model.LstFarmaciasTurno != null)
+    @if (Model.LstFarmaciasTurno != null && Model.LstFarmaciasTurno.Any())
     {
-        @foreach (FarmaciasTurno unaFarmacia in Model.LstFarmaciasTurno)
-        {
-            <div class="form-control turno" style="box-shadow: 2px 2px 4px #000000;margin-bottom:5px;">
-                <p><strong>Farmacia: </strong>@unaFarmacia.Nombre</p>
-                <p>Dirección: @unaFarmacia.Direccion - <a href="https://maps.google.com/?q=@unaFarmacia.Latitud.ToString().Replace(",", "."),@unaFarmacia.Longitud.ToString().Replace(",", ".")" style="color:#fff;" target="_blank">Ver en mapa</a></p>
-                <p>Teléfono: @unaFarmacia.Telefono</p>
-                <p>Fecha: @unaFarmacia.Fecha.ToString("dd/MM/yyyy")</p>
+        <div class="farmacias-section">
+            <SectionTitle Title="Farmacias Disponibles" Icon="bi bi-farmaciasturno" />
+            <div class="farmacias-grid">
+                @foreach (FarmaciasTurno unaFarmacia in Model.LstFarmaciasTurno)
+                {
+                    <FarmaciaCard Farmacia="unaFarmacia" />
+                }
             </div>
-        }
+        </div>
+    }
+    else if (Model.LstFarmaciasTurno != null && !Model.LstFarmaciasTurno.Any())
+    {
+        <EmptyState Message="No se encontraron farmacias de turno para la localidad seleccionada." />
+    }
+    else
+    {
+        <EmptyState Message="Seleccione una localidad para ver las farmacias de turno disponibles." />
     }
 </div>
-@* </div> *@
 @code {
     private VMFarmaciasTurno VMFarmaciasTurno = new VMFarmaciasTurno();
     private List<AndesServices.Entities.Localidad> lstLocalidades = new List<AndesServices.Entities.Localidad>();
@@ -64,7 +67,7 @@
         Model.LstLocalidad = (lstLocalidades != null && lstLocalidades.Count() > 0 ? lstLocalidades : null);
 
         // obtener la localidad del paciente
-        Paciente paciente = await _pacienteService.ObtenerPacientePorIdAsync(BackendToken, PacienteId);
+        Paciente paciente = await _pacienteService.ObtenerPacientePorIdAsync(PacienteId);
         string localidadPaciente = _pacienteService.ObtenerDireccionPrioritaria(paciente)?.ubicacion?.localidad?.nombre ?? "";
 
         string localidadId = null;
@@ -73,6 +76,7 @@
             if (Model.LstLocalidad.Where(loc => loc.nombre.ToLower().Trim() == localidadPaciente.ToLower().Trim()) != null && localidadPaciente != "")
             {
                 localidadId = Model.LstLocalidad.Where(loc => loc.nombre.ToLower().Trim() == localidadPaciente.ToLower().Trim()).FirstOrDefault().localidadId;
+                Model.LocalidadId = localidadId;
             }
 
             Model.LstFarmaciasTurno = await _farmaciasTurnoService.ObtenerFarmaciasTurnoAsync(localidadId, DateTime.Now.ToString("yyyy-MM-dd"), DateTime.Now.ToString("yyyy-MM-dd"));

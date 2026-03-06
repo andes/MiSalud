@@ -1,4 +1,5 @@
-﻿using AndesServices.Entities;
+﻿using AndesServices.DTOs.Login;
+using AndesServices.Entities;
 
 namespace AndesServices.Interfaces
 {
@@ -11,5 +12,8 @@ namespace AndesServices.Interfaces
         Task<bool> DeleteUser(string id);
         Task<T> GetUserById(string id);
         Task<List<T>> GetAllUsers();
+
+        Task<OlvideContraseniaResponseDto?> OlvideContrasenia(OlvideContraseniaRequestDto request);
+        Task<ReestablecerPasswordResponseDto?> ReestablecerPassword(ReestablecerPasswordRequestDto request);
     }
 }

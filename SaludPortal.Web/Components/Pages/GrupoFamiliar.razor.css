@@ -1,7 +1,27 @@
-﻿body {
+﻿.grupo-familiar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
 }
 
-/* Estilos específicos para la página de Grupo Familiar */
-.paciente p {
-    line-height: 1;
+.paciente-section,
+.relaciones-section {
+    margin-bottom: 3rem;
+}
+
+.relaciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .grupo-familiar-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .relaciones-grid {
+        grid-template-columns: 1fr;
+    }
 }

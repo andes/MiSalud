@@ -1,0 +1,36 @@
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+@using AndesServices.Entities
+
+<div class="efector-card">
+    <div class="efector-header">
+        <Icon Name="hospital" Size="20" Fill="#00374c" class="me-2" AriaLabel="Efector" />
+        <div class="efector-info">
+            <span class="efector-name">@EfectorNombre</span>
+            @if (!string.IsNullOrWhiteSpace(Domicilio))
+            {
+                <div class="efector-domicilio">
+                    <Icon Name="geo-alt" Size="16" Fill="#666" class="me-1" AriaLabel="Ubicación" />
+                    <span>@Domicilio</span>
+                </div>
+            }
+        </div>
+    </div>
+    @if (ChildContent != null)
+    {
+        <div class="efector-content">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string EfectorNombre { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Domicilio { get; set; } = string.Empty;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

@@ -1,0 +1,104 @@
+.laboratorio-card {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.laboratorio-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #00374c 0%, #87b867 100%);
+    transition: width 0.3s ease;
+}
+
+.laboratorio-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    border-color: #00374c;
+}
+
+.laboratorio-card:hover::before {
+    width: 6px;
+}
+
+.laboratorio-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.laboratorio-fecha {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #00374c;
+}
+
+.laboratorio-tipo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.laboratorio-body {
+    padding-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.laboratorio-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.laboratorio-info:last-child {
+    margin-bottom: 0;
+}
+
+.laboratorio-label {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.laboratorio-value {
+    font-size: 1.125rem;
+    color: #00374c;
+    font-weight: 600;
+}
+
+.laboratorio-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.download-icon {
+    transition: transform 0.2s ease;
+}
+
+.laboratorio-card:hover .download-icon {
+    transform: scale(1.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .laboratorio-card {
+        padding: 1.25rem;
+    }
+}

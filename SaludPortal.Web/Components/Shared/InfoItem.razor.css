@@ -1,0 +1,26 @@
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #87b867;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .info-value {
+        font-size: 1rem;
+    }
+}

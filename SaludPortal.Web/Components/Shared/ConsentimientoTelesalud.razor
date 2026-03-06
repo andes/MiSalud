@@ -1,0 +1,71 @@
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+
+<div class="consentimiento-modal-overlay">
+    <div class="consentimiento-modal">
+        <div class="consentimiento-header">
+            <Icon Name="camera-video" Size="32" Fill="#fff" class="me-2" AriaLabel="Telesalud" />
+            <h2 class="consentimiento-title">Consentimiento de Telesalud</h2>
+        </div>
+        <div class="consentimiento-body">
+            <div class="consentimiento-section">
+                <p class="consentimiento-text"><strong>Al seleccionar Telesalud Ud. está accediendo a un espacio en constante evolución.</strong></p>
+                <p class="consentimiento-text"><strong>La información con respecto a su salud es información sensible que está protegida por la Ley Provincial de Derechos de los Pacientes 2611 y la Ley Nacional de protección de datos personales 23.526.</strong></p>
+            </div>
+            
+            <div class="consentimiento-divider"></div>
+            
+            <div class="consentimiento-section">
+                <p class="consentimiento-text"><strong>Importante:</strong></p>
+                <ul class="consentimiento-list">
+                    <li>NO es un canal de resolución de urgencias ni emergencias médicas.</li>
+                    <li>NO reemplaza la atención presencial.</li>
+                </ul>
+            </div>
+            
+            <div class="consentimiento-divider"></div>
+            
+            <div class="consentimiento-section">
+                <p class="consentimiento-text">Ud. va a ser contactado al número de teléfono que indique por personal de Gestión de Pacientes, que le solicitará información adicional que puede ser necesaria para resolver su consulta en un plazo estimado de 24-48 horas.</p>
+                <p class="consentimiento-text">Una vez que Ud. completó los datos solicitados podrá visualizar en el Portal Mi Salud: "solicitud de telesalud realizada", y podrá cancelarla en cualquier momento.</p>
+                <p class="consentimiento-text">Su consulta podrá ser resuelta vía contacto de personal de salud que tendrá acceso a su Historia Clínica. De corresponder receta o certificado podrá visualizarlos una vez emitido en <strong>Portal Mi Salud</strong>. De ser necesario ampliar la evaluación se le podrá asignar un turno presencial en caso de ser necesario o un turno para videoconsulta con un profesional.</p>
+                <p class="consentimiento-warning">
+                    <Icon Name="exclamation-triangle" Size="20" Fill="#dc3545" class="me-2" AriaLabel="Advertencia" />
+                    Su consulta puede ser rechazada, y se le informará el motivo.
+                </p>
+            </div>
+        </div>
+        <div class="consentimiento-footer">
+            <button type="button" class="btn btn-secondary" @onclick="HandleRechazar">
+                Rechazar
+            </button>
+            <button type="button" class="btn btn-success" @onclick="HandleAceptar">
+                Aceptar
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnAceptar { get; set; }
+
+    [Parameter]
+    public EventCallback OnRechazar { get; set; }
+
+    private async Task HandleAceptar()
+    {
+        if (OnAceptar.HasDelegate)
+        {
+            await OnAceptar.InvokeAsync();
+        }
+    }
+
+    private async Task HandleRechazar()
+    {
+        if (OnRechazar.HasDelegate)
+        {
+            await OnRechazar.InvokeAsync();
+        }
+    }
+}

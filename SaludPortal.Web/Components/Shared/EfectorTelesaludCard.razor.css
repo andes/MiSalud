@@ -1,0 +1,46 @@
+.teleconsulta-efector-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.teleconsulta-efector-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.teleconsulta-efector-name {
+    font-weight: 600;
+    color: #00374c;
+    font-size: 1rem;
+    flex: 1;
+}
+
+.teleconsulta-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #87b867 0%, #6a9a4f 100%);
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 4px rgba(135, 184, 103, 0.2);
+}
+
+.teleconsulta-efector-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .teleconsulta-solicitar-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

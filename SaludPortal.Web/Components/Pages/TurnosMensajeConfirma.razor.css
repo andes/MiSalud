@@ -1,0 +1,100 @@
+.turnos-mensaje-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.turnos-mensaje-card {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 2rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.turnos-mensaje-card.turnos-mensaje-success {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%);
+}
+
+.turnos-mensaje-card.turnos-mensaje-warning {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #fff8f8 0%, #ffffff 100%);
+}
+
+.turnos-mensaje-icon-wrapper {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.turnos-mensaje-content {
+    width: 100%;
+}
+
+.turnos-mensaje-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00374c;
+    margin-bottom: 1rem;
+}
+
+.turnos-mensaje-body {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: #495057;
+    margin-top: 1rem;
+}
+
+.turnos-mensaje-body p {
+    margin-bottom: 0.5rem;
+}
+
+.turnos-mensaje-body p:last-child {
+    margin-bottom: 0;
+}
+
+.turnos-mensaje-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.turnos-mensaje-actions .btn {
+    display: flex;
+    align-items: center;
+}
+
+.turnos-mensaje-actions .btn Icon {
+    flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .turnos-mensaje-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .turnos-mensaje-card {
+        padding: 1.5rem;
+    }
+
+    .turnos-mensaje-title {
+        font-size: 1.25rem;
+    }
+
+    .turnos-mensaje-body {
+        font-size: 1rem;
+    }
+
+    .turnos-mensaje-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text;
 using System.Net.Http;
+using AndesServices.DTOs.Login;
 
 namespace AndesServices.Services
 {
@@ -30,7 +31,7 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
+                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 var userJson = new StringContent(JsonConvert.SerializeObject(user), System.Text.Encoding.UTF8, "application/json");
                 using (HttpResponseMessage res = await client.PostAsync("modules/mobileApp/login", userJson))
                 {
@@ -75,7 +76,7 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
+                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 var userJson = new StringContent(JsonConvert.SerializeObject(user), System.Text.Encoding.UTF8, "application/json");
                 using (HttpResponseMessage res = await client.PostAsync("modules/mobileApp/login", userJson))
                 {
@@ -135,6 +136,20 @@ namespace AndesServices.Services
         public Task<List<User>> GetAllUsers()
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<OlvideContraseniaResponseDto?> OlvideContrasenia(OlvideContraseniaRequestDto request)
+        {
+            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
+            var response = await client.PostAsJsonAsync("modules/mobileApp/olvide-password", request);
+            return await response.Content.ReadFromJsonAsync<OlvideContraseniaResponseDto>();
+        }
+
+        public async Task<ReestablecerPasswordResponseDto?> ReestablecerPassword(ReestablecerPasswordRequestDto request)
+        {
+            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
+            var response = await client.PostAsJsonAsync("modules/mobileApp/reestablecer-password", request);
+            return await response.Content.ReadFromJsonAsync<ReestablecerPasswordResponseDto>();
         }
     }
 }

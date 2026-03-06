@@ -1,0 +1,32 @@
+.prestaciones-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.prestaciones-section {
+    margin-bottom: 3rem;
+}
+
+.prestaciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.prestaciones-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e0e0e0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .prestaciones-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .prestaciones-grid {
+        grid-template-columns: 1fr;
+    }
+}
