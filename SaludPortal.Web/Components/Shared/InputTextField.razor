@@ -4,6 +4,10 @@
 @typeparam TValue
 
 <div class="input-field-group">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label for="@Id" class="input-label">@Label</label>
+    }
     <div class="input-group @(HasError ? "invalid" : "")">
         <div class="input-icon">
             <Icon Name="@IconName" Size="18" Fill="#666" AriaLabel="@AriaLabel" />
@@ -11,9 +15,12 @@
         <input id="@Id"
                type="@Type"
                @bind="@CurrentValue"
-               class="input-field"
+               class="input-field @(Uppercase ? "uppercase" : "")"
                placeholder="@Placeholder"
                aria-label="@AriaLabel"
+               maxlength="@(MaxLength > 0 ? MaxLength : null)"
+               pattern="@(!string.IsNullOrWhiteSpace(Pattern) ? Pattern : null)"
+               inputmode="@(!string.IsNullOrWhiteSpace(InputMode) ? InputMode : null)"
                disabled="@Disabled" />
     </div>
     <ValidationMessage For="@ValidationFor" class="validation-message" style="color: #dc3545;" />
@@ -22,10 +29,15 @@
 @code {
     [Parameter] public string Id { get; set; } = "";
     [Parameter] public string Type { get; set; } = "text";
+    [Parameter] public string Label { get; set; } = "";
     [Parameter] public string IconName { get; set; } = "";
     [Parameter] public string Placeholder { get; set; } = "";
     [Parameter] public string AriaLabel { get; set; } = "";
     [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public int MaxLength { get; set; } = 0;
+    [Parameter] public bool Uppercase { get; set; } = false;
+    [Parameter] public string Pattern { get; set; } = "";
+    [Parameter] public string InputMode { get; set; } = "";
     [Parameter] public TValue? Value { get; set; }
     [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
     [Parameter] public Expression<Func<TValue>>? ValidationFor { get; set; }
@@ -36,10 +48,18 @@
         get => Value;
         set
         {
-            if (!EqualityComparer<TValue>.Default.Equals(value, Value))
+            var finalValue = value;
+
+            // Si Uppercase está activado y el valor es string, convertir a mayúsculas
+            if (Uppercase && finalValue is string strValue)
             {
-                Value = value;
-                ValueChanged.InvokeAsync(value);
+                finalValue = (TValue)(object)strValue.ToUpperInvariant();
+            }
+
+            if (!EqualityComparer<TValue>.Default.Equals(finalValue, Value))
+            {
+                Value = finalValue;
+                ValueChanged.InvokeAsync(finalValue);
             }
         }
     }

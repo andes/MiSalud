@@ -8,6 +8,7 @@
         public string Email { get; set; }
 
         [Required(ErrorMessage = "El campo Contraseña es requerido")]
+        [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 

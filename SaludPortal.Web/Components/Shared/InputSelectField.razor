@@ -1,0 +1,49 @@
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+@using SaludPortal.Web.Components.Icons
+
+<div class="input-field-group">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label for="@Id" class="input-label">@Label</label>
+    }
+    <div class="input-group @(HasError ? "invalid" : "")">
+        <div class="input-icon">
+            <Icon Name="@IconName" Size="18" Fill="#666" AriaLabel="@AriaLabel" />
+        </div>
+        <select id="@Id"
+                @bind="@CurrentValue"
+                class="input-field"
+                aria-label="@AriaLabel"
+                disabled="@Disabled">
+            @ChildContent
+        </select>
+    </div>
+    <ValidationMessage For="@ValidationFor" class="validation-message" style="color: #dc3545;" />
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string IconName { get; set; } = "";
+    [Parameter] public string AriaLabel { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Expression<Func<string>>? ValidationFor { get; set; }
+    [Parameter] public bool HasError { get; set; } = false;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? CurrentValue
+    {
+        get => Value;
+        set
+        {
+            if (!string.Equals(value, Value))
+            {
+                Value = value;
+                ValueChanged.InvokeAsync(value);
+            }
+        }
+    }
+}

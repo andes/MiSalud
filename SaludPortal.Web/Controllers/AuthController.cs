@@ -1,4 +1,5 @@
 ﻿using AndesServices.Services;
+using AndesServices.DTOs.Login;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,11 @@ namespace SaludPortal.Web.Controllers
             _logger = logger;
         }
 
+        private LoginService CreateLoginService()
+        {
+            return new LoginService(_logger, _httpClientFactory);
+        }
+
         [HttpPost("login")]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Login([FromBody] LoginViewModel model)
@@ -34,27 +40,19 @@ namespace SaludPortal.Web.Controllers
             try
             {
                 if (!ModelState.IsValid) return BadRequest("Datos inválidos");
-                LoginService loginService = new(_logger, _httpClientFactory);
+
+                var loginService = CreateLoginService();
                 var usuario = await loginService.Login(model.Email, model.Password);
                 if (usuario == null || string.IsNullOrEmpty(usuario.token))
                     return Unauthorized("Credenciales inválidas");
 
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, model.Email),
-                    new Claim("PacienteId", usuario.pacientes?.FirstOrDefault()?.id ?? string.Empty),
-                    new Claim("Documento", usuario.documento ?? string.Empty),
-                    new Claim("Token", usuario.token ?? string.Empty)
-                };
+                var claims = BuildClaims(
+                    model.Email,
+                    usuario.pacientes?.FirstOrDefault()?.id,
+                    usuario.documento,
+                    usuario.token);
 
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(identity),
-                    new AuthenticationProperties
-                    {
-                        IsPersistent = model.RememberMe
-                    });
+                await SignInAsync(claims, model.RememberMe);
 
                 return Ok(new { message = "Login exitoso" });
             }
@@ -62,6 +60,40 @@ namespace SaludPortal.Web.Controllers
             {
                 _logger.LogError(ex, "Error procesando login para usuario: {Email}", model.Email);
                 return StatusCode(500, "Error interno del servidor");
+            }
+        }
+
+        [HttpPost("crear-contrasenia")]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> CrearContrasenia([FromBody] CrearContraseniaRequestDto model)
+        {
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest("Datos inválidos");
+
+                var loginService = CreateLoginService();
+                var result = await loginService.CrearContrasenia(model);
+
+                if (result.response == null || string.IsNullOrEmpty(result.response.Token))
+                    return BadRequest(new { message = result.errorMessage ?? "Error al crear contraseña" });
+
+                if (result.response.User?.activacionApp == false)
+                    return BadRequest(new { message = "Código inválido" });
+
+                var claims = BuildClaims(
+                    model.Email,
+                    result.response.User?.pacientes?.FirstOrDefault()?.id,
+                    result.response.User?.documento,
+                    result.response.Token);
+
+                await SignInAsync(claims, true);
+
+                return Ok(new { message = "Contraseña creada exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error procesando crear contraseña para usuario: {Email}", model.Email);
+                return StatusCode(500, new { message = "Error interno del servidor" });
             }
         }
 
@@ -92,6 +124,29 @@ namespace SaludPortal.Web.Controllers
                 });
             }
             return Ok(new AuthStatusDto { Authenticated = false });
+        }
+
+        private static List<Claim> BuildClaims(string email, string? pacienteId, string? documento, string? token)
+        {
+            return new List<Claim>
+            {
+                new(ClaimTypes.Name, email),
+                new("PacienteId", pacienteId ?? string.Empty),
+                new("Documento", documento ?? string.Empty),
+                new("Token", token ?? string.Empty)
+            };
+        }
+
+        private async Task SignInAsync(List<Claim> claims, bool isPersistent)
+        {
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties
+                {
+                    IsPersistent = isPersistent
+                });
         }
 
         public class AuthStatusDto

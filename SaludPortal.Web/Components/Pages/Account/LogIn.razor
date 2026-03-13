@@ -58,20 +58,25 @@
                     </div>
                 }
 
-                <ButtonPrimary Text="@(_busy ? "Iniciando..." : "Iniciar sesión")" 
+                <ButtonPrimary Type="submit"
+                               Text="@(_busy ? "Iniciando..." : "Iniciar sesión")"
                                Disabled="@_busy"
                                AriaLabel="@(_busy ? "Iniciando sesión..." : "Iniciar sesión")" />
             </EditForm>
+            <div class="forgot-password-link">
+                <a href="/olvidocontrasenia" class="login-link">¿Olvidaste tu contraseña?</a>
+            </div>
         </div>
 
         <div class="login-footer">
-            <div class="login-footer-link">
-                <span class="login-footer-text">No tenés cuenta?</span>
-                <a href="#" @onclick="Register" @onclick:preventDefault class="login-link">Crear cuenta</a>
-            </div>
-            <div class="login-footer-link">
-                <a href="/olvidocontrasenia" class="login-link">Olvidaste tu contraseña?</a>
-            </div>
+            <ButtonPrimaryOutlined OnClick="GoToActivacion"
+                                   Text="Ingresar cód. activación"
+                                   AriaLabel="Ingresar código de activación"
+                                   Size="sm" />
+            <ButtonPrimaryOutlined OnClick="Register"
+                                   Text="Registrarse"
+                                   AriaLabel="Registrarse"
+                                   Size="sm" />
         </div>
     </div>
 </div>
@@ -156,7 +161,12 @@
 
     private async Task Register()
     {
-        Nav.NavigateTo("/registerqr", true);
+        Nav.NavigateTo("/registro", true);
+    }
+
+    private void GoToActivacion()
+    {
+        Nav.NavigateTo("/ingresar-codigo-activacion");
     }
 }
 <script src="../js/auth.js"></script>

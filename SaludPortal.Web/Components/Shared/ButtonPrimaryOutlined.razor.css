@@ -1,42 +1,43 @@
-.button-primary {
+.button-primary-outlined {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0.875rem 1.5rem;
-    background: #2b3e4c;
-    color: #ffecc1;
-    border: none;
+    background: transparent;
+    color: #2b3e4c;
+    border: 2px solid #2b3e4c;
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 0.5rem;
+    text-decoration: none;
+    box-shadow: none;
+}
+
+.button-primary-outlined:hover:not(:disabled) {
+    background: #eee;
+    text-decoration: none;
+}
+
+.button-primary-outlined:active:not(:disabled) {
     box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
 }
 
-.button-primary:hover:not(:disabled) {
-    box-shadow: 0 4px 8px rgba(0, 55, 76, 0.3);
-}
-
-.button-primary:active:not(:disabled) {
-    box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
-}
-
-.button-primary:disabled {
+.button-primary-outlined:disabled {
     opacity: 0.7;
     cursor: not-allowed;
 }
 
-.button-primary--sm {
+.button-primary-outlined--sm {
     padding: 0.5rem 0.5rem;
     font-size: .8rem;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .button-primary {
+    .button-primary-outlined {
         padding: 0.75rem 1.25rem;
         font-size: 0.95rem;
     }

@@ -1,0 +1,323 @@
+﻿@page "/registro"
+
+@layout LoginLayout
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+
+@using AndesServices.DTOs.Login
+@using AndesServices.Entities
+@using AndesServices.Interfaces
+@using SaludPortal.Web.Models
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Linq
+@inject NavigationManager Nav
+@inject ILogger<Registro> Logger
+@inject ILoginService<User> LoginService
+
+<PageTitle>Registro</PageTitle>
+
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h2 class="title">Registrarse</h2>
+        </div>
+
+        <div class="body">
+            <div class="alert alert-info mb-4" role="alert">
+                <Icon Name="info-circle" Size="18" Fill="#0dcaf0" class="me-2" AriaLabel="Información" />
+                <span>Completá los datos exactamente como se muestran en el DNI.</span>
+            </div>
+            <EditForm Model="_model" OnValidSubmit="DoRegistro" class="form" @ref="_editForm">
+                <DataAnnotationsValidator />
+
+                <div class="form-content">
+                    <InputTextField @bind-Value="_model.Email"
+                                    Id="txtEmail"
+                                    Type="email"
+                                    IconName="envelope"
+                                    Label="Correo electrónico*"
+                                    Placeholder="Correo electrónico"
+                                    MaxLength="50"
+                                    AriaLabel="Correo electrónico"
+                                    HasError="@HasFieldError(nameof(_model.Email))"
+                                    ValidationFor="@(() => _model.Email)" />
+
+                    <InputTextField @bind-Value="_model.Telefono"
+                                    Id="txtTelefono"
+                                    Type="tel"
+                                    IconName="telephone"
+                                    Label="Teléfono*"
+                                    Placeholder="Teléfono (10 dígitos)"
+                                    MaxLength="10"
+                                    AriaLabel="Teléfono"
+                                    HasError="@HasFieldError(nameof(_model.Telefono))"
+                                    ValidationFor="@(() => _model.Telefono)" />
+
+                    <InputTextField @bind-Value="_model.Apellidos"
+                                    Id="txtApellidos"
+                                    Type="text"
+                                    IconName="mis-datos"
+                                    Label="Apellido/s*"
+                                    Placeholder="Apellido/s"
+                                    MaxLength="50"
+                                    AriaLabel="Apellidos"
+                                    Uppercase="true"
+                                    HasError="@HasFieldError(nameof(_model.Apellidos))"
+                                    ValidationFor="@(() => _model.Apellidos)" />
+
+                    <InputTextField @bind-Value="_model.Nombres"
+                                    Id="txtNombres"
+                                    Type="text"
+                                    IconName="mis-datos"
+                                    Label="Nombre/s*"
+                                    Placeholder="Nombre/s"
+                                    MaxLength="50"
+                                    AriaLabel="Nombres"
+                                    Uppercase="true"
+                                    HasError="@HasFieldError(nameof(_model.Nombres))"
+                                    ValidationFor="@(() => _model.Nombres)" />
+
+                    <InputSelectField @bind-Value="_model.Sexo"
+                                      Id="txtSexo"
+                                      IconName="info-circle"
+                                      Label="Sexo*"
+                                      AriaLabel="Sexo"
+                                      HasError="@HasFieldError(nameof(_model.Sexo))"
+                                      ValidationFor="@(() => _model.Sexo)">
+                        <option value="">Seleccione...</option>
+                        <option value="masculino">Masculino</option>
+                        <option value="femenino">Femenino</option>
+                    </InputSelectField>
+
+                    <InputDateField @bind-Value="_model.FechaNacimiento"
+                                    Id="txtFechaNacimiento"
+                                    IconName="calendar-check"
+                                    Label="Fecha de Nacimiento*"
+                                    AriaLabel="Fecha de Nacimiento"
+                                    HasError="@HasFieldError(nameof(_model.FechaNacimiento))"
+                                    ValidationFor="@(() => _model.FechaNacimiento)" />
+
+                    <InputTextField @bind-Value="_model.Documento"
+                                    Id="txtDocumento"
+                                    Type="text"
+                                    IconName="person-vcard"
+                                    Label="Documento*"
+                                    Placeholder="Documento (DNI)"
+                                    MaxLength="8"
+                                    Pattern="[0-9]*"
+                                    InputMode="numeric"
+                                    AriaLabel="Documento"
+                                    HasError="@HasFieldError(nameof(_model.Documento))"
+                                    ValidationFor="@(() => _model.Documento)" />
+
+                    <InputTextField @bind-Value="_model.NroTramite"
+                                    Id="txtNroTramite"
+                                    Type="text"
+                                    IconName="person-vcard"
+                                    Label="Número de trámite*"
+                                    Placeholder="Número de trámite (11 dígitos)"
+                                    MaxLength="11"
+                                    Pattern="[0-9]*"
+                                    InputMode="numeric"
+                                    AriaLabel="Número de trámite"
+                                    HasError="@HasFieldError(nameof(_model.NroTramite))"
+                                    ValidationFor="@(() => _model.NroTramite)" />
+
+                    <InputTextField @bind-Value="_model.Ejemplar"
+                                    Id="txtEjemplar"
+                                    Type="text"
+                                    IconName="info-circle"
+                                    Label="Ejemplar*"
+                                    Placeholder="A"
+                                    AriaLabel="Ejemplar"
+                                    MaxLength="1"
+                                    Uppercase="true"
+                                    HasError="@HasFieldError(nameof(_model.Ejemplar))"
+                                    ValidationFor="@(() => _model.Ejemplar)" />
+                </div>
+
+                @if (_errors.Count > 0)
+                {
+                    <div class="error" role="alert">
+                        <div class="d-flex align-items-start mb-2">
+                            <Icon Name="exclamation-triangle" Size="18" Fill="#dc3545" class="me-2 mt-1" AriaLabel="Error" />
+                        </div>
+                        <ul class="mb-0">
+                            @foreach (var error in _errors)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_success))
+                {
+                    <div class="success" role="alert">
+                        <Icon Name="check-circle" Size="18" Fill="#28a745" class="me-2" AriaLabel="Éxito" />
+                        <span>@_success</span>
+                    </div>
+                }
+
+                <ButtonPrimary Type="submit"
+                               Text="@(_busy ? "Registrando..." : "Crear Cuenta")"
+                               Disabled="@_busy"
+                               AriaLabel="@(_busy ? "Registrando..." : "Crear Cuenta")" />
+            </EditForm>
+        </div>
+
+        <div class="footer">
+            <div class="footer-link">
+                <span class="footer-text">¿Ya tenés cuenta?</span>
+                <a href="/login" @onclick="GoToLogin" @onclick:preventDefault class="link">Iniciar sesión</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly RegistroViewModel _model = new();
+    private List<string> _errors = new();
+    private string? _success;
+    private bool _busy;
+    private EditForm? _editForm;
+
+    private static bool EqualsNormalized(string? left, string? right)
+    {
+        return string.Equals(left?.Trim(), right?.Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Agrega con ceros a la izquierda el numero de tramite.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    private static string PadLeftNroTramite(string? value)
+    {
+        return (value ?? string.Empty).Trim().PadLeft(11, '0');
+    }
+
+    private bool HasFieldError(string fieldName)
+    {
+        return _editForm?.EditContext?.GetValidationMessages(new FieldIdentifier(_model, fieldName)).Any() ?? false;
+    }
+
+    private async Task DoRegistro()
+    {
+        _busy = true;
+        _errors.Clear();
+        _success = null;
+
+        try
+        {
+            char sexo = _model.Sexo switch
+            {
+                "masculino" => 'M',
+                "femenino" => 'F',
+                _ => throw new InvalidOperationException("Sexo inválido")
+            };
+            var renaperResultDto = await LoginService.VerificarUsuarioRenaper(_model.Documento, sexo);
+
+            if (renaperResultDto != null && renaperResultDto.Resultado == "error")
+            {
+                _errors.Add(renaperResultDto.Mensaje ?? "Error desconocido");
+                return;
+            }
+
+            if (renaperResultDto?.Data == null)
+            {
+                _errors.Add("No se obtuvieron datos válidos del RENAPER.");
+                return;
+            }
+            var data = renaperResultDto.Data;
+            var idTramitePrincipal = PadLeftNroTramite(data.IdTramitePrincipal);
+
+            if (!EqualsNormalized(data.Apellido, _model.Apellidos))
+            {
+                _errors.Add("El apellido ingresado no coincide con los datos del RENAPER.");
+            }
+
+            if (!EqualsNormalized(data.Nombres, _model.Nombres))
+            {
+                _errors.Add("El nombre ingresado no coincide con los datos del RENAPER.");
+            }
+
+            if (!EqualsNormalized(data.Ejemplar, _model.Ejemplar))
+            {
+                _errors.Add("El ejemplar ingresado no coincide con los datos del RENAPER.");
+            }
+
+            if (!EqualsNormalized(_model.NroTramite, idTramitePrincipal))
+            {
+                _errors.Add("El número de trámite ingresado no coincide con los datos del RENAPER.");
+            }
+
+            if (!DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaRenaper))
+            {
+                _errors.Add("Error al procesar la fecha de nacimiento del RENAPER.");
+            }
+            else if (fechaRenaper.Date != _model.FechaNacimiento.Date)
+            {
+                _errors.Add("La fecha de nacimiento ingresada no coincide con los datos del RENAPER.");
+            }
+
+            if (_errors.Count > 0)
+            {
+                return;
+            }
+
+            // registrar usuario
+            var scanText = $"{idTramitePrincipal}@{data.Apellido.ToUpper()}@{data.Nombres.ToUpper()}@{sexo}@{_model.Documento}@{_model.Ejemplar}@{data.FechaNacimiento}";
+            var registroResult = await LoginService.Registro(new RegistroRequestDto
+            {
+                ScanText = scanText,
+                Email = _model.Email,
+                Documento = _model.Documento,
+                Sexo = _model.Sexo,
+                Telefono = _model.Telefono
+            });
+
+            RegistroResponseDto? response = registroResult.response;
+            string? error = registroResult.errorMessage;
+           
+            if (response == null && error != null)
+            {
+                Logger.LogError("Error desconocido al registrar usuario. Response: {@Response}, Error: {Error}", response, error);
+                _errors.Add(error);
+                return;
+            }
+            if (response != null && response.ActivacionApp)
+            {
+                _errors.Add("Ya existe una cuenta activa con ese e-mail");
+                return;
+            }
+            if (response != null && !response.ActivacionApp)
+            {
+                _success = "Cuenta creada exitosamente. Redirigiendo a validar código de activación...";
+                StateHasChanged();
+                await Task.Delay(2000);
+                Nav.NavigateTo("/ingresar-codigo-activacion", forceLoad: true);
+                return;
+            }
+            Logger.LogError("Error desconocido al registrar usuario. Response: {@Response}, Error: {Error}", response, error);
+            _errors.Add("Error desconocido al registrar usuario.");
+            return;
+        }
+        catch (Exception ex)
+        {
+            _errors.Add("Error al registrar usuario");
+            Logger.LogError(ex, "Error al registrar usuario");
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login", true);
+    }
+}

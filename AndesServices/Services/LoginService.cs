@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text;
 using System.Net.Http;
 using AndesServices.DTOs.Login;
+using AndesServices.DTOs;
 
 namespace AndesServices.Services
 {
@@ -150,6 +151,51 @@ namespace AndesServices.Services
             var client = _httpClientFactory.CreateClient("Andes-NoJWT");
             var response = await client.PostAsJsonAsync("modules/mobileApp/reestablecer-password", request);
             return await response.Content.ReadFromJsonAsync<ReestablecerPasswordResponseDto>();
+        }
+
+        public async Task<VerificarUsuarioRenaperResponseDto?> VerificarUsuarioRenaper(string dni, char sexo)
+        {
+            var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
+            return await client.GetFromJsonAsync<VerificarUsuarioRenaperResponseDto>($"/r1/OPTIC/GOB/GOB00001/GP-RENAPER/WS_RENAPER_DOCUMENTO/{dni}/{sexo.ToString().ToUpper()}");
+        }
+
+        public async Task<(RegistroResponseDto? response, string? errorMessage)> Registro(RegistroRequestDto dto)
+        {
+            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
+            var response = await client.PostAsJsonAsync("modules/mobileApp/registro", dto);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var res = await response.Content.ReadFromJsonAsync<ErrorDto>();
+                return (null, res?.Message);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<RegistroResponseDto>();
+
+            return (result, null);
+        }
+
+        public async Task<ValidarCodigoActivacionResponseDto?> ValidarCodigoActivacion(ValidarCodigoActivacionRequestDto dto)
+        {
+            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
+            var response = await client.PostAsJsonAsync("modules/mobileApp/login", dto);
+
+            return await response.Content.ReadFromJsonAsync<ValidarCodigoActivacionResponseDto>();
+        }
+
+        public async Task<(CrearContraseniaResponseDto? response, string? errorMessage)> CrearContrasenia(CrearContraseniaRequestDto dto)
+        {
+            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
+            var response = await client.PostAsJsonAsync("modules/mobileApp/login", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var res = await response.Content.ReadFromJsonAsync<ValidarCodigoActivacionErrorDto>();
+                return (null, res?.Error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<CrearContraseniaResponseDto>();
+            return (result, null);
         }
     }
 }

@@ -31,6 +31,16 @@ window.authApi = (function () {
         document.cookie = name + '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax;';
     }
 
+    async function crearContrasenia(data) {
+        const resp = await fetch('api/auth/crear-contrasenia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+            , body: JSON.stringify(data)
+        });
+        return await parse(resp);
+    }
+
     async function parse(resp) {
         let raw = await resp.text();
         let data = null;
@@ -38,7 +48,7 @@ window.authApi = (function () {
         return { ok: resp.ok, status: resp.status, data, raw };
     }
 
-    return { login, logout };
+    return { login, logout, crearContrasenia };
 
 })();
 

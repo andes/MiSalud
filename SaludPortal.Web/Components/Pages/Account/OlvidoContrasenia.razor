@@ -31,11 +31,10 @@
                     <Icon Name="check-circle" Size="20" Fill="#28a745" class="me-2" AriaLabel="Éxito" />
                     <span>Se envió el código de activación de su cuenta al correo @_model.Email</span>
                 </div>
-                <button type="button" 
-                        class="login-button" 
-                        @onclick="@(() => Nav.NavigateTo("/reestablecer-password"))">
-                    <span>Ingresar Código de Activación</span>
-                </button>
+                <ButtonPrimary Type="button"
+                               Text="Ingresar Código de Activación"
+                               AriaLabel="Ingresar Código de Activación"
+                               OnClick="IrAReestablecerPassword" />
             }
             else
             {
@@ -64,7 +63,8 @@
                         </div>
                     }
 
-                    <ButtonPrimary Text="@(_busy ? "Enviando..." : "Enviar")" 
+                    <ButtonPrimary Type="submit"
+                                   Text="@(_busy ? "Enviando..." : "Enviar")" 
                                    Disabled="@_busy"
                                    AriaLabel="@(_busy ? "Enviando..." : "Enviar")" />
                 </EditForm>
@@ -127,5 +127,10 @@
         {
             _busy = false;
         }
+    }
+
+    private void IrAReestablecerPassword(MouseEventArgs _)
+    {
+        Nav.NavigateTo("/reestablecer-password");
     }
 }

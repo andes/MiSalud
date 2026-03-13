@@ -26,7 +26,7 @@
                 <option value="">(Seleccione una localidad)</option>
                 @if (Model.LstLocalidad != null)
                 {
-                    @foreach (var localidad in Model.LstLocalidad)
+                    @foreach (var localidad in Model.LstLocalidad.OrderBy(l=> l.nombre))
                     {
                         <option value="@localidad.localidadId">@localidad.nombre</option>
                     }

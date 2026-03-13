@@ -1,0 +1,210 @@
+﻿@page "/crear-contrasenia"
+@layout LoginLayout
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+
+@using SaludPortal.Web.Models.AccountViewModels
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Linq
+@inject NavigationManager Nav
+@inject ILogger<CrearContrasenia> Logger
+@inject IJSRuntime JS
+
+<PageTitle>Crear contraseña</PageTitle>
+
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h2 class="title">Crear contraseña</h2>
+        </div>
+
+        <div class="body">
+            <div class="alert alert-info mb-4" role="alert">
+                <Icon Name="info-circle" Size="18" Fill="#0dcaf0" class="me-2" AriaLabel="Informacion" />
+                <span>Ingresá una nueva contraseña para activar tu cuenta.</span>
+            </div>
+
+            <EditForm Model="_model" OnValidSubmit="DoCrearContrasenia" class="form" @ref="_editForm">
+                <DataAnnotationsValidator />
+
+                <div class="form-content">
+                    <InputTextField @bind-Value="_model.Email"
+                                    Id="txtEmail"
+                                    Type="email"
+                                    IconName="envelope"
+                                    Label="Correo electrónico*"
+                                    Placeholder="Correo electrónico"
+                                    MaxLength="50"
+                                    AriaLabel="Correo electrónico"
+                                    HasError="@HasFieldError(nameof(_model.Email))"
+                                    ValidationFor="@(() => _model.Email)" />
+
+                    <InputTextField @bind-Value="_model.NuevaContrasenia"
+                                    Id="txtNuevaContrasenia"
+                                    Type="password"
+                                    IconName="lock"
+                                    Label="Nueva contraseña*"
+                                    Placeholder="Nueva contraseña"
+                                    AriaLabel="Nueva contraseña"
+                                    HasError="@HasFieldError(nameof(_model.NuevaContrasenia))"
+                                    ValidationFor="@(() => _model.NuevaContrasenia)" />
+
+                    <InputTextField @bind-Value="_model.ConfirmarContrasenia"
+                                    Id="txtConfirmarContrasenia"
+                                    Type="password"
+                                    IconName="lock"
+                                    Label="Confirmar contraseña*"
+                                    Placeholder="Confirmá la contraseña"
+                                    AriaLabel="Confirmar contraseña"
+                                    HasError="@HasFieldError(nameof(_model.ConfirmarContrasenia))"
+                                    ValidationFor="@(() => _model.ConfirmarContrasenia)" />
+                </div>
+
+                @if (_errors.Count > 0)
+                {
+                    <div class="error" role="alert">
+                        <div class="d-flex align-items-start mb-2">
+                            <Icon Name="exclamation-triangle" Size="18" Fill="#dc3545" class="me-2 mt-1" AriaLabel="Error" />
+                        </div>
+                        <ul class="mb-0">
+                            @foreach (var error in _errors)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_success))
+                {
+                    <div class="success" role="alert">
+                        <Icon Name="check-circle" Size="18" Fill="#28a745" class="me-2" AriaLabel="Exito" />
+                        <span>@_success</span>
+                    </div>
+                }
+
+                <ButtonPrimary Type="submit"
+                               Text="@(_busy ? "Guardando..." : "Crear contraseña")"
+                               Disabled="@_busy"
+                               AriaLabel="@(_busy ? "Guardando..." : "Crear contraseña")" />
+            </EditForm>
+        </div>
+
+        <div class="footer">
+            <div class="footer-link">
+                <span class="footer-text">¿Ya tenés tu cuenta activa?</span>
+                <a href="/login" @onclick="GoToLogin" @onclick:preventDefault class="link">Iniciar sesión</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, SupplyParameterFromQuery]
+    public string? Email { get; set; }
+
+    [Parameter, SupplyParameterFromQuery]
+    public string? Codigo { get; set; }
+
+    private readonly CrearContraseniaViewModel _model = new();
+    private List<string> _errors = new();
+    private string? _success;
+    private bool _busy;
+    private EditForm? _editForm;
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Codigo))
+        {
+            Nav.NavigateTo("/ingresar-codigo-activacion", forceLoad: true);
+            return;
+        }
+
+        _model.Email = Email;
+    }
+
+    private bool HasFieldError(string fieldName)
+    {
+        return _editForm?.EditContext?.GetValidationMessages(new FieldIdentifier(_model, fieldName)).Any() ?? false;
+    }
+
+    private async Task DoCrearContrasenia()
+    {
+        _busy = true;
+        _errors.Clear();
+        _success = null;
+
+        try
+        {
+            var result = await JS.InvokeAsync<CrearContraseniaResult>("authApi.crearContrasenia", new
+            {
+                email = _model.Email,
+                password = Codigo,
+                new_password = _model.NuevaContrasenia
+            });
+
+            if (result.Ok)
+            {
+                _success = "Contraseña creada exitosamente. Redirigiendo al inicio...";
+                StateHasChanged();
+                await Task.Delay(2000);
+                Nav.NavigateTo("/home", forceLoad: true);
+                return;
+            }
+
+            _errors.Add(ExtractMessage(result.Data) ?? "Error al crear la contraseña.");
+        }
+        catch (Exception ex)
+        {
+            _errors.Add("Error al crear la contraseña.");
+            Logger.LogError(ex, "Error al crear contraseña");
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private class CrearContraseniaResult
+    {
+        public bool Ok { get; set; }
+        public int Status { get; set; }
+        public dynamic? Data { get; set; }
+    }
+
+    private static string? ExtractMessage(System.Text.Json.JsonElement data)
+    {
+        if (data.ValueKind == System.Text.Json.JsonValueKind.Object &&
+            data.TryGetProperty("message", out var msgProp))
+            return msgProp.GetString();
+
+        if (data.ValueKind == System.Text.Json.JsonValueKind.String)
+        {
+            var raw = data.GetString();
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+
+            if (raw.TrimStart().StartsWith("{"))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(raw);
+                    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                        doc.RootElement.TryGetProperty("message", out var inner))
+                        return inner.GetString();
+                }
+                catch { }
+            }
+            return raw;
+        }
+
+        return null;
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login", true);
+    }
+}
+<script src="../js/auth.js"></script>

@@ -1,0 +1,48 @@
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+@using SaludPortal.Web.Components.Icons
+
+<div class="input-field-group">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label for="@Id" class="input-label">@Label</label>
+    }
+    <div class="input-group @(HasError ? "invalid" : "")">
+        <div class="input-icon">
+            <Icon Name="@IconName" Size="18" Fill="#666" AriaLabel="@AriaLabel" />
+        </div>
+        <input type="date"
+               id="@Id"
+               @bind="@CurrentValue"
+               class="input-field"
+               aria-label="@AriaLabel"
+               min="1900-01-01"
+               disabled="@Disabled" />
+    </div>
+    <ValidationMessage For="@ValidationFor" class="validation-message" style="color: #dc3545;" />
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string IconName { get; set; } = "calendar-check";
+    [Parameter] public string AriaLabel { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public DateTime Value { get; set; } = new DateTime(2000, 1, 1);
+    [Parameter] public EventCallback<DateTime> ValueChanged { get; set; }
+    [Parameter] public Expression<Func<DateTime>>? ValidationFor { get; set; }
+    [Parameter] public bool HasError { get; set; } = false;
+
+    private DateTime CurrentValue
+    {
+        get => Value == DateTime.MinValue ? new DateTime(2000, 1, 1) : Value;
+        set
+        {
+            if (value != Value)
+            {
+                Value = value;
+                ValueChanged.InvokeAsync(value);
+            }
+        }
+    }
+}

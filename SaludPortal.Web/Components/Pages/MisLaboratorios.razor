@@ -212,7 +212,7 @@ else
         foreach (var protocolo in protocolosRania)
         {
             var unLaboratorio = new AndesServices.Entities.MisLaboratorios();
-            unLaboratorio.Laboratorio = protocolo.Profesion;
+            unLaboratorio.Laboratorio = "Clínica Dr. Roberto Raña";
             unLaboratorio.medicoSolicitante = $"{protocolo.SolicitanteApellido} {protocolo.SolicitanteNombre}";
             unLaboratorio.fecha = protocolo.Fecha;
             unLaboratorio.idProtocolo = protocolo.ProtocoloId;
