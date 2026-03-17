@@ -27,10 +27,7 @@
                 <DataAnnotationsValidator />
                 @* <ValidationSummary class="login-validation-summary" /> *@
 
-                <InputTextField @bind-Value="_model.Email"
-                                Id="txtUsuario"
-                                Type="email"
-                                IconName="envelope"
+                <InputEmailField @bind-Value="_model.Email"
                                 Placeholder="Ingresa tu email"
                                 AriaLabel="Usuario"
                                 HasError="@HasFieldError(nameof(_model.Email))"

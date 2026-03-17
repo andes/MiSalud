@@ -1,0 +1,151 @@
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+@using SaludPortal.Web.Components.Icons
+@using System.Text.RegularExpressions
+
+<div class="input-field-group">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label class="input-label">@Label</label>
+    }
+    <div class="input-group @(HasError || errorCodigoArea || errorTelefono ? "invalid" : "")">
+        <div class="input-icon">
+            <Icon Name="@IconName" Size="18" Fill="#666" AriaLabel="@AriaLabel" />
+        </div>
+        <input type="tel"
+               inputmode="numeric"
+               class="input-field phone-area-input"
+               placeholder="Cód. área (sin 0)"
+               @bind="CodigoAreaValue"
+               @bind:event="oninput"
+               onkeydown="numericInput.preventNonNumeric(event)"
+               maxlength="@maxLengthCodigoArea"
+               disabled="@Disabled" />
+        <span class="phone-separator">|</span>
+        <input type="tel"
+               class="input-field"
+               placeholder="Número (sin 15)"
+               @bind="TelefonoValue"
+               @bind:event="oninput"
+               onkeydown="numericInput.preventNonNumeric(event)"
+               maxlength="@maxLengthTelefono"
+               disabled="@Disabled" />
+    </div>
+    <div class="phone-feedback">
+        @if (errorCodigoArea)
+        {
+            <small class="text-danger">Sin 0 inicial en el código de área</small>
+        }
+        else if (errorTelefono)
+        {
+            <small class="text-danger">Sin 15 al inicio del número</small>
+        }
+        else
+        {
+            <small class="text-muted">Cód. área (ej: 299) y número sin 15 (ej: 4123456). Total: @(codigoArea.Length + telefono.Length)/@LONGITUD_MAXIMA_TOTAL</small>
+        }
+    </div>
+    <ValidationMessage For="@ValidationFor" class="validation-message" style="color: #dc3545;" />
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string IconName { get; set; } = "telephone";
+    [Parameter] public string AriaLabel { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Expression<Func<string>>? ValidationFor { get; set; }
+    [Parameter] public bool HasError { get; set; } = false;
+
+    private const int LONGITUD_MAXIMA_TOTAL = 10;
+    private const int LONGITUD_MINIMA_CODIGO_AREA = 2;
+    private const int LONGITUD_MAXIMA_CODIGO_AREA = 4;
+    private const int LONGITUD_MINIMA_TELEFONO = 6;
+    private const int LONGITUD_MAXIMA_TELEFONO = 8;
+
+    private string codigoArea = "";
+    private string telefono = "";
+    private bool errorCodigoArea = false;
+    private bool errorTelefono = false;
+    private int maxLengthCodigoArea = LONGITUD_MAXIMA_CODIGO_AREA;
+    private int maxLengthTelefono = LONGITUD_MAXIMA_TELEFONO;
+
+    private static readonly Regex SoloNumerosRegex = new Regex(@"[^\d]", RegexOptions.Compiled);
+    private static readonly Regex IniciaConCeroRegex = new Regex(@"^0+", RegexOptions.Compiled);
+    private static readonly Regex IniciaConQuinceRegex = new Regex(@"^15", RegexOptions.Compiled);
+
+    private string CodigoAreaValue
+    {
+        get => codigoArea;
+        set
+        {
+            string valor = SoloNumerosRegex.Replace(value ?? "", "");
+
+            if (IniciaConCeroRegex.IsMatch(valor))
+                valor = IniciaConCeroRegex.Replace(valor, "");
+
+            int maxPermitido = Math.Max(
+                LONGITUD_MINIMA_CODIGO_AREA,
+                Math.Min(LONGITUD_MAXIMA_CODIGO_AREA, LONGITUD_MAXIMA_TOTAL - telefono.Length)
+            );
+
+            if (valor.Length > maxPermitido)
+                valor = valor[..maxPermitido];
+
+            codigoArea = valor;
+            errorCodigoArea = codigoArea.StartsWith("0");
+
+            maxLengthTelefono = Math.Min(LONGITUD_MAXIMA_TELEFONO, LONGITUD_MAXIMA_TOTAL - codigoArea.Length);
+            if (telefono.Length > maxLengthTelefono)
+                telefono = telefono[..maxLengthTelefono];
+
+            NotifyValueChanged();
+        }
+    }
+
+    private string TelefonoValue
+    {
+        get => telefono;
+        set
+        {
+            string valor = SoloNumerosRegex.Replace(value ?? "", "");
+
+            if (IniciaConQuinceRegex.IsMatch(valor))
+                valor = IniciaConQuinceRegex.Replace(valor, "");
+
+            int maxPermitido = Math.Min(LONGITUD_MAXIMA_TELEFONO, LONGITUD_MAXIMA_TOTAL - codigoArea.Length);
+
+            if (valor.Length > maxPermitido)
+                valor = valor[..maxPermitido];
+
+            telefono = valor;
+            errorTelefono = telefono.StartsWith("15");
+
+            maxLengthCodigoArea = Math.Max(
+                LONGITUD_MINIMA_CODIGO_AREA,
+                Math.Min(LONGITUD_MAXIMA_CODIGO_AREA, LONGITUD_MAXIMA_TOTAL - telefono.Length)
+            );
+            if (codigoArea.Length > maxLengthCodigoArea)
+                codigoArea = codigoArea[..maxLengthCodigoArea];
+
+            NotifyValueChanged();
+        }
+    }
+
+    public bool EsValido =>
+        !string.IsNullOrWhiteSpace(codigoArea) &&
+        codigoArea.Length >= LONGITUD_MINIMA_CODIGO_AREA &&
+        codigoArea.Length <= LONGITUD_MAXIMA_CODIGO_AREA &&
+        !string.IsNullOrWhiteSpace(telefono) &&
+        telefono.Length >= LONGITUD_MINIMA_TELEFONO &&
+        telefono.Length <= LONGITUD_MAXIMA_TELEFONO &&
+        (codigoArea.Length + telefono.Length) <= LONGITUD_MAXIMA_TOTAL &&
+        !errorCodigoArea &&
+        !errorTelefono;
+
+    private void NotifyValueChanged()
+    {
+        ValueChanged.InvokeAsync($"{codigoArea}{telefono}");
+    }
+}

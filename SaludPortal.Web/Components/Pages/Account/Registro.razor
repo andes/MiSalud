@@ -33,10 +33,7 @@
                 <DataAnnotationsValidator />
 
                 <div class="form-content">
-                    <InputTextField @bind-Value="_model.Email"
-                                    Id="txtEmail"
-                                    Type="email"
-                                    IconName="envelope"
+                    <InputEmailField @bind-Value="_model.Email"
                                     Label="Correo electrónico*"
                                     Placeholder="Correo electrónico"
                                     MaxLength="50"
@@ -44,16 +41,11 @@
                                     HasError="@HasFieldError(nameof(_model.Email))"
                                     ValidationFor="@(() => _model.Email)" />
 
-                    <InputTextField @bind-Value="_model.Telefono"
-                                    Id="txtTelefono"
-                                    Type="tel"
-                                    IconName="telephone"
-                                    Label="Teléfono*"
-                                    Placeholder="Teléfono (10 dígitos)"
-                                    MaxLength="10"
-                                    AriaLabel="Teléfono"
-                                    HasError="@HasFieldError(nameof(_model.Telefono))"
-                                    ValidationFor="@(() => _model.Telefono)" />
+                    <InputPhoneField @bind-Value="_model.Telefono"
+                                     Label="Teléfono*"
+                                     AriaLabel="Teléfono"
+                                     HasError="@HasFieldError(nameof(_model.Telefono))"
+                                     ValidationFor="@(() => _model.Telefono)" />
 
                     <InputTextField @bind-Value="_model.Apellidos"
                                     Id="txtApellidos"
@@ -99,31 +91,17 @@
                                     HasError="@HasFieldError(nameof(_model.FechaNacimiento))"
                                     ValidationFor="@(() => _model.FechaNacimiento)" />
 
-                    <InputTextField @bind-Value="_model.Documento"
-                                    Id="txtDocumento"
-                                    Type="text"
-                                    IconName="person-vcard"
-                                    Label="Documento*"
-                                    Placeholder="Documento (DNI)"
-                                    MaxLength="8"
-                                    Pattern="[0-9]*"
-                                    InputMode="numeric"
-                                    AriaLabel="Documento"
-                                    HasError="@HasFieldError(nameof(_model.Documento))"
-                                    ValidationFor="@(() => _model.Documento)" />
+                    <InputDocumentoField @bind-Value="_model.Documento"
+                                        IconName="person-vcard"
+                                        AriaLabel="Documento"
+                                        HasError="@HasFieldError(nameof(_model.Documento))"
+                                        ValidationFor="@(() => _model.Documento)" />
 
-                    <InputTextField @bind-Value="_model.NroTramite"
-                                    Id="txtNroTramite"
-                                    Type="text"
-                                    IconName="person-vcard"
-                                    Label="Número de trámite*"
-                                    Placeholder="Número de trámite (11 dígitos)"
-                                    MaxLength="11"
-                                    Pattern="[0-9]*"
-                                    InputMode="numeric"
-                                    AriaLabel="Número de trámite"
-                                    HasError="@HasFieldError(nameof(_model.NroTramite))"
-                                    ValidationFor="@(() => _model.NroTramite)" />
+                    <InputNroTramiteField @bind-Value="_model.NroTramite"
+                                         IconName="person-vcard"
+                                         AriaLabel="Número de trámite"
+                                         HasError="@HasFieldError(nameof(_model.NroTramite))"
+                                         ValidationFor="@(() => _model.NroTramite)" />
 
                     <InputTextField @bind-Value="_model.Ejemplar"
                                     Id="txtEjemplar"
@@ -284,6 +262,10 @@
            
             if (response == null && error != null)
             {
+                if (error != "Ya existe una cuenta activa con ese e-mail")
+                {
+                    throw new Exception(error);
+                }
                 Logger.LogError("Error desconocido al registrar usuario. Response: {@Response}, Error: {Error}", response, error);
                 _errors.Add(error);
                 return;

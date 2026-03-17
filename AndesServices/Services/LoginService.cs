@@ -166,8 +166,8 @@ namespace AndesServices.Services
             
             if (!response.IsSuccessStatusCode)
             {
-                var res = await response.Content.ReadFromJsonAsync<ErrorDto>();
-                return (null, res?.Message);
+                string message = await response.Content.ReadAsStringAsync();
+                return (null, message);
             }
 
             var result = await response.Content.ReadFromJsonAsync<RegistroResponseDto>();

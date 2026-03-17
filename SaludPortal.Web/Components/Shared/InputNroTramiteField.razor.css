@@ -1,0 +1,82 @@
+.input-field-group {
+    margin-bottom: 1rem;
+}
+
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.input-group:focus-within {
+    border-color: #00374c;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 55, 76, 0.1);
+}
+
+.input-group.invalid {
+    border-color: #dc3545;
+}
+
+.input-group.invalid:focus-within {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.input-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    color: #666;
+    flex-shrink: 0;
+}
+
+.input-field {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.875rem 1rem 0.875rem 0.5rem;
+    font-size: 1rem;
+    color: #00374c;
+    outline: none;
+}
+
+.input-field::placeholder {
+    color: #999;
+}
+
+.input-field:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.input-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #00374c;
+    margin-bottom: 0.5rem;
+}
+
+.field-hint {
+    min-height: 1.4em;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.validation-message {
+    font-size: 0.8rem;
+    color: #dc3545;
+    margin-top: 0.25rem;
+}
+
+.validation-message:empty,
+.validation-message:empty::before {
+    display: none;
+    content: none;
+}

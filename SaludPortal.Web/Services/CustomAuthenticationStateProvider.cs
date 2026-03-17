@@ -66,7 +66,9 @@ namespace SaludPortal.Web.Services
                 new Claim(ClaimTypes.Name, username),
                 new Claim("PacienteId", usuario.pacientes?.FirstOrDefault()?.id ?? string.Empty),
                 new Claim("Documento", usuario.documento ?? string.Empty),
-                new Claim("TokenBackend", usuario.token ?? string.Empty) // opcional: renombrado para no confundir con auth interno
+                new Claim("TokenBackend", usuario.token ?? string.Empty), // opcional: renombrado para no confundir con auth interno
+                new Claim("Nombre", usuario.nombre ?? string.Empty),
+                new Claim("Apellido", usuario.apellido ?? string.Empty)
             };
     }
 

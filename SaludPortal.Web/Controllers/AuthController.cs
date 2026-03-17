@@ -50,7 +50,9 @@ namespace SaludPortal.Web.Controllers
                     model.Email,
                     usuario.pacientes?.FirstOrDefault()?.id,
                     usuario.documento,
-                    usuario.token);
+                    usuario.token,
+                    usuario?.nombre,
+                    usuario?.apellido);
 
                 await SignInAsync(claims, model.RememberMe);
 
@@ -84,7 +86,10 @@ namespace SaludPortal.Web.Controllers
                     model.Email,
                     result.response.User?.pacientes?.FirstOrDefault()?.id,
                     result.response.User?.documento,
-                    result.response.Token);
+                    result.response.Token,
+                    result.response.User?.nombre,
+                    result.response.User?.apellido
+                    );
 
                 await SignInAsync(claims, true);
 
@@ -126,14 +131,16 @@ namespace SaludPortal.Web.Controllers
             return Ok(new AuthStatusDto { Authenticated = false });
         }
 
-        private static List<Claim> BuildClaims(string email, string? pacienteId, string? documento, string? token)
+        private static List<Claim> BuildClaims(string email, string? pacienteId, string? documento, string? token, string nombre, string apellido)
         {
             return new List<Claim>
             {
                 new(ClaimTypes.Name, email),
                 new("PacienteId", pacienteId ?? string.Empty),
                 new("Documento", documento ?? string.Empty),
-                new("Token", token ?? string.Empty)
+                new("Token", token ?? string.Empty),
+                new("Nombre", nombre ?? string.Empty),
+                new("Apellido", apellido ?? string.Empty)
             };
         }
 

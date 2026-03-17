@@ -8,7 +8,7 @@
         <div class="container-fluid">
             <div class="dropdown">
                 <button class="btn btn-secondary dropdown-toggle" style="background-color:#2b3e4c;" type="button" id="dropdownMenuMiCuenta" data-bs-toggle="dropdown" aria-expanded="false" title="@(userName ?? "Usuario")">
-                    @(userName ?? "Usuario")
+                    @(NombreUsuarioLogueado ?? "Usuario")
                 </button>
                 <ul class="dropdown-menu">
                     <li>
@@ -24,47 +24,47 @@
         </div>
     </div>
 
-    <input type="checkbox" title="Menu" class="navbar-toggler" />
+    <input type="checkbox" title="Menu" class="navbar-toggler" @bind="isNavMenuOpen" />
 
     <div class="nav-scrollable">
         <nav class="nav flex-column">
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All" alt="Inicio" title="Inicio">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All" alt="Inicio" title="Inicio" @onclick="CollapseNavMenu">
                     <span class="bi bi-house-door-fill"></span> Inicio
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="misvacunas" title="Mis vacunas">
+                <NavLink class="nav-link" href="misvacunas" title="Mis vacunas" @onclick="CollapseNavMenu">
                     <span class="bi bi-syringe"></span>Mis vacunas
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="GrupoFamiliar" title="Grupo familiar">
+                <NavLink class="nav-link" href="GrupoFamiliar" title="Grupo familiar" @onclick="CollapseNavMenu">
                     <span class="bi bi-people-group"></span> Grupo familiar
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="HistoriaSalud" title="Historia de salud">
+                <NavLink class="nav-link" href="HistoriaSalud" title="Historia de salud" @onclick="CollapseNavMenu">
                     <span class="bi bi-clipboard2-heart"></span> Historia de salud
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="MisLaboratorios" title="Mis laboratorios">
+                <NavLink class="nav-link" href="MisLaboratorios" title="Mis laboratorios" @onclick="CollapseNavMenu">
                     <span class="bi bi-flask-vial"></span> Mis laboratorios
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="MisRecetas" title="Mis recetas">
+                <NavLink class="nav-link" href="MisRecetas" title="Mis recetas" @onclick="CollapseNavMenu">
                     <span class="bi bi-file-medical"></span> Mis recetas
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="Misturnos" title="Mis turnos">
+                <NavLink class="nav-link" href="Misturnos" title="Mis turnos" @onclick="CollapseNavMenu">
                     <span class="bi bi-turnos"></span> Mis turnos
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="Farmaciasdeturno" title="Farmacias de turno">
+                <NavLink class="nav-link" href="Farmaciasdeturno" title="Farmacias de turno" @onclick="CollapseNavMenu">
                     <span class="bi bi-farmaciasturno"></span> Farmacias de turno
                 </NavLink>
             </div>
@@ -75,12 +75,20 @@
 
     [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
     private string? userName;
+    private string? NombreUsuarioLogueado;
+    private bool isNavMenuOpen;
 
     protected override async Task OnParametersSetAsync()
     {
         if (AuthStateTask is null) return;
         var auth = await AuthStateTask;
         userName = auth.User.Identity?.IsAuthenticated == true ? auth.User.Identity.Name : null;
+        NombreUsuarioLogueado = auth.User.GetNombre();
+    }
+
+    private void CollapseNavMenu()
+    {
+        isNavMenuOpen = false;
     }
 
     private async Task OnLogout()

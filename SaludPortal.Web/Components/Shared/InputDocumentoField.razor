@@ -1,0 +1,58 @@
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+@using SaludPortal.Web.Components.Icons
+@using System.Text.RegularExpressions
+
+<div class="input-field-group">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label class="input-label">@Label</label>
+    }
+    <div class="input-group @(HasError ? "invalid" : "")">
+        <div class="input-icon">
+            <Icon Name="@IconName" Size="18" Fill="#666" AriaLabel="@AriaLabel" />
+        </div>
+        <input type="text"
+               inputmode="numeric"
+               class="input-field"
+               placeholder="@Placeholder"
+               @bind="DocumentoValue"
+               @bind:event="oninput"
+               onkeydown="numericInput.preventNonNumeric(event)"
+               maxlength="@LONGITUD_MAXIMA"
+               disabled="@Disabled" />
+    </div>
+    <div class="field-hint">
+        <small class="text-muted">Solo números, @LONGITUD_MINIMA u @LONGITUD_MAXIMA dígitos. Total: @(Value?.Length ?? 0)/@LONGITUD_MAXIMA</small>
+    </div>
+    <ValidationMessage For="@ValidationFor" class="validation-message" style="color: #dc3545;" />
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "Documento*";
+    [Parameter] public string IconName { get; set; } = "";
+    [Parameter] public string Placeholder { get; set; } = "Ej: 12345678";
+    [Parameter] public string AriaLabel { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Expression<Func<string>>? ValidationFor { get; set; }
+    [Parameter] public bool HasError { get; set; } = false;
+
+    private const int LONGITUD_MINIMA = 7;
+    private const int LONGITUD_MAXIMA = 8;
+
+    private static readonly Regex SoloNumerosRegex = new Regex(@"[^\d]", RegexOptions.Compiled);
+
+    private string DocumentoValue
+    {
+        get => Value ?? "";
+        set
+        {
+            string valor = SoloNumerosRegex.Replace(value ?? "", "");
+            if (valor.Length > LONGITUD_MAXIMA)
+                valor = valor[..LONGITUD_MAXIMA];
+            ValueChanged.InvokeAsync(valor);
+        }
+    }
+}

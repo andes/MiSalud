@@ -1,0 +1,47 @@
+﻿@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Components.Shared
+@rendermode InteractiveServer
+
+<section class="privacidad-modal" aria-labelledby="privacidad-titulo">
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon" aria-hidden="true">
+                <Icon Name="lock" Size="28" Fill="#ffecc1" AriaLabel="Privacidad" />
+            </div>
+            <div>
+                <h2 id="privacidad-titulo" class="title">¿Quiénes pueden acceder a tu Historia Clínica?</h2>
+                <p class="subtitle">Tu Historia Clínica está protegida y solo puede ser consultada en estas situaciones:</p>
+            </div>
+        </div>
+
+        <button type="button" title="Cerrar" class="close" @onclick="Close" aria-label="Cerrar modal de privacidad">
+            <Icon Name="x-circle" Size="18" Fill="#ffecc1" AriaLabel="Cerrar" />
+        </button>
+    </div>
+
+    <div class="body">
+        <div class="privacidad-contenedor">
+            <article class="privacidad-caja">
+                <Badge>1</Badge>
+                <span class="privacidad-titulonota">Cuando te atienden tus profesionales de salud</span>
+                <p>Para brindarte la atención que necesitas.</p>
+            </article>
+            <article class="privacidad-caja">
+                <Badge>2</Badge>
+                <span class="privacidad-titulonota">Si hay un riesgo para la salud pública o la vida de otras personas</span>
+                <p>Y la autoridad sanitaria lo autoriza.</p>
+            </article>
+            <article class="privacidad-caja">
+                <Badge>3</Badge>
+                <span class="privacidad-titulonota">En auditorías médicas o trámites de tu cobertura de salud</span>
+                <p>Siempre cuidando la confidencialidad de tus datos.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance ModalQuienesPuedenVerHS { get; set; } = default!;
+
+    private async Task Close() => await ModalQuienesPuedenVerHS.CloseAsync();
+}
