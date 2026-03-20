@@ -212,33 +212,15 @@
             var data = renaperResultDto.Data;
             var idTramitePrincipal = PadLeftNroTramite(data.IdTramitePrincipal);
 
-            if (!EqualsNormalized(data.Apellido, _model.Apellidos))
+            if (!EqualsNormalized(data.Apellido, _model.Apellidos)
+                || !EqualsNormalized(data.Nombres, _model.Nombres)
+                || !EqualsNormalized(data.Ejemplar, _model.Ejemplar)
+                || !EqualsNormalized(idTramitePrincipal, _model.NroTramite)
+                || !DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaRenaper)
+                || fechaRenaper.Date != _model.FechaNacimiento.Date
+            )
             {
-                _errors.Add("El apellido ingresado no coincide con los datos del RENAPER.");
-            }
-
-            if (!EqualsNormalized(data.Nombres, _model.Nombres))
-            {
-                _errors.Add("El nombre ingresado no coincide con los datos del RENAPER.");
-            }
-
-            if (!EqualsNormalized(data.Ejemplar, _model.Ejemplar))
-            {
-                _errors.Add("El ejemplar ingresado no coincide con los datos del RENAPER.");
-            }
-
-            if (!EqualsNormalized(_model.NroTramite, idTramitePrincipal))
-            {
-                _errors.Add("El número de trámite ingresado no coincide con los datos del RENAPER.");
-            }
-
-            if (!DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaRenaper))
-            {
-                _errors.Add("Error al procesar la fecha de nacimiento del RENAPER.");
-            }
-            else if (fechaRenaper.Date != _model.FechaNacimiento.Date)
-            {
-                _errors.Add("La fecha de nacimiento ingresada no coincide con los datos del RENAPER.");
+                _errors.Add("Datos incorrectos.");
             }
 
             if (_errors.Count > 0)
