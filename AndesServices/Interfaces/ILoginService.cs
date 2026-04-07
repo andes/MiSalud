@@ -14,8 +14,9 @@ namespace AndesServices.Interfaces
 
         Task<OlvideContraseniaResponseDto?> OlvideContrasenia(OlvideContraseniaRequestDto request);
         Task<ReestablecerPasswordResponseDto?> ReestablecerPassword(ReestablecerPasswordRequestDto request);
+        Task<bool> ValidarConexionXroadss();
 
-        Task<VerificarUsuarioRenaperResponseDto?> VerificarUsuarioRenaper(string dni, char sexo);
+        Task<VerificarUsuarioXroadssResponseDto?> VerificarUsuarioXroads(string dni, char sexo);
         Task<(RegistroResponseDto? response, string? errorMessage)> Registro(RegistroRequestDto dto);
         Task<ValidarCodigoActivacionResponseDto?> ValidarCodigoActivacion(ValidarCodigoActivacionRequestDto dto);
         Task<(CrearContraseniaResponseDto? response, string? errorMessage)> CrearContrasenia(CrearContraseniaRequestDto dto);

@@ -1,0 +1,165 @@
+@page "/centros-salud"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Models
+@using AndesServices.Interfaces
+@using AndesServices.DTOs.CentrosDeSalud
+@using BlazorSpinner
+@using System.Linq
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ICentrosSalud CentrosSaludService
+@inject BlazorSpinner.SpinnerService _spinnerService
+
+@inherits AuthenticatedComponentBase
+
+<PageTitle>Centros de Salud</PageTitle>
+
+<div class="centros-salud-page">
+    @* <PageHeader Title="Centros de Salud" Subtitle="Encuentra los centros de salud más cercanos" /> *@
+    <div></div>
+
+    @if (_centrosLoaded)
+    {
+        <div class="centros-content">
+            <div class="mapa-column">
+                <CentrosSaludMap Centros="lstCentrosSalud" CentroSeleccionado="CentroSeleccionado" />
+            </div>
+            <div class="lista-column">
+                <CentroSaludList 
+                    Centros="lstCentrosSalud" 
+                    SelectedOrigen="@_origenSeleccionado"
+                    SelectedCentroId="CentroSeleccionado?.Id"
+                    OnOrigenChanged="HandleOrigenChange"
+                    OnCentroSelected="HandleCentroSeleccionado" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="loading-state">
+            <p>Cargando centros de salud...</p>
+        </div>
+    }
+</div>
+
+@code {
+    private const string OrigenAraucania = "araucania";
+    private const string OrigenProvincia = "provincia";
+
+    private List<CentroSaludListItem> lstCentrosSalud = new();
+    private CentroSaludListItem? CentroSeleccionado;
+    private string _origenSeleccionado = OrigenProvincia;
+    private bool _centrosLoaded = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCentrosSalud(_origenSeleccionado);
+    }
+
+    private async Task CargarCentrosSalud(string origen)
+    {
+        try
+        {
+            _centrosLoaded = false;
+            _spinnerService.Show();
+
+            if (origen == OrigenProvincia)
+            {
+                var centrosProvincia = await CentrosSaludService.ObtenerCentrosDeSaludProvincia();
+                
+                lstCentrosSalud = centrosProvincia.Select(MapFromProvincia).ToList();
+            }
+            else
+            {
+                var centrosAraucania = await CentrosSaludService.ObtenerCentrosDeSaludAraucania();
+                lstCentrosSalud = centrosAraucania.Select(MapFromAraucania).ToList();
+            }
+
+            _centrosLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error cargando centros de salud: {ex.Message}");
+            _centrosLoaded = false;
+        }
+        finally
+        {
+            _spinnerService.Hide();
+        }
+    }
+
+    private async Task HandleOrigenChange(string origen)
+    {
+        if (string.IsNullOrWhiteSpace(origen) || origen == _origenSeleccionado)
+        {
+            return;
+        }
+
+        _origenSeleccionado = origen;
+        CentroSeleccionado = null;
+        await CargarCentrosSalud(_origenSeleccionado);
+    }
+
+    private void HandleCentroSeleccionado(CentroSaludListItem centro)
+    {
+        CentroSeleccionado = centro;
+    }
+
+    private static CentroSaludListItem MapFromAraucania(CentroSaludAraucania centro)
+    {
+        return new CentroSaludListItem
+        {
+            Id = !string.IsNullOrWhiteSpace(centro.Id) ? centro.Id : centro.CentroSaludAraucaniaId,
+            Nombre = centro.Nombre,
+            Latitud = centro.Latitud,
+            Longitud = centro.Longitud,
+            Direccion = centro.Direccion,
+            Region = centro.Region,
+            Comunidad = centro.Comunidad,
+            Complejidad = centro.Complejidad,
+            Telefono = centro.Telefono,
+            Origen = OrigenAraucania
+        };
+    }
+
+    private static CentroSaludListItem MapFromProvincia(CentroSaludProvincia centro)
+    {
+        var primerTelefono = centro.telecom?
+            .Where(t => !string.IsNullOrWhiteSpace(t.valor))
+            .OrderBy(t => t.ranking)
+            .Select(t => t.valor)
+            .FirstOrDefault();
+
+        var telefonoContacto = centro.contacto?
+            .Where(c => !string.IsNullOrWhiteSpace(c.valor) &&
+                        string.Equals(c.tipo, "telefono", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(c => c.ranking)
+            .Select(c => c.valor)
+            .FirstOrDefault();
+
+        var complejidad = centro.nivelComplejidad.HasValue
+            ? $"Nivel {centro.nivelComplejidad.Value}"
+            : null;
+
+        var geoReferencia = centro.direccion?.geoReferencia;
+        var longitud = geoReferencia != null && geoReferencia.Count > 1 ? geoReferencia[1] : (double?)null;
+        var latitud = geoReferencia != null && geoReferencia.Count > 0 ? geoReferencia[0] : (double?)null;
+
+        return new CentroSaludListItem
+        {
+            Id = !string.IsNullOrWhiteSpace(centro.id) ? centro.id : centro._id,
+            Nombre = centro.nombre,
+            Latitud = latitud,
+            Longitud = longitud,
+            Direccion = centro.direccion?.valor,
+            Region = centro.direccion?.ubicacion?.provincia?.nombre,
+            Comunidad = centro.direccion?.ubicacion?.localidad?.nombre,
+            Complejidad = complejidad,
+            Telefono = primerTelefono ?? telefonoContacto,
+            Origen = OrigenProvincia
+        };
+    }
+}

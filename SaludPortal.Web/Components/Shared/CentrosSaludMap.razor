@@ -1,0 +1,131 @@
+@using AndesServices.DTOs.CentrosDeSalud
+@using Microsoft.AspNetCore.Components
+@using Microsoft.Extensions.Configuration
+@using SaludPortal.Web.Models
+@inject IJSRuntime JS
+@inject IConfiguration Configuration
+
+<div class="centros-mapa-container">
+	<div id="@_mapElementId" class="map-canvas"></div>
+</div>
+
+@code {
+	private readonly string _mapElementId = $"centros-map-{Guid.NewGuid():N}";
+	private bool _isMapInitialized;
+	private string _lastDataSignature = string.Empty;
+
+	[Parameter]
+	public List<CentroSaludListItem> Centros { get; set; } = new();
+
+	[Parameter]
+	public CentroSaludListItem? CentroSeleccionado { get; set; }
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await EnsureMapInitializedAsync();
+		}
+
+		if (!_isMapInitialized)
+		{
+			return;
+		}
+
+		await SyncMarkersAsync();
+		await SyncSelectionAsync();
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (_isMapInitialized)
+		{
+			await SyncMarkersAsync();
+		}
+	}
+
+	private async Task EnsureMapInitializedAsync()
+	{
+		var apiKey = Configuration["GoogleMaps:ApiKey"];
+		if (string.IsNullOrWhiteSpace(apiKey))
+		{
+			Console.Error.WriteLine("Google Maps API Key no configurada");
+			return;
+		}
+
+		var center = GetMapCenter();
+
+		try
+		{
+			await JS.InvokeVoidAsync(
+				"centrosSaludMap.init",
+				_mapElementId,
+				apiKey,
+				center.lat,
+				center.lng,
+				Centros);
+
+			_isMapInitialized = true;
+			_lastDataSignature = BuildDataSignature();
+		}
+		catch (Exception ex)
+		{
+			Console.Error.WriteLine($"Error inicializando mapa: {ex.Message}");
+		}
+	}
+
+	private async Task SyncMarkersAsync()
+	{
+		var signature = BuildDataSignature();
+		if (signature == _lastDataSignature)
+		{
+			return;
+		}
+
+		try
+		{
+			await JS.InvokeVoidAsync("centrosSaludMap.setMarkers", _mapElementId, Centros);
+			_lastDataSignature = signature;
+		}
+		catch (Exception ex)
+		{
+			Console.Error.WriteLine($"Error actualizando markers: {ex.Message}");
+		}
+	}
+
+	private async Task SyncSelectionAsync()
+	{
+		var selectedId = CentroSeleccionado?.Id;
+		if (string.IsNullOrWhiteSpace(selectedId))
+		{
+			return;
+		}
+
+		try
+		{
+			await JS.InvokeVoidAsync("centrosSaludMap.focus", _mapElementId, selectedId);
+		}
+		catch (Exception ex)
+		{
+			Console.Error.WriteLine($"Error enfocando centro en mapa: {ex.Message}");
+		}
+	}
+
+	private (double lat, double lng) GetMapCenter()
+	{
+		var withCoords = Centros.FirstOrDefault(c => c.Latitud.HasValue && c.Longitud.HasValue);
+		if (withCoords != null)
+		{
+			return (withCoords.Latitud!.Value, withCoords.Longitud!.Value);
+		}
+
+		return (-38.9516, -68.0591);
+	}
+
+	private string BuildDataSignature()
+	{
+		var ids = Centros.Select(c => c.Id);
+		return string.Join("|", ids);
+	}
+
+}

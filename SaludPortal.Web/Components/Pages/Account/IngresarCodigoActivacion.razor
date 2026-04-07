@@ -24,10 +24,13 @@
         </div>
 
         <div class="body">
-            <div class="alert alert-info mb-4" role="alert">
-                <Icon Name="info-circle" Size="18" Fill="#0dcaf0" class="me-2" AriaLabel="Información" />
-                <span>Te enviamos un código de activación al correo registrado.</span>
-            </div>
+            @if (CodigoEnviado)
+            {
+                <div class="alert alert-info mb-4" role="alert">
+                    <Icon Name="info-circle" Size="18" Fill="#0dcaf0" class="me-2" AriaLabel="Información" />
+                    <span>Te enviamos un código de activación al correo registrado.</span>
+                </div>
+            }
 
             <EditForm Model="_model" OnValidSubmit="DoValidarCodigo" class="form" @ref="_editForm">
                 <DataAnnotationsValidator />
@@ -95,6 +98,9 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "codigoEnviado")]
+    public bool CodigoEnviado { get; set; } = false;
+
     private readonly IngresarCodigoActivacionViewModel _model = new();
     private List<string> _errors = new();
     private string? _success;

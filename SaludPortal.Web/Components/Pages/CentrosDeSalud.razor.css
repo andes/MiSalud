@@ -1,0 +1,91 @@
+.centros-salud-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.centros-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    height: calc(100vh - 8rem);
+}
+
+.mapa-column {
+    height: 100%;
+    overflow: hidden;
+}
+
+.lista-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-left: 2px solid #e0e0e0;
+    overflow-y: auto;
+    padding-left: 1rem;
+}
+
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 8rem);
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    color: #999;
+    font-size: 1.1rem;
+    padding: 3rem;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    .centros-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        height: auto;
+    }
+
+    .lista-column {
+        border-left: none;
+        border-top: 2px solid #e0e0e0;
+        padding-left: 0;
+        padding-top: 1.5rem;
+        min-height: 400px;
+    }
+
+    .mapa-column {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .centros-salud-page {
+        gap: 1rem;
+    }
+
+    .centros-content {
+        gap: 1rem;
+    }
+
+    .lista-column {
+        padding-top: 1rem;
+    }
+}
+
+/* Scrollbar styling para lista */
+.lista-column::-webkit-scrollbar {
+    width: 6px;
+}
+
+.lista-column::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.lista-column::-webkit-scrollbar-thumb {
+    background-color: #d0d0d0;
+    border-radius: 3px;
+}
+
+.lista-column::-webkit-scrollbar-thumb:hover {
+    background-color: #00374c;
+}

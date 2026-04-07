@@ -1,0 +1,63 @@
+@implements IDisposable
+@inject AppToastService ToastService
+
+@if (_toasts.Count > 0)
+{
+    <div class="app-toast-host" role="status" aria-live="polite" aria-atomic="true">
+        @foreach (var toast in _toasts)
+        {
+            <div class="app-toast @GetCssClass(toast.Level)">
+                <span>@toast.Message</span>
+                <button type="button" class="app-toast-close" @onclick="() => Dismiss(toast.Id)" aria-label="Cerrar">x</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private readonly List<AppToastMessage> _toasts = new();
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += HandleToast;
+    }
+
+    private void HandleToast(AppToastMessage toast)
+    {
+        _toasts.Add(toast);
+        _ = InvokeAsync(StateHasChanged);
+        _ = AutoDismissAsync(toast.Id, toast.DurationMs);
+    }
+
+    private async Task AutoDismissAsync(Guid id, int durationMs)
+    {
+        await Task.Delay(durationMs);
+        await InvokeAsync(() => Dismiss(id));
+    }
+
+    private void Dismiss(Guid id)
+    {
+        var index = _toasts.FindIndex(t => t.Id == id);
+        if (index >= 0)
+        {
+            _toasts.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    private static string GetCssClass(AppToastLevel level)
+    {
+        return level switch
+        {
+            AppToastLevel.Warning => "app-toast-warning",
+            AppToastLevel.Error => "app-toast-error",
+            AppToastLevel.Success => "app-toast-success",
+            _ => "app-toast-info"
+        };
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnShow -= HandleToast;
+    }
+}

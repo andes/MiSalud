@@ -5,6 +5,8 @@
 @rendermode InteractiveServer
 
 @using SaludPortal.Web.Models.AccountViewModels
+@using AndesServices.Entities
+@using AndesServices.Interfaces
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Forms
@@ -13,6 +15,8 @@
 @inject CustomAuthenticationStateProvider AuthProvider
 @inject ILogger<LogIn> Logger
 @inject IJSRuntime JS
+@inject ILoginService<User> LoginService
+@inject AppToastService ToastService
 
 <PageTitle>Ingresar</PageTitle>
 
@@ -83,13 +87,35 @@
     private string? _error;
     private bool _busy;
     private EditForm? _editForm;
+    private bool _xroadssConnectionChecked;
 
     [Parameter, SupplyParameterFromQuery]
     public string? ReturnUrl { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckXroadssConnectionAsync();
+    }
+
     private bool HasFieldError(string fieldName)
     {
         return _editForm?.EditContext?.GetValidationMessages(new FieldIdentifier(_model, fieldName)).Any() ?? false;
+    }
+
+    private async Task CheckXroadssConnectionAsync()
+    {
+        if (_xroadssConnectionChecked)
+        {
+            return;
+        }
+
+        _xroadssConnectionChecked = true;
+
+        var xroadssConnection = await LoginService.ValidarConexionXroadss();
+        if (!xroadssConnection)
+        {
+            ToastService.ShowError("Error al validar conexión con xroadss.", 10000);
+        }
     }
 
 

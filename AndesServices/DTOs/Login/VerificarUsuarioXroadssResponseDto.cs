@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace AndesServices.DTOs.Login;
 
-public class VerificarUsuarioRenaperResponseDto
+public class VerificarUsuarioXroadssResponseDto
 {
     [JsonPropertyName("resultado")]
     public string Resultado { get; set; } = string.Empty;
@@ -11,14 +11,14 @@ public class VerificarUsuarioRenaperResponseDto
     [JsonPropertyName("mensaje")]
     public string? Mensaje { get; set; }
 
-    [JsonConverter(typeof(RenaperDataDtoConverter))]
+    [JsonConverter(typeof(XroadssDataDtoConverter))]
     [JsonPropertyName("data")]
-    public RenaperDataDto? Data { get; set; }
+    public XroadssDataDto? Data { get; set; }
 }
 
-public class RenaperDataDtoConverter : JsonConverter<RenaperDataDto?>
+public class XroadssDataDtoConverter : JsonConverter<XroadssDataDto?>
 {
-    public override RenaperDataDto? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override XroadssDataDto? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.StartArray)
         {
@@ -29,19 +29,19 @@ public class RenaperDataDtoConverter : JsonConverter<RenaperDataDto?>
 
         if (reader.TokenType == JsonTokenType.StartObject)
         {
-            return JsonSerializer.Deserialize<RenaperDataDto>(ref reader, options);
+            return JsonSerializer.Deserialize<XroadssDataDto>(ref reader, options);
         }
 
         return null;
     }
 
-    public override void Write(Utf8JsonWriter writer, RenaperDataDto? value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, XroadssDataDto? value, JsonSerializerOptions options)
     {
         JsonSerializer.Serialize(writer, value, options);
     }
 }
 
-public class RenaperDataDto
+public class XroadssDataDto
 {
     [JsonPropertyName("id_tramite_principal")]
     public string IdTramitePrincipal { get; set; } = string.Empty;

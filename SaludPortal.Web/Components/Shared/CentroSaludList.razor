@@ -1,0 +1,104 @@
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Models
+@using System.Linq
+
+<div class="centro-salud-list-container">
+    <div class="filters-section">
+        <div class="scope-selector">
+            <InputSelectField Id="centrosScope"
+                              Label="Cobertura"
+                              IconName="hospital"
+                              AriaLabel="Seleccionar cobertura de centros"
+                              Value="@SelectedOrigen"
+                              ValueChanged="HandleOrigenChanged">
+                <option value="araucania">Araucanía</option>
+                <option value="provincia">Neuquén</option>
+            </InputSelectField>
+        </div>
+
+        <div class="search-section">
+            <input type="text" 
+                   class="search-input" 
+                   placeholder="Buscar por nombre..." 
+                   @bind="SearchTerm" 
+                   @bind:event="oninput"
+                   aria-label="Búsqueda de centros de salud" />
+        </div>
+    </div>
+
+    @if (FilteredCentros.Any())
+    {
+        <div class="centros-count">
+            @FilteredCentros.Count() centro@(FilteredCentros.Count() != 1 ? "s" : "")
+        </div>
+        <div class="centros-list">
+            @foreach (var centro in FilteredCentros)
+            {
+                <CentroSaludCard 
+                    Centro="centro" 
+                    IsSelected="SelectedCentroId == centro.Id"
+                    OnSelected="HandleSelectCentro" />
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <p>No se encontraron centros de salud</p>
+            <small>Intenta con otro término de búsqueda</small>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<CentroSaludListItem> Centros { get; set; } = new();
+
+    [Parameter]
+    public string? SelectedCentroId { get; set; }
+
+    [Parameter]
+    public string? SelectedOrigen { get; set; }
+
+    [Parameter]
+    public EventCallback<CentroSaludListItem> OnCentroSelected { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnOrigenChanged { get; set; }
+
+    private string SearchTerm { get; set; } = string.Empty;
+
+    private IEnumerable<CentroSaludListItem> FilteredCentros
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(SearchTerm))
+                return Centros;
+
+            var searchLower = SearchTerm.ToLower();
+            return Centros.Where(c => 
+                (c.Nombre?.ToLower().Contains(searchLower) ?? false) ||
+                (c.Direccion?.ToLower().Contains(searchLower) ?? false) ||
+                (c.Region?.ToLower().Contains(searchLower) ?? false) ||
+                (c.Comunidad?.ToLower().Contains(searchLower) ?? false)
+            ).ToList();
+        }
+    }
+
+    private async Task HandleSelectCentro(CentroSaludListItem centro)
+    {
+        if (OnCentroSelected.HasDelegate)
+        {
+            await OnCentroSelected.InvokeAsync(centro);
+        }
+    }
+
+    private async Task HandleOrigenChanged(string origen)
+    {
+        if (OnOrigenChanged.HasDelegate)
+        {
+            await OnOrigenChanged.InvokeAsync(origen);
+        }
+    }
+}

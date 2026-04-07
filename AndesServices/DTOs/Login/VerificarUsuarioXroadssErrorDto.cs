@@ -2,7 +2,7 @@
 
 namespace AndesServices.DTOs.Login
 {
-    public class VerificarUsuarioRenaperErrorDto
+    public class VerificarUsuarioXroadssErrorDto
     {
         [JsonPropertyName("resultado")]
         public string Resultado { get; set; } = string.Empty;

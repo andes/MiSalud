@@ -47,6 +47,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddBlazoredModal();
 builder.Services.AddScoped<SpinnerService>();
+builder.Services.AddScoped<AppToastService>();
 builder.Services.AddScoped<UserContext>();
 builder.Services.AddScoped<VMFarmaciasTurno>();
 builder.Services.AddScoped<VMMisLaboratorios>();
@@ -70,6 +71,7 @@ builder.Services.AddScoped<IMisRecetas, MisRecetasService>();
 builder.Services.AddScoped<IOrganizacion, OrganizacionService>();
 builder.Services.AddScoped<IMisTurnos, MisTurnosService>();
 builder.Services.AddScoped<ITerritorio, TerritorioService>();
+builder.Services.AddScoped<ICentrosSalud, CentrosSaludService>();
 
 // Register AndesTokenHandler as scoped to access HttpContext
 builder.Services.AddTransient<AndesTokenHandler>();

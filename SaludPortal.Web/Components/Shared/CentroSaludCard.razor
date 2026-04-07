@@ -1,0 +1,66 @@
+@using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Models
+
+<div class="centro-salud-card @(IsSelected ? "selected" : "")" @onclick="HandleClick" tabindex="0">
+    <div class="centro-header">
+        <span class="centro-nombre">@Centro.Nombre</span>
+    </div>
+    <div class="centro-body">
+        @if (!string.IsNullOrWhiteSpace(Centro.Direccion))
+        {
+            <div class="centro-info">
+                <span class="centro-label">Dirección:</span>
+                <span class="centro-value">@Centro.Direccion</span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Centro.Comunidad))
+        {
+            <div class="centro-info">
+                <span class="centro-label">Comunidad:</span>
+                <span class="centro-value">@Centro.Comunidad</span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Centro.Complejidad))
+        {
+            <div class="centro-info">
+                <span class="centro-label">Complejidad:</span>
+                <span class="centro-value">
+                    <span class="complejidad-badge">@Centro.Complejidad</span>
+                </span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Centro.Telefono))
+        {
+            <div class="centro-info telefono-info">
+                <span class="centro-label">Teléfono:</span>
+                <span class="centro-value telefono-value">
+                    <Icon Name="telephone" Size="14" Fill="#00374c" AriaLabel="Teléfono" />
+                    <span>@Centro.Telefono</span>
+                </span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CentroSaludListItem Centro { get; set; } = new();
+
+    [Parameter]
+    public bool IsSelected { get; set; }
+
+    [Parameter]
+    public EventCallback<CentroSaludListItem> OnSelected { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (OnSelected.HasDelegate)
+        {
+            await OnSelected.InvokeAsync(Centro);
+        }
+    }
+}

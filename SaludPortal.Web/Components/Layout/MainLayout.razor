@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Web.Components.Shared
 @inherits LayoutComponentBase
 @* <script src="js/cookieMonitor.js"></script> *@
 @* @attribute [Authorize] *@
@@ -35,6 +36,7 @@
                 <a class="dismiss">🗙</a>
             </div>
             <script src="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/js/all.min.js"></script>
+            <AppToastHost />
 @*         </Authorized>
     </AuthorizeView>
 </CascadingAuthenticationState> *@

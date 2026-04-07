@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text;
+using System.Net;
 using System.Net.Http;
 using AndesServices.DTOs.Login;
 using AndesServices.DTOs;
@@ -153,10 +154,25 @@ namespace AndesServices.Services
             return await response.Content.ReadFromJsonAsync<ReestablecerPasswordResponseDto>();
         }
 
-        public async Task<VerificarUsuarioRenaperResponseDto?> VerificarUsuarioRenaper(string dni, char sexo)
+        public async Task<bool> ValidarConexionXroadss()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
+                using var response = await client.GetAsync("/r1/OPTIC/GOB/GOB00001/GP-RENAPER/WS_RENAPER_DOCUMENTO/00000000/M");
+                return response.StatusCode == HttpStatusCode.OK;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error al validar conexión con xroadss.andes.gob.ar");
+                return false;
+            }
+        }
+
+        public async Task<VerificarUsuarioXroadssResponseDto?> VerificarUsuarioXroads(string dni, char sexo)
         {
             var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
-            return await client.GetFromJsonAsync<VerificarUsuarioRenaperResponseDto>($"/r1/OPTIC/GOB/GOB00001/GP-RENAPER/WS_RENAPER_DOCUMENTO/{dni}/{sexo.ToString().ToUpper()}");
+            return await client.GetFromJsonAsync<VerificarUsuarioXroadssResponseDto>($"/r1/OPTIC/GOB/GOB00001/GP-RENAPER/WS_RENAPER_DOCUMENTO/{dni}/{sexo.ToString().ToUpper()}");
         }
 
         public async Task<(RegistroResponseDto? response, string? errorMessage)> Registro(RegistroRequestDto dto)

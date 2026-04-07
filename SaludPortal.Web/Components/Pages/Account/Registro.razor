@@ -15,6 +15,7 @@
 @inject NavigationManager Nav
 @inject ILogger<Registro> Logger
 @inject ILoginService<User> LoginService
+@inject AppToastService ToastService
 
 <PageTitle>Registro</PageTitle>
 
@@ -161,6 +162,12 @@
     private string? _success;
     private bool _busy;
     private EditForm? _editForm;
+    private bool _xroadssConnectionChecked;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckXroadssConnectionAsync();
+    }
 
     private static bool EqualsNormalized(string? left, string? right)
     {
@@ -182,6 +189,22 @@
         return _editForm?.EditContext?.GetValidationMessages(new FieldIdentifier(_model, fieldName)).Any() ?? false;
     }
 
+    private async Task CheckXroadssConnectionAsync()
+    {
+        if (_xroadssConnectionChecked)
+        {
+            return;
+        }
+
+        _xroadssConnectionChecked = true;
+
+        var xroadssConnection = await LoginService.ValidarConexionXroadss();
+        if (!xroadssConnection)
+        {
+            ToastService.ShowError("Error al validar conexión con xroadss", 10000);
+        }
+    }
+
     private async Task DoRegistro()
     {
         _busy = true;
@@ -196,28 +219,39 @@
                 "femenino" => 'F',
                 _ => throw new InvalidOperationException("Sexo inválido")
             };
-            var renaperResultDto = await LoginService.VerificarUsuarioRenaper(_model.Documento, sexo);
 
-            if (renaperResultDto != null && renaperResultDto.Resultado == "error")
+            VerificarUsuarioXroadssResponseDto? xroadssResultDto = null;
+
+            try
             {
-                _errors.Add(renaperResultDto.Mensaje ?? "Error desconocido");
+                xroadssResultDto = await LoginService.VerificarUsuarioXroads(_model.Documento, sexo);
+            }
+            catch (Exception ex)
+            {
+                _errors.Add("Error al obtener datos del Xroadss: " + ex.Message);
+                throw ex;
+            }
+
+            if (xroadssResultDto != null && xroadssResultDto.Resultado == "error")
+            {
+                _errors.Add(xroadssResultDto.Mensaje ?? "Error desconocido");
                 return;
             }
 
-            if (renaperResultDto?.Data == null)
+            if (xroadssResultDto?.Data == null)
             {
                 _errors.Add("No se obtuvieron datos válidos del RENAPER.");
                 return;
             }
-            var data = renaperResultDto.Data;
+            var data = xroadssResultDto.Data;
             var idTramitePrincipal = PadLeftNroTramite(data.IdTramitePrincipal);
 
             if (!EqualsNormalized(data.Apellido, _model.Apellidos)
                 || !EqualsNormalized(data.Nombres, _model.Nombres)
                 || !EqualsNormalized(data.Ejemplar, _model.Ejemplar)
                 || !EqualsNormalized(idTramitePrincipal, _model.NroTramite)
-                || !DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaRenaper)
-                || fechaRenaper.Date != _model.FechaNacimiento.Date
+                || !DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaXroadss)
+                || fechaXroadss.Date != _model.FechaNacimiento.Date
             )
             {
                 _errors.Add("Datos incorrectos.");
@@ -226,10 +260,10 @@
             if (_errors.Count > 0)
             {
                 return;
-            }
+            }            
 
             // registrar usuario
-            var scanText = $"{idTramitePrincipal}@{data.Apellido.ToUpper()}@{data.Nombres.ToUpper()}@{sexo}@{_model.Documento}@{_model.Ejemplar}@{data.FechaNacimiento}";
+            var scanText = $"{_model.NroTramite}@{_model.Apellidos.ToUpper()}@{_model.Nombres.ToUpper()}@{sexo}@{_model.Documento}@{_model.Ejemplar}@{_model.FechaNacimiento:dd/MM/yyyy}";
             var registroResult = await LoginService.Registro(new RegistroRequestDto
             {
                 ScanText = scanText,
@@ -262,7 +296,7 @@
                 _success = "Cuenta creada exitosamente. Redirigiendo a validar código de activación...";
                 StateHasChanged();
                 await Task.Delay(2000);
-                Nav.NavigateTo("/ingresar-codigo-activacion", forceLoad: true);
+                Nav.NavigateTo("/ingresar-codigo-activacion?codigoEnviado=true", forceLoad: true);
                 return;
             }
             Logger.LogError("Error desconocido al registrar usuario. Response: {@Response}, Error: {Error}", response, error);

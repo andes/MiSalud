@@ -19,7 +19,11 @@
             @ChildContent
         </select>
     </div>
-    <ValidationMessage For="@ValidationFor" class="validation-message" style="color: #dc3545;" />
+
+    @if (ValidationFor is not null)
+    {
+        <ValidationMessage For="@ValidationFor" class="validation-message" style="color: #dc3545;" />
+    }
 </div>
 
 @code {

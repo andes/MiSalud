@@ -1,0 +1,109 @@
+.centro-salud-card {
+    background-color: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.centro-salud-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #00374c 0%, #87b867 100%);
+    transition: width 0.3s ease;
+}
+
+.centro-salud-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    border-color: #00374c;
+}
+
+.centro-salud-card:hover::before {
+    width: 6px;
+}
+
+.centro-salud-card.selected {
+    border-color: #00374c;
+    background-color: #f8f9fa;
+    box-shadow: 0 8px 20px rgba(0, 55, 76, 0.15);
+}
+
+.centro-salud-card.selected::before {
+    width: 6px;
+    background: linear-gradient(180deg, #00374c 0%, #87b867 100%);
+}
+
+.centro-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.centro-nombre {
+    display: inline-block;
+    background: linear-gradient(135deg, #00374c 0%, #2b3e4c 100%);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
+}
+
+.centro-body {
+    padding-top: 0.5rem;
+}
+
+.centro-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.centro-info:last-child {
+    margin-bottom: 0;
+}
+
+.centro-label {
+    font-weight: 600;
+    color: #00374c;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.centro-value {
+    color: #333;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.telefono-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.telefono-value ::deep svg {
+    flex-shrink: 0;
+}
+
+.complejidad-badge {
+    display: inline-block;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #c8e6c9;
+}
