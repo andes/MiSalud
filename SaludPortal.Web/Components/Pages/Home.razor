@@ -1,11 +1,15 @@
 ﻿@page "/home"
 @using AndesServices.Entities
+@using AndesServices.Interfaces
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Components.Modals
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 @inject IJSRuntime JS
+@inject ILoginService<User> LoginService
+@inject AppToastService ToastService
+@inject ILogger<Home> Logger
 
 
 <PageTitle>Home</PageTitle>
@@ -18,6 +22,8 @@
     <img src="../images/bannermisalud.png" alt="Mi Salud Banner" style="max-width: 45%;display:block; margin:0 auto;" />
 </div>
 @code {
+    private bool _xroadssConnectionChecked;
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationState { get; set; }
 
@@ -50,6 +56,24 @@
         else
         {
             Nav.NavigateTo("/login", true);
+        }
+
+        await CheckXroadssConnectionAsync();
+    }
+
+    private async Task CheckXroadssConnectionAsync()
+    {
+        if (_xroadssConnectionChecked)
+        {
+            return;
+        }
+
+        _xroadssConnectionChecked = true;
+
+        var xroadssConnection = await LoginService.ValidarConexionXroadss();
+        if (!xroadssConnection)
+        {
+            ToastService.ShowError("Error al validar conexión con xroadss.", 10000);
         }
     }
 }

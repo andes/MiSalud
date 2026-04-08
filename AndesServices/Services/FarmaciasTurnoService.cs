@@ -14,7 +14,7 @@ namespace AndesServices.Services
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<List<FarmaciasTurno>> ObtenerFarmaciasTurnoAsync(string localidadId, string fechaDesde, string fechaHasta)
+        public async Task<List<FarmaciasTurno>?> ObtenerFarmaciasTurnoAsync(string localidadId, string fechaDesde, string fechaHasta)
         {
             try
             {
@@ -25,14 +25,7 @@ namespace AndesServices.Services
                 {
                     if (res.IsSuccessStatusCode)
                     {
-                        List<FarmaciasTurno>? LstFarmacias = await res.Content.ReadFromJsonAsync<List<FarmaciasTurno>>();
-                        if (LstFarmacias == null)
-                        {
-                            Console.WriteLine("No se encontraron farmacias disponibles.");
-                            return null;
-                        }
-
-                        return LstFarmacias;
+                        return await res.Content.ReadFromJsonAsync<List<FarmaciasTurno>>();
                     }
                 }
             }
@@ -44,7 +37,7 @@ namespace AndesServices.Services
             return null;
         }
 
-        public async Task<List<Localidad>> ObtenerLocalidadesAsync()
+        public async Task<List<Localidad>?> ObtenerLocalidadesAsync()
         {
             try
             {
