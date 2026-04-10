@@ -1,4 +1,5 @@
-﻿using AndesServices.Entities;
+﻿using AndesServices.DTOs.Prestaciones;
+using AndesServices.Entities;
 using AndesServices.Interfaces;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
@@ -121,7 +122,7 @@ namespace AndesServices.Services
             return null;
         }
 
-        public async Task<Byte[]> DescargarCDAFilePorIdAsync(string id)
+        public async Task<Byte[]?> DescargarCDAFilePorIdAsync(string id)
         {
             byte[] unByte = null;
 
@@ -201,6 +202,102 @@ namespace AndesServices.Services
                     fecha = fecha
                 }
             };
+        }
+
+        public async Task<Byte[]?> DescargarPdfPrestacionAsync(string idPrestacion)
+        {
+            var dto = new DescargarArchivoPrestacionDto
+            {
+                IdPrestacion = idPrestacion
+            };
+
+            byte[] bytes = null;
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("Andes");
+                using (HttpResponseMessage res = await client.PostAsJsonAsync($"modules/descargas", dto))
+                {
+                    if (res.IsSuccessStatusCode)
+                    {
+                        byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
+                        if (fileResponse == null)
+                        {
+                            Console.WriteLine("Error: File is null.");
+                            return bytes;
+                        }
+
+                        return fileResponse;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Error al obtener el archivo de la prestación: {exception.Message}");
+                return bytes;
+            }
+            return bytes;
+        }
+
+        public async Task<string?> ObtenerFileTokenAsync()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("Andes");
+                using (HttpResponseMessage res = await client.PostAsync("auth/file-token", null))
+                {
+                    if (!res.IsSuccessStatusCode)
+                    {
+                        _logger.LogWarning("No se pudo obtener el file-token. Status: {Status}", res.StatusCode);
+                        return null;
+                    }
+
+                    var tokenResponse = await res.Content.ReadFromJsonAsync<FileTokenResponseDto>();
+                    if (tokenResponse == null || string.IsNullOrEmpty(tokenResponse.Token))
+                    {
+                        _logger.LogWarning("El file-token recibido está vacío.");
+                        return null;
+                    }
+
+                    return tokenResponse.Token;
+                }
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Error al obtener el file-token.");
+                return null;
+            }
+        }
+
+        public async Task<string?> ObtenerImagenPrestacionUrlAsync(string idPrestacion, string fileToken)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("Andes");
+                var baseAddress = client.BaseAddress?.ToString().TrimEnd('/');
+                var pacsUrl = $"{baseAddress}/modules/rup/prestaciones/{idPrestacion}/pacs?token={fileToken}";
+
+                using var checkRes = await client.GetAsync(pacsUrl, HttpCompletionOption.ResponseHeadersRead);
+                if (!checkRes.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("El endpoint PACS devolvió {Status} para la prestación {Id}.", checkRes.StatusCode, idPrestacion);
+                    return null;
+                }
+
+                var contentType = checkRes.Content.Headers.ContentType?.MediaType ?? "";
+                if (contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("El endpoint PACS devolvió JSON (recurso no encontrado) para la prestación {Id}.", idPrestacion);
+                    return null;
+                }
+
+                return pacsUrl;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Error al obtener la imagen de la prestación {Id}.", idPrestacion);
+                return null;
+            }
         }
     }
 }

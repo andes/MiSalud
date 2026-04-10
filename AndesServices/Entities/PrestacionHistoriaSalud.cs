@@ -24,5 +24,11 @@ namespace AndesServices.Entities
         public UsuarioAuditoria? createdBy { get; set; }
         public DateTimeOffset? updatedAt { get; set; }
         public UsuarioAuditoria? updatedBy { get; set; }
+
+        public bool EsCda()
+        {
+            var expresionSnomed = solicitud?.tipoPrestacion?.conceptId;
+            return expresionSnomed == "90226004" || expresionSnomed == "86273004";
+        }
     }
 }

@@ -19,6 +19,8 @@
 @inherits AuthenticatedComponentBase
 @inject IHistoriaSalud _miHistoriaSaludService
 
+<PageTitle>Historia de salud - Mi Salud</PageTitle>
+
 <div class="historia-salud-container">
     <PageHeader Title="Historia de Salud" Subtitle="Categorías de prestaciones médicas" />
 
@@ -29,7 +31,7 @@
             <div class="categorias-grid">
                 @foreach (var categoria in Model.lstCategoriasHistoriaSalud)
                 {
-                    <CategoriaCard Categoria="categoria" OnClick="HandleCategoriaClick" />
+                    <CategoriaCard Categoria="categoria" OnClick="IrACategoria" />
                 }
             </div>
         </div>
@@ -69,13 +71,11 @@
         _spinnerService.Hide();
     }
 
-    private async Task HandleCategoriaClick((string? expresionSnomed, string? titulo) data)
+    private async Task IrACategoria(CategoriaHistoriaSalud categoria)
     {
-        await IrACategoria(data.expresionSnomed, data.titulo);
-    }
+        var expresionSnomed = categoria.ExpresionSnomed;
+        var titulo = categoria.Titulo;
 
-    private async Task IrACategoria(string? expresionSnomed, string? titulo)
-    {
         if (string.IsNullOrWhiteSpace(expresionSnomed))
             return;
 

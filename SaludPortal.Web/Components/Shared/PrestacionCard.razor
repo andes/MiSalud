@@ -5,15 +5,29 @@
 @using System.Text.Json
 @using System.Linq
 
-<div class="prestacion-card" @onclick="HandleDownload" title="@(EsCda ? "Descargar" : "")" tabindex="0">
+<div class="prestacion-card" @onclick="HandleDownload" tabindex="0">
     <div class="prestacion-header">
         <span class="prestacion-tipo">@(Prestacion.solicitud?.tipoPrestacion?.term ?? "Prestación")</span>
-        @if (EsCda)
-        {
-            <div class="prestacion-download">
-                <Icon Name="cloud-download" Size="24" Fill="#00374c" class="download-icon" AriaLabel="Descargar" />
-            </div>
-        }
+        <div class="prestacion-actions">
+            @if (OnViewImage.HasDelegate)
+            {
+                <div class="prestacion-action" @onclick="HandleViewImage" @onclick:stopPropagation="true" title="Ver imagen">
+                    <Icon Name="eye" Size="24" Fill="#00374c" AriaLabel="Ver imágen" />
+                </div>
+            }
+            @if (OnCopyLink.HasDelegate)
+            {
+                <div class="prestacion-action" @onclick="HandleCopyLink" @onclick:stopPropagation="true" title="Copiar enlace de imágen">
+                    <Icon Name="clipboard" Size="24" Fill="#00374c" AriaLabel="Copiar enlace de imágen" />
+                </div>
+            }
+            @if (OnDownload.HasDelegate)
+            {
+                <div class="prestacion-action" @onclick="HandleDownload" @onclick:stopPropagation="true" title="Descargar PDF">
+                    <Icon Name="cloud-download" Size="24" Fill="#00374c" class="download-icon" AriaLabel="Descargar PDF" />
+                </div>
+            }
+        </div>
     </div>
     
     <div class="prestacion-body">
@@ -101,10 +115,13 @@
     public PrestacionHistoriaSalud Prestacion { get; set; } = new();
 
     [Parameter]
-    public bool EsCda { get; set; }
+    public EventCallback<PrestacionHistoriaSalud> OnDownload { get; set; }
 
     [Parameter]
-    public EventCallback<string> OnDownload { get; set; }
+    public EventCallback<PrestacionHistoriaSalud> OnViewImage { get; set; }
+
+    [Parameter]
+    public EventCallback<PrestacionHistoriaSalud> OnCopyLink { get; set; }
 
     private string GetFechaFormateada()
     {
@@ -121,15 +138,25 @@
 
     private async Task HandleDownload()
     {
-        if (EsCda && OnDownload.HasDelegate)
+        if (OnDownload.HasDelegate)
         {
-            string archivo = "";
-            if (Prestacion.paciente?.adjuntos != null && Prestacion.paciente.adjuntos.Count > 0 && !string.IsNullOrEmpty(Prestacion.paciente.adjuntos[0]))
-            {
-                var adjunto = Prestacion.paciente.adjuntos[0];
-                archivo = adjunto.Substring(adjunto.LastIndexOf('/') + 1, adjunto.LastIndexOf('.') - adjunto.LastIndexOf('/') - 1);
-            }
-            await OnDownload.InvokeAsync(archivo);
+            await OnDownload.InvokeAsync(Prestacion);
+        }
+    }
+
+    private async Task HandleViewImage()
+    {
+        if (OnViewImage.HasDelegate)
+        {
+            await OnViewImage.InvokeAsync(Prestacion);
+        }
+    }
+
+    private async Task HandleCopyLink()
+    {
+        if (OnCopyLink.HasDelegate)
+        {
+            await OnCopyLink.InvokeAsync(Prestacion);
         }
     }
 }

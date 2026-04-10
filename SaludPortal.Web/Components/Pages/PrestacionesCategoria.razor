@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Services
 @using AndesServices.Interfaces
 @using AndesServices.Entities.ViewModels
@@ -18,6 +19,8 @@
 @inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
 @inject IHistoriaSalud _miHistoriaSaludService
+
+<PageTitle>@($"{TituloMostrar} - Mi Salud")</PageTitle>
 
 <div class="prestaciones-container">
     <PageHeader Title="@TituloMostrar" Subtitle="Historial de prestaciones médicas" />
@@ -43,7 +46,9 @@
             <div class="prestaciones-grid">
                 @foreach (var p in prestaciones.OrderByDescending(p => p.ejecucion?.fecha))
                 {
-                    <PrestacionCard Prestacion="p" EsCda="esCda" OnDownload="HandleDownload" />
+                    <PrestacionCard Prestacion="p" OnDownload="DownloadPdfPrestacion"
+                        OnViewImage="@(_fileToken != null ? OpenImagenPrestacion : default)"
+                        OnCopyLink="@(_fileToken != null ? CopiarEnlacePrestacion : default)" />
                 }
             </div>
         </div>
@@ -59,29 +64,30 @@
 <script type="text/javascript">
 
     function openPdf(archivo, categoria) {
-    const pdfData = "data:application/pdf;base64," + archivo;
+        const pdfData = "data:application/pdf;base64," + archivo;
 
-    const a = document.createElement("a");
-    document.body.appendChild(a);
-    a.href = pdfData;
-    a.download = "prestacion_" + categoria + ".pdf";
-    a.target = "_self";
-    a.click();
+        const a = document.createElement("a");
+        document.body.appendChild(a);
+        a.href = pdfData;
+        a.download = "prestacion_" + categoria + ".pdf";
+        a.target = "_self";
+        a.click();
     }
 </script>
 
 @code {
+    [CascadingParameter] IModalService Modal { get; set; } = default!;
+
     [Parameter] public string? expresionSnomed { get; set; }
 
-    private string? titulo;
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? titulo { get; set; }
     private List<PrestacionHistoriaSalud>? prestaciones;
     private bool cargando;
     private string? error;
+    private string? _fileToken;
     private string TituloMostrar => string.IsNullOrWhiteSpace(titulo) ? expresionSnomed ?? "" : titulo!;
-    private string fecha;
-    private Byte[] archivoDescargar = null;
-
-    private bool esCda => expresionSnomed == "90226004" || expresionSnomed == "86273004";
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -92,40 +98,18 @@
         var pacienteId = PacienteId;
         if (string.IsNullOrEmpty(pacienteId))
             return;
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        if (!string.IsNullOrEmpty(uri.Query))
-        {
-            var query = QueryHelpers.ParseQuery(uri.Query);
-            if (query.TryGetValue("titulo", out var v))
-            {
-                titulo = Uri.UnescapeDataString(v.ToString());
-            }
-        }
 
         if (string.IsNullOrWhiteSpace(expresionSnomed))
         {
-            error = "Expresión inválida.";
+            error = "Tipo categoría inválida.";
             return;
         }
 
-        var token = BackendToken;
-        var pacienteId = PacienteId;
-        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(pacienteId))
-        {
-            error = "No hay contexto de autenticación.";
-            return;
-        }
-
-        cargando = true;
-        error = null;
-        _spinnerService.Show();
         try
         {
+            _spinnerService.Show();
             prestaciones = await _miHistoriaSaludService.ObtenerPrestacionesAsync(expresionSnomed, pacienteId);
+            _fileToken = await _miHistoriaSaludService.ObtenerFileTokenAsync();
         }
         catch (Exception ex)
         {
@@ -134,27 +118,30 @@
         finally
         {
             _spinnerService.Hide();
-            cargando = false;
         }
     }
 
-    private async Task HandleDownload(string idPrestacion)
+    async Task DownloadPdfPrestacion(PrestacionHistoriaSalud prestacion)
     {
-        await DownloadPrestacion(idPrestacion);
-    }
-
-    async Task DownloadPrestacion(string idPrestacion)
-    {
+        string idPrestacion = prestacion?.id ?? "";
+  
         _spinnerService.Show();
 
-        if (esCda)
+        if (prestacion.EsCda())
         {
+            if (prestacion.paciente?.adjuntos != null 
+                && prestacion.paciente.adjuntos.Count > 0 
+                && !string.IsNullOrEmpty(prestacion.paciente.adjuntos[0]))
+            {
+                var adjunto = prestacion.paciente.adjuntos[0];
+                idPrestacion = adjunto.Substring(adjunto.LastIndexOf('/') + 1, adjunto.LastIndexOf('.') - adjunto.LastIndexOf('/') - 1);
+            }
             var token = BackendToken;
-            archivoDescargar = await _miHistoriaSaludService.DescargarCDAFilePorIdAsync(idPrestacion);
+            Byte[] archivoDescargar = await _miHistoriaSaludService.DescargarCDAFilePorIdAsync(idPrestacion);
             if (archivoDescargar == null || archivoDescargar.Length == 0)
             {
                 _spinnerService.Hide();
-                await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo de la prestación.");
+                MostrarError("No se encontró el archivo de la prestación.");
                 return;
             }
 
@@ -163,22 +150,99 @@
         }
         else
         {
-            // archivoDescargar = await _miHistoriaSaludService..DescargarLaboratorio(BackendToken, idProtocolo, Documento);
-            // if (archivoDescargar == null || archivoDescargar.Length == 0)
-            // {
-            //     _spinnerService.Hide();
-            //     await JSRuntime.InvokeVoidAsync("alert", "No se encontró el archivo del laboratorio.");
-            //     return;
-            // }
-
-            // string base64Pdf = Convert.ToBase64String(archivoDescargar);
-            // await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf);
-        }
+            var pdfPrestacion = await _miHistoriaSaludService.DescargarPdfPrestacionAsync(idPrestacion);
+            if (pdfPrestacion == null || pdfPrestacion.Length == 0)
+            {
+                _spinnerService.Hide();
+                MostrarError("No se encontró el archivo de la prestación.");
+                return;
+            }
+            else
+            {
+                string base64Pdf = Convert.ToBase64String(pdfPrestacion);
+                await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, TituloMostrar);
+            }
+        } 
         _spinnerService.Hide();
     }
 
     private void Volver()
     {
         NavigationManager.NavigateTo("/historiasalud");
+    }
+
+    private void MostrarError(string mensaje)
+    {
+        var parameters = new ModalParameters()
+            .Add(nameof(ErrorModal.Titulo), "Error")
+            .Add(nameof(ErrorModal.Mensaje), mensaje);
+        var options = new ModalOptions()
+        {
+            Size = ModalSize.Medium,
+            Position = ModalPosition.TopCenter,
+            HideCloseButton = false,
+            HideHeader = false
+        };
+        Modal.Show<ErrorModal>(parameters, options);
+    }
+
+    async Task OpenImagenPrestacion(PrestacionHistoriaSalud prestacion)
+    {
+        var idPrestacion = prestacion?.id ?? "";
+        if (string.IsNullOrEmpty(idPrestacion))
+        {
+            MostrarError("No se encontró el identificador de la prestación.");
+            return;
+        }
+
+        try
+        {
+            _spinnerService.Show();
+            var url = await _miHistoriaSaludService.ObtenerImagenPrestacionUrlAsync(idPrestacion, _fileToken!);
+            if (string.IsNullOrEmpty(url))
+            {
+                MostrarError("No se encontró imagen para esta prestación.");
+                return;
+            }
+            await JSRuntime.InvokeVoidAsync("open", url, "_blank");
+        }
+        catch (Exception ex)
+        {
+            MostrarError("Error al obtener la imagen: " + ex.Message);
+        }
+        finally
+        {
+            _spinnerService.Hide();
+        }
+    }
+
+    async Task CopiarEnlacePrestacion(PrestacionHistoriaSalud prestacion)
+    {
+        var idPrestacion = prestacion?.id ?? "";
+        if (string.IsNullOrEmpty(idPrestacion))
+        {
+            MostrarError("No se encontró el identificador de la prestación.");
+            return;
+        }
+
+        try
+        {
+            _spinnerService.Show();
+            var url = await _miHistoriaSaludService.ObtenerImagenPrestacionUrlAsync(idPrestacion, _fileToken!);
+            if (string.IsNullOrEmpty(url))
+            {
+                MostrarError("No se encontró imagen para esta prestación.");
+                return;
+            }
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", url);
+        }
+        catch (Exception ex)
+        {
+            MostrarError("Error al copiar el enlace: " + ex.Message);
+        }
+        finally
+        {
+            _spinnerService.Hide();
+        }
     }
 }
