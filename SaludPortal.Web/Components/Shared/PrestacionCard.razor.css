@@ -31,6 +31,7 @@
 
 .prestacion-header {
     display: flex;
+    gap: 1rem;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
@@ -49,9 +50,19 @@
     box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
 }
 
-.prestacion-download {
+.prestacion-actions {
     display: flex;
     align-items: center;
+    gap: 1rem;
+}
+
+.prestacion-action {
+    display: flex;
+    align-items: center;
+}
+
+.prestacion-action:hover {
+    color: #00374c;
     cursor: pointer;
 }
 
