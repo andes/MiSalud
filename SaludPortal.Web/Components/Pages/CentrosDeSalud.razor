@@ -11,6 +11,7 @@
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ICentrosSalud CentrosSaludService
+@inject IPaciente PacienteService
 @inject BlazorSpinner.SpinnerService _spinnerService
 
 @inherits AuthenticatedComponentBase
@@ -25,7 +26,8 @@
     {
         <div class="centros-content">
             <div class="mapa-column">
-                <CentrosSaludMap Centros="lstCentrosSalud" CentroSeleccionado="CentroSeleccionado" />
+                <CentrosSaludMap Centros="lstCentrosSalud" CentroSeleccionado="CentroSeleccionado"
+                    PacienteLatitud="_pacienteLatitud" PacienteLongitud="_pacienteLongitud" PacienteDireccion="_pacienteDireccion" />
             </div>
             <div class="lista-column">
                 <CentroSaludList 
@@ -54,9 +56,41 @@
     private string _origenSeleccionado = OrigenProvincia;
     private bool _centrosLoaded = false;
 
-    protected override async Task OnInitializedAsync()
+    private double? _pacienteLatitud;
+    private double? _pacienteLongitud;
+    private string? _pacienteDireccion;
+
+    protected override async Task OnAuthenticatedInitializedAsync()
     {
-        await CargarCentrosSalud(_origenSeleccionado);
+        await Task.WhenAll(
+            CargarCentrosSalud(_origenSeleccionado),
+            CargarDireccionPaciente());
+    }
+
+    private async Task CargarDireccionPaciente()
+    {
+        if (string.IsNullOrWhiteSpace(PacienteId))
+        {
+            return;
+        }
+
+        try
+        {
+            var paciente = await PacienteService.ObtenerPacientePorIdAsync(PacienteId);
+            var dir = PacienteService.ObtenerDireccionPrioritaria(paciente);
+            var geo = dir?.geoReferencia;
+
+            if (geo != null && geo.Count >= 2)
+            {
+                _pacienteLatitud = geo[0];
+                _pacienteLongitud = geo[1];
+                _pacienteDireccion = dir!.valor;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error cargando dirección del paciente: {ex.Message}");
+        }
     }
 
     private async Task CargarCentrosSalud(string origen)

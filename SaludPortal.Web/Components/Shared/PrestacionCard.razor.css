@@ -74,6 +74,16 @@
     transform: scale(1.1);
 }
 
+.link-copied {
+    animation: link-copied-pop 0.2s ease;
+}
+
+@keyframes link-copied-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
 .prestacion-body {
     padding-top: 0.5rem;
 }

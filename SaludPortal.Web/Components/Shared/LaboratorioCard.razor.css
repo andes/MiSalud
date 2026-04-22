@@ -35,8 +35,30 @@
     padding-bottom: 0.75rem;
     border-bottom: 2px solid #f0f0f0;
     display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.laboratorio-header-info {
+    display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.laboratorio-actions {
+    display: flex;
+    align-items: center;
+}
+
+.laboratorio-action {
+    display: flex;
+    align-items: center;
+}
+
+.laboratorio-action:hover {
+    color: #00374c;
+    cursor: pointer;
 }
 
 .laboratorio-fecha {
@@ -81,13 +103,6 @@
     font-weight: 600;
 }
 
-.laboratorio-footer {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: 0.75rem;
-    border-top: 1px solid #f0f0f0;
-}
-
 .download-icon {
     transition: transform 0.2s ease;
 }
@@ -100,5 +115,11 @@
 @media (max-width: 768px) {
     .laboratorio-card {
         padding: 1.25rem;
+    }
+
+    .laboratorio-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 }

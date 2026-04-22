@@ -13,13 +13,17 @@
 
 
 <PageTitle>Inicio - Mi Salud</PageTitle>
-@* <h1>Todo sobre vos, para cuidarte mejor.</h1> *@
-<div>
-    Tu Historia Clínica está protegida. Enterate cuándo puede ser consultada &ensp;
-    <button class="btn-homeprivacidad" @onclick="() => ShowModal()">Quiénes pueden verla</button>
-</div>
-<div class="home-banner">
-    <img src="../images/bannermisalud.png" alt="Mi Salud Banner" style="max-width: 45%;display:block; margin:0 auto;" />
+<div class="container">
+    
+    <h1>El cuidado de mi <strong>salud</strong> comineza <strong>acá</strong></h1>
+    <div class="home-subtitle">
+        Tu Historia Clínica está protegida. Enterate cuándo puede ser consultada &ensp;
+        <button class="btn-homeprivacidad" @onclick="() => ShowModal()">Quiénes pueden verla</button>
+    </div>
+    <div class="home-img-banner">
+        <img src="../images/bannermisalud.png" alt="Mi Salud Banner" />
+
+    </div>
 </div>
 @code {
     private bool _xroadssConnectionChecked;

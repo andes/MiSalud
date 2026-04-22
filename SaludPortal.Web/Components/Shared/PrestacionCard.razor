@@ -17,8 +17,8 @@
             }
             @if (OnCopyLink.HasDelegate)
             {
-                <div class="prestacion-action" @onclick="HandleCopyLink" @onclick:stopPropagation="true" title="Copiar enlace de imágen">
-                    <Icon Name="clipboard" Size="24" Fill="#00374c" AriaLabel="Copiar enlace de imágen" />
+                <div class="prestacion-action @(LinkCopied ? "link-copied" : "")" @onclick="HandleCopyLink" @onclick:stopPropagation="true" title="@(LinkCopied ? "¡Enlace copiado!" : "Copiar enlace de imágen")">
+                    <Icon Name="@(LinkCopied ? "check-circle" : "link-45deg")" Size="24" Fill="@(LinkCopied ? "#87b867" : "#00374c")" AriaLabel="@(LinkCopied ? "Enlace copiado" : "Copiar enlace de imágen")" />
                 </div>
             }
             @if (OnDownload.HasDelegate)
@@ -122,6 +122,9 @@
 
     [Parameter]
     public EventCallback<PrestacionHistoriaSalud> OnCopyLink { get; set; }
+
+    [Parameter]
+    public bool LinkCopied { get; set; }
 
     private string GetFechaFormateada()
     {

@@ -4,10 +4,7 @@
 <div class="receta-card">
     <div class="receta-header">
         <span class="receta-fecha">@Receta.fechaRegistro.ToString("dd/MM/yyyy HH:mm:ss")</span>
-        @if (Receta.estadoDispensaActual != null && !string.IsNullOrWhiteSpace(Receta.estadoDispensaActual.tipo))
-        {
-            <span class="receta-estado">@Receta.estadoDispensaActual.tipo</span>
-        }
+        <span class="receta-estado @GetEstadoDispensaClass()">@GetEstadoDispensaTexto()</span>
     </div>
     
     <div class="receta-body">
@@ -62,4 +59,51 @@
 @code {
     [Parameter]
     public MisReceta Receta { get; set; } = new();
+
+    private string GetEstadoDispensaTexto()
+    {
+        if (EsVencidaPorAntiguedad())
+            return "vencida";
+
+        if (string.IsNullOrWhiteSpace(Receta.estadoDispensaActual?.tipo))
+            return "sin-dispensa";
+
+        return Receta.estadoDispensaActual.tipo;
+    }
+
+    private string GetEstadoDispensaClass()
+    {
+        var estadoTipo = GetEstadoDispensaTexto();
+        var normalizado = estadoTipo.Trim().ToLowerInvariant().Replace("_", "-").Replace(" ", "-");
+
+        if (normalizado.Contains("sin-dispens"))
+            return "receta-estado--sin-dispensa";
+
+        if (normalizado.Contains("venc"))
+            return "receta-estado--vencida";
+
+        if (normalizado.Contains("dispens"))
+            return "receta-estado--dispensada";
+
+        return "receta-estado--sin-dispensa";
+    }
+
+    private bool EsVencidaPorAntiguedad()
+    {
+        var estadoTipo = Receta.estadoDispensaActual?.tipo;
+        var normalizado = (estadoTipo ?? string.Empty).Trim().ToLowerInvariant().Replace("_", "-").Replace(" ", "-");
+
+        var estaDispensada = normalizado.Contains("dispens") && !normalizado.Contains("sin-dispens");
+        if (estaDispensada)
+            return false;
+
+        var fechaBase = Receta.fechaRegistro != default
+            ? Receta.fechaRegistro
+            : Receta.fechaPrestacion;
+
+        if (fechaBase == default)
+            return false;
+
+        return fechaBase.AddDays(30) < DateTime.Now;
+    }
 }

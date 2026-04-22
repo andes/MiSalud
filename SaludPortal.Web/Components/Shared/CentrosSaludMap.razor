@@ -1,9 +1,7 @@
 @using AndesServices.DTOs.CentrosDeSalud
 @using Microsoft.AspNetCore.Components
-@using Microsoft.Extensions.Configuration
 @using SaludPortal.Web.Models
 @inject IJSRuntime JS
-@inject IConfiguration Configuration
 
 <div class="centros-mapa-container">
 	<div id="@_mapElementId" class="map-canvas"></div>
@@ -13,12 +11,22 @@
 	private readonly string _mapElementId = $"centros-map-{Guid.NewGuid():N}";
 	private bool _isMapInitialized;
 	private string _lastDataSignature = string.Empty;
+	private string _lastPatientSignature = string.Empty;
 
 	[Parameter]
 	public List<CentroSaludListItem> Centros { get; set; } = new();
 
 	[Parameter]
 	public CentroSaludListItem? CentroSeleccionado { get; set; }
+
+	[Parameter]
+	public double? PacienteLatitud { get; set; }
+
+	[Parameter]
+	public double? PacienteLongitud { get; set; }
+
+	[Parameter]
+	public string? PacienteDireccion { get; set; }
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -34,6 +42,7 @@
 
 		await SyncMarkersAsync();
 		await SyncSelectionAsync();
+		await SyncPatientAddressAsync();
 	}
 
 	protected override async Task OnParametersSetAsync()
@@ -41,18 +50,12 @@
 		if (_isMapInitialized)
 		{
 			await SyncMarkersAsync();
+			await SyncPatientAddressAsync();
 		}
 	}
 
 	private async Task EnsureMapInitializedAsync()
 	{
-		var apiKey = Configuration["GoogleMaps:ApiKey"];
-		if (string.IsNullOrWhiteSpace(apiKey))
-		{
-			Console.Error.WriteLine("Google Maps API Key no configurada");
-			return;
-		}
-
 		var center = GetMapCenter();
 
 		try
@@ -60,7 +63,6 @@
 			await JS.InvokeVoidAsync(
 				"centrosSaludMap.init",
 				_mapElementId,
-				apiKey,
 				center.lat,
 				center.lng,
 				Centros);
@@ -120,6 +122,35 @@
 		}
 
 		return (-38.9516, -68.0591);
+	}
+
+	private async Task SyncPatientAddressAsync()
+	{
+		if (!PacienteLatitud.HasValue || !PacienteLongitud.HasValue)
+		{
+			return;
+		}
+
+		var signature = $"{PacienteLatitud}|{PacienteLongitud}|{PacienteDireccion}";
+		if (signature == _lastPatientSignature)
+		{
+			return;
+		}
+
+		try
+		{
+			await JS.InvokeVoidAsync(
+				"centrosSaludMap.showPatientAddress",
+				_mapElementId,
+				PacienteLatitud.Value,
+				PacienteLongitud.Value,
+				PacienteDireccion);
+			_lastPatientSignature = signature;
+		}
+		catch (Exception ex)
+		{
+			Console.Error.WriteLine($"Error mostrando dirección del paciente en mapa: {ex.Message}");
+		}
 	}
 
 	private string BuildDataSignature()

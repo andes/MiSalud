@@ -8,9 +8,11 @@
     <link rel="stylesheet" href="@Assets["/Files/lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["/Files/app.css"]" />
     <link rel="stylesheet" href="@Assets["/Files/SaludPortal.Web.styles.css"]" />
-    <link href="@Assets["SaludPortal.Web.styles.css"]" rel="stylesheet">
-    <script src="js/numeric-input.js"></script>
+    <script src="@Assets["/Files/js/numeric-input.js"]"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet @rendermode="PageRenderMode" />
@@ -21,7 +23,9 @@
 
     <script src="@Assets["/Files/lib/bootstrap/dist/js/bootstrap.bundle.min.js"]"></script>
     <script src="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/js/all.min.js"></script>
-    <script src="js/centrosSaludMap.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="@Assets["/Files/js/centrosSaludMap.js"]"></script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 

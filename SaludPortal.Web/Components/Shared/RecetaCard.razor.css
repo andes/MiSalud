@@ -48,14 +48,27 @@
 
 .receta-estado {
     display: inline-block;
-    background: linear-gradient(135deg, #87b867 0%, #128647 100%);
     color: #fff;
     padding: 0.25rem 0.75rem;
     border-radius: 15px;
     font-weight: 600;
     font-size: 0.85rem;
-    box-shadow: 0 2px 4px rgba(135, 184, 103, 0.2);
     text-transform: capitalize;
+}
+
+.receta-estado--sin-dispensa {
+    background: linear-gradient(135deg, #9b7ec7 0%, #7e57c2 100%);
+    box-shadow: 0 2px 4px rgba(126, 87, 194, 0.25);
+}
+
+.receta-estado--dispensada {
+    background: linear-gradient(135deg, #87b867 0%, #128647 100%);
+    box-shadow: 0 2px 4px rgba(135, 184, 103, 0.25);
+}
+
+.receta-estado--vencida {
+    background: linear-gradient(135deg, #ff9a5a 0%, #e65100 100%);
+    box-shadow: 0 2px 4px rgba(230, 81, 0, 0.25);
 }
 
 .receta-body {

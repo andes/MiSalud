@@ -9,6 +9,13 @@
     font-style: normal;
 }
 
+:root {
+    --azul-nqn: rgb(40, 62, 76);
+    --verde-nqn: rgb(135, 184, 103);
+    --beige-nqn-1: rgb(252, 242, 220);
+    --beige-nqn-2: rgb(244, 223, 185);
+}
+
 html, body {
     font-family: "Manrope", sans-serif;
     margin: 0;

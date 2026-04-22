@@ -47,8 +47,9 @@
                 @foreach (var p in prestaciones.OrderByDescending(p => p.ejecucion?.fecha))
                 {
                     <PrestacionCard Prestacion="p" OnDownload="DownloadPdfPrestacion"
-                        OnViewImage="@(_fileToken != null ? OpenImagenPrestacion : default)"
-                        OnCopyLink="@(_fileToken != null ? CopiarEnlacePrestacion : default)" />
+                                    OnViewImage="@(_fileToken != null ? OpenImagenPrestacion : default)"
+                                    OnCopyLink="@(_fileToken != null ? CopiarEnlacePrestacion : default)"
+                                    LinkCopied="@(_copiedPrestacionId == p.id)" />
                 }
             </div>
         </div>
@@ -87,6 +88,8 @@
     private bool cargando;
     private string? error;
     private string? _fileToken;
+    private string? _copiedPrestacionId;
+    private CancellationTokenSource? _copiedResetCts;
     private string TituloMostrar => string.IsNullOrWhiteSpace(titulo) ? expresionSnomed ?? "" : titulo!;
 
     protected override async Task OnAuthenticatedInitializedAsync()
@@ -129,8 +132,8 @@
 
         if (prestacion.EsCda())
         {
-            if (prestacion.paciente?.adjuntos != null 
-                && prestacion.paciente.adjuntos.Count > 0 
+            if (prestacion.paciente?.adjuntos != null
+                && prestacion.paciente.adjuntos.Count > 0
                 && !string.IsNullOrEmpty(prestacion.paciente.adjuntos[0]))
             {
                 var adjunto = prestacion.paciente.adjuntos[0];
@@ -162,7 +165,7 @@
                 string base64Pdf = Convert.ToBase64String(pdfPrestacion);
                 await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, TituloMostrar);
             }
-        } 
+        }
         _spinnerService.Hide();
     }
 
@@ -225,16 +228,22 @@
             return;
         }
 
+        string? url = null;
+        
         try
         {
             _spinnerService.Show();
-            var url = await _miHistoriaSaludService.ObtenerImagenPrestacionUrlAsync(idPrestacion, _fileToken!);
+            url = await _miHistoriaSaludService.ObtenerImagenPrestacionUrlAsync(idPrestacion, _fileToken!);
             if (string.IsNullOrEmpty(url))
             {
                 MostrarError("No se encontró imagen para esta prestación.");
                 return;
             }
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", url);
+        }
+        catch (OperationCanceledException)
+        {
+            // reset cancelado por nueva copia, no hacer nada
         }
         catch (Exception ex)
         {
@@ -243,6 +252,24 @@
         finally
         {
             _spinnerService.Hide();
+        }
+
+        if (!string.IsNullOrEmpty(url))
+        {
+            _copiedResetCts?.Cancel();
+            _copiedResetCts = new CancellationTokenSource();
+            _copiedPrestacionId = idPrestacion;
+            StateHasChanged();
+
+            var cts = _copiedResetCts;
+            await Task.Delay(5000, cts.Token).ContinueWith(t =>
+            {
+                if (!t.IsCanceled)
+                {
+                    _copiedPrestacionId = null;
+                    InvokeAsync(StateHasChanged);
+                }
+            });
         }
     }
 }
