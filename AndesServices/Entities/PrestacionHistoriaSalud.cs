@@ -25,10 +25,9 @@ namespace AndesServices.Entities
         public DateTimeOffset? updatedAt { get; set; }
         public UsuarioAuditoria? updatedBy { get; set; }
 
-        public bool EsCda()
-        {
-            var expresionSnomed = solicitud?.tipoPrestacion?.conceptId;
-            return expresionSnomed == "90226004" || expresionSnomed == "86273004";
-        }
+        public static bool EsCda(string? conceptId) =>
+            conceptId == "90226004" || conceptId == "86273004";
+
+        public bool EsCda() => EsCda(solicitud?.tipoPrestacion?.conceptId);
     }
 }

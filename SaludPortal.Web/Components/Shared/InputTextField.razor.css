@@ -5,6 +5,7 @@
 .input-group {
     position: relative;
     display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     background-color: #f8f9fa;
     border: 2px solid #e0e0e0;
@@ -38,9 +39,10 @@
 
 .input-field {
     flex: 1;
+    min-width: 0;
     border: none;
     background: transparent;
-    padding: 0.875rem 1rem 0.875rem 0.5rem;
+    padding: 0.625rem 1rem 0.625rem 0.5rem;
     font-size: 1rem;
     color: #00374c;
     outline: none;

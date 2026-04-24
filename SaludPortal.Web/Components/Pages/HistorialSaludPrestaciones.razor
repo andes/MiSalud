@@ -46,10 +46,15 @@
             <div class="prestaciones-grid">
                 @foreach (var p in prestaciones.OrderByDescending(p => p.ejecucion?.fecha))
                 {
-                    <PrestacionCard Prestacion="p" OnDownload="DownloadPdfPrestacion"
-                                    OnViewImage="@(_fileToken != null ? OpenImagenPrestacion : default)"
-                                    OnCopyLink="@(_fileToken != null ? CopiarEnlacePrestacion : default)"
-                                    LinkCopied="@(_copiedPrestacionId == p.id)" />
+                    if (p.EsCda())
+                    {
+                        <HistorialCdaCard Prestacion="p" OnDownload="DownloadPdfPrestacion" />                    
+                    } else {
+                        <HistorialPrestacionCard Prestacion="p" OnDownload="DownloadPdfPrestacion"
+                                                 OnViewImage="@(_fileToken != null ? OpenImagenPrestacion : default)"
+                                                 OnCopyLink="@(_fileToken != null ? CopiarEnlacePrestacion : default)"
+                                                 LinkCopied="@(_copiedPrestacionId == p.id)" />
+                    }
                 }
             </div>
         </div>

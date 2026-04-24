@@ -34,11 +34,3 @@
     padding: 0.5rem 0.5rem;
     font-size: .8rem;
 }
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .button-primary-outlined {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.95rem;
-    }
-}

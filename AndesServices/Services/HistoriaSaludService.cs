@@ -58,7 +58,7 @@ namespace AndesServices.Services
             {
                 var client = _httpClientFactory.CreateClient("Andes");
                 
-                bool esCda = (tipoPrestaciones == "90226004" || tipoPrestaciones == "86273004");
+                bool esCda = PrestacionHistoriaSalud.EsCda(tipoPrestaciones);
                 string url;
                 
                 if (esCda)
