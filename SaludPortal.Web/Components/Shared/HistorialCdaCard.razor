@@ -5,7 +5,7 @@
 @using System.Text.Json
 @using System.Linq
 
-<div class="prestacion-card" @onclick="HandleDownload" tabindex="0">
+<div class="prestacion-card" tabindex="0">
     <div class="prestacion-header">
         <span class="prestacion-tipo">@(Prestacion.solicitud?.tipoPrestacion?.term ?? "Prestación")</span>
         <div class="prestacion-actions">
@@ -26,7 +26,7 @@
                     <Icon Name="hospital" Size="16" Fill="#666" class="me-1" AriaLabel="Institución" />
                     Institución:
                 </span>
-                <span class="prestacion-value">@Prestacion.solicitud.organizacion.nombre</span>
+                <span class="prestacion-value prestacion-institucion">@Prestacion.solicitud.organizacion.nombre</span>
             </div>
         }
 

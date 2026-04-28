@@ -10,10 +10,13 @@
 }
 
 :root {
-    --azul-nqn: rgb(40, 62, 76);
+    --azul-nqn: rgb(43, 62, 76);
     --verde-nqn: rgb(135, 184, 103);
     --beige-nqn-1: rgb(252, 242, 220);
     --beige-nqn-2: rgb(244, 223, 185);
+
+     /* Para los titulos de las cards */
+    --verde-nqn-2: rgb(41, 79, 43);
 }
 
 html, body {

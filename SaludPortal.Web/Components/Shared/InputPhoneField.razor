@@ -16,6 +16,7 @@
                inputmode="numeric"
                class="input-field phone-area-input"
                placeholder="Cód. área (sin 0)"
+               @ref="codigoAreaInputRef"
                @bind="CodigoAreaValue"
                @bind:event="oninput"
                onkeydown="numericInput.preventNonNumeric(event)"
@@ -25,6 +26,7 @@
         <input type="tel"
                class="input-field"
                placeholder="Número (sin 15)"
+               @ref="telefonoInputRef"
                @bind="TelefonoValue"
                @bind:event="oninput"
                onkeydown="numericInput.preventNonNumeric(event)"
@@ -64,6 +66,11 @@
     private const int LONGITUD_MINIMA_TELEFONO = 6;
     private const int LONGITUD_MAXIMA_TELEFONO = 8;
 
+    private ElementReference codigoAreaInputRef;
+    private ElementReference telefonoInputRef;
+    private bool _pendingFocusCodigoArea = false;
+    private bool _pendingFocusTelefono = false;
+
     private string codigoArea = "";
     private string telefono = "";
     private bool errorCodigoArea = false;
@@ -100,6 +107,9 @@
             if (telefono.Length > maxLengthTelefono)
                 telefono = telefono[..maxLengthTelefono];
 
+            if (!errorCodigoArea && codigoArea.Length >= maxPermitido)
+                _pendingFocusTelefono = true;
+
             NotifyValueChanged();
         }
     }
@@ -129,6 +139,9 @@
             if (codigoArea.Length > maxLengthCodigoArea)
                 codigoArea = codigoArea[..maxLengthCodigoArea];
 
+            if (telefono.Length == 0)
+                _pendingFocusCodigoArea = true;
+
             NotifyValueChanged();
         }
     }
@@ -147,5 +160,19 @@
     private void NotifyValueChanged()
     {
         ValueChanged.InvokeAsync($"{codigoArea}{telefono}");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocusCodigoArea)
+        {
+            _pendingFocusCodigoArea = false;
+            await codigoAreaInputRef.FocusAsync();
+        }
+        else if (_pendingFocusTelefono)
+        {
+            _pendingFocusTelefono = false;
+            await telefonoInputRef.FocusAsync();
+        }
     }
 }

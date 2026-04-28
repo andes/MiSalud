@@ -1,6 +1,7 @@
 @using System.Linq.Expressions
 @using Microsoft.AspNetCore.Components.Forms
 @using SaludPortal.Web.Components.Icons
+@using System.Globalization
 
 <div class="input-field-group">
     @if (!string.IsNullOrWhiteSpace(Label))
@@ -13,7 +14,8 @@
         </div>
         <input type="date"
                id="@Id"
-               @bind="@CurrentValue"
+               value="@FormatValue()"
+               @onchange="HandleChange"
                class="input-field"
                aria-label="@AriaLabel"
                min="1900-01-01"
@@ -28,21 +30,20 @@
     [Parameter] public string IconName { get; set; } = "calendar-check";
     [Parameter] public string AriaLabel { get; set; } = "";
     [Parameter] public bool Disabled { get; set; } = false;
-    [Parameter] public DateTime Value { get; set; } = new DateTime(2000, 1, 1);
+    [Parameter] public DateTime Value { get; set; } = DateTime.MinValue;
     [Parameter] public EventCallback<DateTime> ValueChanged { get; set; }
     [Parameter] public Expression<Func<DateTime>>? ValidationFor { get; set; }
     [Parameter] public bool HasError { get; set; } = false;
 
-    private DateTime CurrentValue
+    private string FormatValue()
+        => Value == DateTime.MinValue ? "" : Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    private async Task HandleChange(ChangeEventArgs e)
     {
-        get => Value == DateTime.MinValue ? new DateTime(2000, 1, 1) : Value;
-        set
+        var raw = e.Value?.ToString();
+        if (DateTime.TryParseExact(raw, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
         {
-            if (value != Value)
-            {
-                Value = value;
-                ValueChanged.InvokeAsync(value);
-            }
+            await ValueChanged.InvokeAsync(parsed);
         }
     }
 }

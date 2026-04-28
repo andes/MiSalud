@@ -41,13 +41,15 @@
 
 .prestacion-tipo {
     display: inline-block;
-    background: linear-gradient(135deg, #00374c 0%, #2b3e4c 100%);
-    color: #fff;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    box-shadow: 0 2px 4px rgba(0, 55, 76, 0.2);
+    color: var(--verde-nqn-2);
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    font-weight: bold; 
+    font-size: 1.25rem;   
+
+    &::first-letter {
+        text-transform: uppercase;
+    }
 }
 
 .prestacion-actions {
@@ -111,6 +113,11 @@
     font-size: 1.125rem;
     color: #00374c;
     font-weight: 600;
+}
+
+.prestacion-institucion {
+    color: #002c3d;;
+    font-weight: 900;
 }
 
 .prestacion-section {
