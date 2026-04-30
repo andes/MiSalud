@@ -100,7 +100,8 @@
         {
             var result = await LoginService.OlvideContrasenia(new OlvideContraseniaRequestDto
             {
-                Email = _model.Email
+                Email = _model.Email,
+                Origen = "Portal Mi Salud" // Asi lo pidieron
             });
 
 
