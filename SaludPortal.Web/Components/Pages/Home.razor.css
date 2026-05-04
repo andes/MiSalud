@@ -18,7 +18,7 @@
     background: #ffffff;
     border: 1px solid #e2e8ef;
     border-radius: 14px;
-    padding: 1.25rem 1rem 1.25rem 1.25rem;
+    padding: .5rem 1rem;
     box-shadow: 0 4px 10px -4px rgba(0,0,0,.08), 0 2px 4px -2px rgba(0,0,0,.06);
     transition: box-shadow .2s ease, transform .2s ease;
     align-items: center;
@@ -46,10 +46,6 @@
 @media (max-width: 945px) {
     .home-subtitle {
         flex-direction: column;
-    }
-    
-    .btn-homeprivacidad {
-        padding: .5rem 1rem;
     }
 }
 

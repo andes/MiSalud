@@ -174,3 +174,17 @@ input.form-control, textarea.form-control {
     background-color: #fff !important;
     color: #000;
 }
+
+.loading-overlay {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+.loading-container {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+.icon-container {
+    margin-top: 0 !important;
+}

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using SaludPortal.Web.Components.Shared;
+using AndesServices;
+using AndesServices.DTOs;
 using AndesServices.Interfaces;
 using AndesServices.Entities;
 using SaludPortal.Web.Models;
@@ -296,17 +298,11 @@ namespace SaludPortal.Web.Components.Pages
             _spinnerService.Show();
             try
             {
-                // Crear copia del paciente para modificar
-                var pacienteActualizado = await _pacienteService.ObtenerPacientePorIdAsync(paciente.id);
-                if (pacienteActualizado == null)
-                {
-                    mensajeError = "No se pudo obtener los datos del paciente.";
-                    return;
-                }
+                var pacienteActualizado = paciente.MapToActualizarPacienteDto();
 
                 // Actualizar datos personales
-                pacienteActualizado.alias = string.IsNullOrWhiteSpace(formModel.Alias) ? null : formModel.Alias.Trim();
-                pacienteActualizado.genero = formModel.Genero;
+                pacienteActualizado.Alias = string.IsNullOrWhiteSpace(formModel.Alias) ? null : formModel.Alias.Trim();
+                pacienteActualizado.Genero = formModel.Genero;
 
                 // Actualizar domicilio - buscar por nombre en lugar de ID
                 var provinciaSeleccionada = provincias?.FirstOrDefault(p => p.id == formModel.ProvinciaId);
@@ -324,79 +320,68 @@ namespace SaludPortal.Web.Components.Pages
                 }
 
                 // Obtener o crear dirección principal
-                Direccion? direccionPrincipal = pacienteActualizado?.direccion?.Count > 1 ? pacienteActualizado.direccion[1] : null;
+                var direccionPrincipal = _pacienteService.ObtenerDireccionPrioritaria(pacienteActualizado);
                 if (direccionPrincipal == null)
                 {
-                    direccionPrincipal = new Direccion
+                    direccionPrincipal = new ActualizarPacienteDireccionDto
                     {
-                        activo = true,
-                        ranking = 1,
-                        geoReferencia = new List<double>()
+                        Activo = true,
+                        Ranking = 1,
+                        GeoReferencia = new List<double>()
                     };
-                    if (pacienteActualizado.direccion == null)
-                    {
-                        pacienteActualizado.direccion = new List<Direccion>();
-                    }
-                    pacienteActualizado.direccion.Add(direccionPrincipal);
+                    pacienteActualizado.Direccion.Add(direccionPrincipal);
                 }
 
-                direccionPrincipal.valor = formModel.Direccion?.Trim();
-                direccionPrincipal.codigoPostal = formModel.CodigoPostal?.Trim();
+                direccionPrincipal.Valor = formModel.Direccion?.Trim();
+                direccionPrincipal.CodigoPostal = formModel.CodigoPostal?.Trim();
 
-                if (direccionPrincipal.ubicacion == null)
+                if (direccionPrincipal.Ubicacion == null)
                 {
-                    direccionPrincipal.ubicacion = new Ubicacion();
+                    direccionPrincipal.Ubicacion = new ActualizarPacienteUbicacionDto();
                 }
 
-                direccionPrincipal.ubicacion.provincia = new Provincia
+                direccionPrincipal.Ubicacion.Provincia = new ActualizarPacienteReferenciaDto
                 {
-                    _id = provinciaSeleccionada._id,
-                    id = provinciaSeleccionada.id,
-                    nombre = provinciaSeleccionada.nombre
+                    IdInterno = provinciaSeleccionada._id,
+                    Id = provinciaSeleccionada.id,
+                    Nombre = provinciaSeleccionada.nombre
                 };
 
-                direccionPrincipal.ubicacion.localidad = new Localidad
+                direccionPrincipal.Ubicacion.Localidad = new ActualizarPacienteReferenciaDto
                 {
-                    _id = localidadSeleccionada._id,
-                    nombre = localidadSeleccionada.nombre,
-                    id = localidadSeleccionada.id ?? localidadSeleccionada._id
+                    IdInterno = localidadSeleccionada._id,
+                    Nombre = localidadSeleccionada.nombre,
+                    Id = localidadSeleccionada.id ?? localidadSeleccionada._id
                 };
 
                 // Obtener georeferencia de la dirección actualizada
-                string direccionCompleta = $"{direccionPrincipal.valor}, {direccionPrincipal.ubicacion.localidad.nombre}";
+                string direccionCompleta = $"{direccionPrincipal.Valor}, {direccionPrincipal.Ubicacion.Localidad?.Nombre}";
                 userLocation georeferencia = await _pacienteService.ObtenerGeoreferenciaPaciente(direccionCompleta);
                 if (georeferencia != null)
                 {
-                    direccionPrincipal.geoReferencia = new List<double> { georeferencia.lat, georeferencia.lng };
+                    direccionPrincipal.GeoReferencia = new List<double> { georeferencia.lat, georeferencia.lng };
                 }
 
                 // Actualizar contactos
-                if (pacienteActualizado.contacto == null)
-                {
-                    pacienteActualizado.contacto = new List<Contacto>();
-                }
-
                 // Actualizar o crear email
-                var emailContacto = pacienteActualizado.contacto.FirstOrDefault(c => c.tipo == "email");
+                var emailContacto = pacienteActualizado.Contacto.FirstOrDefault(c => c.Tipo == "email");
                 if (!string.IsNullOrWhiteSpace(formModel.Email))
                 {
                     if (emailContacto == null)
                     {
-                        emailContacto = new Contacto
+                        emailContacto = new ActualizarPacienteContactoDto
                         {
-                            tipo = "email",
-                            activo = true,
-                            ranking = 0
+                            Tipo = "email",
+                            Activo = true,
+                            Ranking = 0
                         };
-                        pacienteActualizado.contacto.Add(emailContacto);
+                        pacienteActualizado.Contacto.Add(emailContacto);
                     }
-                    emailContacto.valor = formModel.Email.Trim();
+                    emailContacto.Valor = formModel.Email.Trim();
                 }
                 else if (emailContacto != null)
                 {
-                    // Si el email está vacío, mantener el contacto pero con valor vacío o eliminarlo según lógica de negocio
-                    // Por ahora lo dejamos con valor vacío
-                    emailContacto.valor = string.Empty;
+                    emailContacto.Valor = string.Empty;
                 }
 
                 // Validar celular antes de guardar
@@ -413,18 +398,18 @@ namespace SaludPortal.Web.Components.Pages
                 }
 
                 // Actualizar o crear celular
-                var celularContacto = pacienteActualizado.contacto.FirstOrDefault(c => c.tipo == "celular");
+                var celularContacto = pacienteActualizado.Contacto.FirstOrDefault(c => c.Tipo == "celular");
                 if (celularContacto == null)
                 {
-                    celularContacto = new Contacto
+                    celularContacto = new ActualizarPacienteContactoDto
                     {
-                        tipo = "celular",
-                        activo = true,
-                        ranking = 1
+                        Tipo = "celular",
+                        Activo = true,
+                        Ranking = 1
                     };
-                    pacienteActualizado.contacto.Add(celularContacto);
+                    pacienteActualizado.Contacto.Add(celularContacto);
                 }
-                celularContacto.valor = celular;
+                celularContacto.Valor = celular;
 
                 // Guardar cambios
                 var pacienteGuardado = await _pacienteService.ModificarDatos(paciente.id, pacienteActualizado);
@@ -440,7 +425,7 @@ namespace SaludPortal.Web.Components.Pages
                     mensajeError = "No se pudo guardar los cambios. Por favor, intente nuevamente.";
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 mensajeError = $"Error al guardar los datos";
             }

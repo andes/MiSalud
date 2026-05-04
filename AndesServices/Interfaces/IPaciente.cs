@@ -1,4 +1,5 @@
-﻿using AndesServices.Entities;
+﻿using AndesServices.DTOs;
+using AndesServices.Entities;
 
 namespace AndesServices.Interfaces
 {
@@ -6,7 +7,8 @@ namespace AndesServices.Interfaces
     {
         Task<Paciente> ObtenerPacientePorIdAsync(string idPaciente);
         Task<userLocation> ObtenerGeoreferenciaPaciente(string direccion);
-        Task<Paciente> ModificarDatos(string idPaciente, Paciente paciente);
+        Task<Paciente> ModificarDatos(string idPaciente, ActualizarPacienteDto paciente);
         Direccion? ObtenerDireccionPrioritaria(Paciente? paciente);
+        ActualizarPacienteDireccionDto? ObtenerDireccionPrioritaria(ActualizarPacienteDto paciente);
     }
 }

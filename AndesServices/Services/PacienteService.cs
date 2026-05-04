@@ -1,4 +1,5 @@
-﻿using AndesServices.Entities;
+﻿using AndesServices.DTOs;
+using AndesServices.Entities;
 using AndesServices.Interfaces;
 using Newtonsoft.Json;
 
@@ -77,18 +78,18 @@ namespace AndesServices.Services
         }
 
         // Modifica datos personales de un Paciente
-        public async Task<Paciente> ModificarDatos(string idPaciente, Paciente paciente)
+        public async Task<Paciente> ModificarDatos(string idPaciente, ActualizarPacienteDto dto)
         {
-            if (paciente == null)
+            if (dto == null)
             {
-                throw new ArgumentNullException(nameof(paciente));
+                throw new ArgumentNullException(nameof(dto));
             }
 
             // Validar género si está presente
-            if (!string.IsNullOrEmpty(paciente.genero))
+            if (!string.IsNullOrEmpty(dto.Genero))
             {
                 var generosValidos = new List<string> { "mujer", "mujer trans", "varon", "varon trans", "no binario", "travesti", "masculinidad trans", "femenino", "masculino", "otro" };
-                if (!generosValidos.Contains(paciente.genero))
+                if (!generosValidos.Contains(dto.Genero))
                 {
                     throw new ArgumentException("Genero no permitido.");
                 }
@@ -109,48 +110,55 @@ namespace AndesServices.Services
                 DateTime fechaActual = DateTime.UtcNow;
 
                 // Actualizar ultimaActualizacion en contactos
-                if (paciente.contacto != null)
+                if (dto.Contacto != null)
                 {
-                    foreach (var c in paciente.contacto)
+                    foreach (var c in dto.Contacto)
                     {
-                        var contactoOriginal = pacienteOriginal?.contacto?.FirstOrDefault(co => co.id == c.id);
-                        if (contactoOriginal != null)
+                        var contactoOriginal = pacienteOriginal?.contacto?.FirstOrDefault(co =>
+                            co.id == c.Id ||
+                            co._id == c.IdInterno ||
+                            co.id == c.IdInterno ||
+                            co._id == c.Id);
+
+                        if (contactoOriginal == null ||
+                            contactoOriginal.valor != c.Valor ||
+                            contactoOriginal.tipo != c.Tipo)
                         {
-                            if (contactoOriginal.valor != c.valor || contactoOriginal.tipo != c.tipo)
-                            {
-                                c.ultimaActualizacion = fechaActual;
-                            }
+                            c.UltimaActualizacion = fechaActual;
                         }
                     }
                 }
 
                 // Actualizar ultimaActualizacion en direcciones y obtener georeferencia
-                if (paciente.direccion != null)
+                if (dto.Direccion != null)
                 {
-                    foreach (var d in paciente.direccion)
+                    foreach (var d in dto.Direccion)
                     {
-                        var direccionOriginal = pacienteOriginal?.direccion?.FirstOrDefault(di => di.id == d.id);
-                        if (direccionOriginal != null)
+                        var direccionOriginal = pacienteOriginal?.direccion?.FirstOrDefault(di =>
+                            di.id == d.Id ||
+                            di._id == d.IdInterno ||
+                            di.id == d.IdInterno ||
+                            di._id == d.Id);
+
+                        if (direccionOriginal == null ||
+                            direccionOriginal.valor != d.Valor ||
+                            direccionOriginal.codigoPostal != d.CodigoPostal ||
+                            direccionOriginal.ranking != d.Ranking ||
+                            direccionOriginal.ubicacion?.pais?.nombre != d.Ubicacion?.Pais?.Nombre ||
+                            direccionOriginal.ubicacion?.provincia?.nombre != d.Ubicacion?.Provincia?.Nombre ||
+                            direccionOriginal.ubicacion?.localidad?.nombre != d.Ubicacion?.Localidad?.Nombre)
                         {
-                            if (direccionOriginal.valor != d.valor ||
-                                direccionOriginal.codigoPostal != d.codigoPostal ||
-                                direccionOriginal.ranking != d.ranking ||
-                                direccionOriginal.ubicacion?.pais?.nombre != d.ubicacion?.pais?.nombre ||
-                                direccionOriginal.ubicacion?.provincia?.nombre != d.ubicacion?.provincia?.nombre ||
-                                direccionOriginal.ubicacion?.localidad?.nombre != d.ubicacion?.localidad?.nombre)
-                            {
-                                d.ultimaActualizacion = fechaActual;
-                            }
+                            d.UltimaActualizacion = fechaActual;
                         }
                     }
                 }
 
-                // Serializar el objeto paciente completo
+                // Serializar el DTO de actualización
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Patch,
                     RequestUri = new Uri($"modules/mobileApp/pacientes/{idPaciente}", UriKind.Relative),
-                    Content = new StringContent(JsonConvert.SerializeObject(paciente), System.Text.Encoding.UTF8, "application/json")
+                    Content = new StringContent(JsonConvert.SerializeObject(dto), System.Text.Encoding.UTF8, "application/json")
                 };
 
                 using (HttpResponseMessage res = await client.SendAsync(request))
@@ -186,6 +194,21 @@ namespace AndesServices.Services
             {
                 return direccion[1];
             }
+            return null;
+        }
+
+        public ActualizarPacienteDireccionDto? ObtenerDireccionPrioritaria(ActualizarPacienteDto pacienteActualizado)
+        {
+            if (pacienteActualizado.Direccion.Count == 1)
+            {
+                return pacienteActualizado.Direccion[0];
+            }
+
+            if (pacienteActualizado.Direccion.Count > 1)
+            {
+                return pacienteActualizado.Direccion[1];
+            }
+
             return null;
         }
     }
