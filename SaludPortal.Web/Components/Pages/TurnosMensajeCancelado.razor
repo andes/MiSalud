@@ -9,7 +9,13 @@
 <PageTitle>Turno cancelado - Mi Salud</PageTitle>
 
 <div class="turnos-mensaje-container">
-    <PageHeader Title="Mis turnos" />
+    <div class="turnos-mensaje-header">
+        <PageHeader Title="Mis turnos" />
+        <div class="turnos-mensaje-header__back">
+            <ButtonPrimaryOutlined Href="/misturnos" Text="Volver a mis turnos" AriaLabel="Volver a mis turnos"
+                                   Size="sm" />
+        </div>
+    </div>
 
     <div class="turnos-mensaje-card turnos-mensaje-warning">
         <div class="turnos-mensaje-icon-wrapper">
@@ -24,12 +30,5 @@
                 </div>
             }
         </div>
-    </div>
-
-    <div class="turnos-mensaje-actions">
-        <a href="/misturnos" class="btn btn-primary">
-            <Icon Name="calendar-check" Size="20" Fill="#fff" class="me-2" AriaLabel="Turnos" />
-            Volver a mis turnos
-        </a>
     </div>
 </div>

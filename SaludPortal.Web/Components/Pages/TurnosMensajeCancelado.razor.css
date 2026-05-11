@@ -60,19 +60,16 @@
     margin-bottom: 0;
 }
 
-.turnos-mensaje-actions {
+.turnos-mensaje-header {
     display: flex;
-    justify-content: center;
-    margin-top: 2rem;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
 }
 
-.turnos-mensaje-actions .btn {
-    display: flex;
-    align-items: center;
-}
-
-.turnos-mensaje-actions .btn Icon {
+.turnos-mensaje-header__back {
     flex-shrink: 0;
+    margin-top: .5rem;
 }
 
 /* Responsive Design */

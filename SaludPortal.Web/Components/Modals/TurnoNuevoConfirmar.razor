@@ -101,7 +101,7 @@
                 await ModalConfirmarTurno.CloseAsync();
                 MessageService.Title = "Turno no confirmado";
                 MessageService.Content = "No se pudo confirmar el turno. Posiblemente el turno ya no se encontraba disponible. Por favor, intente nuevamente.";
-                Nav.NavigateTo("/turnosmensajeconfirma");
+                Nav.NavigateTo("/turnosmensajenoconfirma");
             }
         }
     }

@@ -8,8 +8,9 @@ namespace AndesServices.Interfaces
         /// <summary>
         /// Obtiene las categorís de la historia de salud.
         /// </summary>
+        /// <param name="expresionSnomed">Expresión SNOMED para filtrar las categorías.</param>
         /// <returns>Lista de categorias de la historia de salud.</returns>
-        Task<List<CategoriaHistoriaSalud>> ObtenerCategoriasHistoriaSaludAsync();
+        Task<List<CategoriaHistoriaSalud>> ObtenerCategoriasHistoriaSaludAsync(string? expresionSnomed);
         /// <summary>
         /// Obtiene las categorís de la historia de salud.
         /// </summary>

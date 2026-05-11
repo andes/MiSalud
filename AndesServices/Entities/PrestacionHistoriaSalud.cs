@@ -29,5 +29,7 @@ namespace AndesServices.Entities
             conceptId == "90226004" || conceptId == "86273004";
 
         public bool EsCda() => EsCda(solicitud?.tipoPrestacion?.conceptId);
+
+        public bool EsEcocardiograma() => solicitud?.tipoPrestacion?.conceptId == "5001000013101";
     }
 }

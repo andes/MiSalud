@@ -8,25 +8,27 @@ namespace AndesServices.Services
 {
     public class HistoriaSaludService : IHistoriaSalud
     {
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<HistoriaSaludService> _logger;
+        private readonly HttpClient _andesClient;
 
         public HistoriaSaludService(
             IHttpClientFactory httpClientFactory,
             ILogger<HistoriaSaludService> logger)
         {
-            _httpClientFactory = httpClientFactory;
             _logger = logger;
+            _andesClient = httpClientFactory.CreateClient("Andes");
         }
 
         // Implementación de los métodos de la interfaz IHistoriaSalud
-        public async Task<List<CategoriaHistoriaSalud>> ObtenerCategoriasHistoriaSaludAsync()
+        public async Task<List<CategoriaHistoriaSalud>> ObtenerCategoriasHistoriaSaludAsync(string? expresionSnomed = null)
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
+                var endpoint = string.IsNullOrWhiteSpace(expresionSnomed) 
+                    ? "modules/mobileApp/categoria" 
+                    : $"modules/mobileApp/categoria?expresionSnomed={Uri.EscapeDataString(expresionSnomed)}";
 
-                using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/categoria"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync(endpoint))
                 {
                     if (res.IsSuccessStatusCode)
                     {
@@ -36,7 +38,7 @@ namespace AndesServices.Services
 
                         if (listaCategoriasHistoriaSalud == null)
                         {
-                            Console.WriteLine("No se encontraron categorias.");
+                            _logger.LogWarning("No se encontraron categorias.");
                             return null;
                         }
 
@@ -46,19 +48,17 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener las categorias: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener las categorias.");
                 return null;
             }
             return null;
         }
 
-        public async Task<List<PrestacionHistoriaSalud>> ObtenerPrestacionesAsync(string tipoPrestaciones, string idPaciente, string estado = "validada")
+        public async Task<List<PrestacionHistoriaSalud>> ObtenerPrestacionesAsync(string expresionSnomed, string idPaciente, string estado = "validada")
         {
             try
-            {
-                var client = _httpClientFactory.CreateClient("Andes");
-                
-                bool esCda = PrestacionHistoriaSalud.EsCda(tipoPrestaciones);
+            {                
+                bool esCda = PrestacionHistoriaSalud.EsCda(expresionSnomed);
                 string url;
                 
                 if (esCda)
@@ -67,10 +67,10 @@ namespace AndesServices.Services
                 }
                 else
                 {
-                    url = $"modules/rup/prestaciones?tipoPrestaciones={tipoPrestaciones}&idPaciente={idPaciente}&estado={estado}";
+                    url = $"modules/rup/prestaciones?tipoPrestaciones={expresionSnomed}&idPaciente={idPaciente}&estado={estado}";
                 }
 
-                using (HttpResponseMessage res = await client.GetAsync(url))
+                using (HttpResponseMessage res = await _andesClient.GetAsync(url))
                 {
                     if (res.IsSuccessStatusCode)
                     {
@@ -82,12 +82,12 @@ namespace AndesServices.Services
                                 var cdaDocs = await res.Content.ReadFromJsonAsync<List<CdaDocumento>>();
                                 if (cdaDocs == null || cdaDocs.Count == 0)
                                 {
-                                    Console.WriteLine("No se encontraron documentos CDA.");
+                                    _logger.LogWarning("No se encontraron documentos CDA.");
                                     return null;
                                 }
 
                                 var mapped = new List<PrestacionHistoriaSalud>(cdaDocs.Count);
-                                foreach (var d in cdaDocs.Where(c => c.prestacion?.snomed?.conceptId == tipoPrestaciones))
+                                foreach (var d in cdaDocs.Where(c => c.prestacion?.snomed?.conceptId == expresionSnomed))
                                 {
                                     mapped.Add(MapCdaToPrestacion(d));
                                 }
@@ -100,7 +100,7 @@ namespace AndesServices.Services
 
                                 if (listaPrestacionesHistoriaSalud == null)
                                 {
-                                    Console.WriteLine("No se encontraron prestaciones.");
+                                    _logger.LogWarning("No se encontraron prestaciones.");
                                     return null;
                                 }
 
@@ -116,7 +116,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener las prestaciones: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener las prestaciones.");
                 return null;
             }
             return null;
@@ -128,16 +128,16 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
+                
                 //var parametrosBody = new StringContent("{\"protocolo\":{\"data\":{\"idProtocolo\":" + idProtocolo + ",\"documento\":" + documento + "}}}", System.Text.Encoding.UTF8, "application/json");
-                using (HttpResponseMessage res = await client.GetAsync($"modules/cda/{id}"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync($"modules/cda/{id}"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
                         byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
                         if (fileResponse == null)
                         {
-                            Console.WriteLine("Error: File is null.");
+                            _logger.LogWarning("Error: File is null.");
                             return await Task.FromResult(unByte);
                         }
 
@@ -147,7 +147,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener el archivo del CDA: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener el archivo del CDA.");
                 return await Task.FromResult(unByte);
             }
             return await Task.FromResult(unByte);
@@ -215,15 +215,15 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-                using (HttpResponseMessage res = await client.PostAsJsonAsync($"modules/descargas", dto))
+                
+                using (HttpResponseMessage res = await _andesClient.PostAsJsonAsync($"modules/descargas", dto))
                 {
                     if (res.IsSuccessStatusCode)
                     {
                         byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
                         if (fileResponse == null)
                         {
-                            Console.WriteLine("Error: File is null.");
+                            _logger.LogWarning("Error: File is null.");
                             return bytes;
                         }
 
@@ -233,7 +233,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener el archivo de la prestación: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener el archivo de la prestación.");
                 return bytes;
             }
             return bytes;
@@ -243,8 +243,8 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-                using (HttpResponseMessage res = await client.PostAsync("auth/file-token", null))
+                
+                using (HttpResponseMessage res = await _andesClient.PostAsync("auth/file-token", null))
                 {
                     if (!res.IsSuccessStatusCode)
                     {
@@ -273,11 +273,11 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-                var baseAddress = client.BaseAddress?.ToString().TrimEnd('/');
+                
+                var baseAddress = _andesClient.BaseAddress?.ToString().TrimEnd('/');
                 var pacsUrl = $"{baseAddress}/modules/rup/prestaciones/{idPrestacion}/pacs?token={fileToken}";
 
-                using var checkRes = await client.GetAsync(pacsUrl, HttpCompletionOption.ResponseHeadersRead);
+                using var checkRes = await _andesClient.GetAsync(pacsUrl, HttpCompletionOption.ResponseHeadersRead);
                 if (!checkRes.IsSuccessStatusCode)
                 {
                     _logger.LogWarning("El endpoint PACS devolvió {Status} para la prestación {Id}.", checkRes.StatusCode, idPrestacion);

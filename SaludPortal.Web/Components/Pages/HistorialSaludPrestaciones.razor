@@ -1,4 +1,4 @@
-﻿@page "/historiasalud/categoria/{expresionSnomed}/"
+﻿@page "/historiasalud/{expresionSnomed}/"
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
@@ -20,10 +20,18 @@
 @inherits AuthenticatedComponentBase
 @inject IHistoriaSalud _miHistoriaSaludService
 
-<PageTitle>@($"{TituloMostrar} - Mi Salud")</PageTitle>
+<PageTitle>@($"Historia de salud - {categoriaSeleccionada?.Titulo} - Mi Salud")</PageTitle>
 
 <div class="prestaciones-container">
-    <PageHeader Title="@TituloMostrar" Subtitle="Historial de prestaciones médicas" />
+    <div class="prestaciones-header">
+        <PageHeader Title="@categoriaSeleccionada?.Titulo" Subtitle="Historial de prestaciones médicas" />
+        <div class="prestaciones-header__back">
+            <ButtonPrimaryOutlined Href="/historiasalud"
+                                   Text="VOLVER"
+                                   AriaLabel="Volver a Historia de Salud"
+                                   Size="sm" />
+        </div>
+    </div>
 
     @if (cargando)
     {
@@ -49,7 +57,12 @@
                     if (p.EsCda())
                     {
                         <HistorialCdaCard Prestacion="p" OnDownload="DownloadPdfPrestacion" />                    
-                    } else {
+                    } 
+                    else if (p.EsEcocardiograma())
+                    {
+                        <HistorialPrestacionEcocardiogramaCard Prestacion="p" OnDownload="DownloadPdfPrestacion" />
+                    } 
+                    else {
                         <HistorialPrestacionCard Prestacion="p" OnDownload="DownloadPdfPrestacion"
                                                  OnViewImage="@(_fileToken != null ? OpenImagenPrestacion : default)"
                                                  OnCopyLink="@(_fileToken != null ? CopiarEnlacePrestacion : default)"
@@ -60,11 +73,6 @@
         </div>
     }
 
-    <div class="prestaciones-actions">
-        <a href="historiaSalud" title="Historia de salud" class="btn btn-celeste">
-            <span class="bi bi-arrow-left me-2"></span>Volver
-        </a>
-    </div>
 </div>
 
 <script type="text/javascript">
@@ -86,16 +94,13 @@
 
     [Parameter] public string? expresionSnomed { get; set; }
 
-    [Parameter]
-    [SupplyParameterFromQuery]
-    public string? titulo { get; set; }
+    private CategoriaHistoriaSalud? categoriaSeleccionada;
     private List<PrestacionHistoriaSalud>? prestaciones;
     private bool cargando;
     private string? error;
     private string? _fileToken;
     private string? _copiedPrestacionId;
     private CancellationTokenSource? _copiedResetCts;
-    private string TituloMostrar => string.IsNullOrWhiteSpace(titulo) ? expresionSnomed ?? "" : titulo!;
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -118,6 +123,8 @@
             _spinnerService.Show();
             prestaciones = await _miHistoriaSaludService.ObtenerPrestacionesAsync(expresionSnomed, pacienteId);
             _fileToken = await _miHistoriaSaludService.ObtenerFileTokenAsync();
+            categoriaSeleccionada = (await _miHistoriaSaludService.ObtenerCategoriasHistoriaSaludAsync(expresionSnomed))
+                .FirstOrDefault();
         }
         catch (Exception ex)
         {
@@ -132,6 +139,7 @@
     async Task DownloadPdfPrestacion(PrestacionHistoriaSalud prestacion)
     {
         string idPrestacion = prestacion?.id ?? "";
+        var categoria = categoriaSeleccionada?.Titulo ?? "prestacion";
   
         _spinnerService.Show();
 
@@ -154,7 +162,7 @@
             }
 
             string base64Pdf = Convert.ToBase64String(archivoDescargar);
-            await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, TituloMostrar);
+            await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, categoria);
         }
         else
         {
@@ -168,7 +176,7 @@
             else
             {
                 string base64Pdf = Convert.ToBase64String(pdfPrestacion);
-                await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, TituloMostrar);
+                await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, categoria);
             }
         }
         _spinnerService.Hide();

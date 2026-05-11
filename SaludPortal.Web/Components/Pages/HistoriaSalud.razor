@@ -10,7 +10,7 @@
 @using System.Linq
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager Nav
+@inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IConfiguration Configuration
 @inject BlazorSpinner.SpinnerService _spinnerService
@@ -53,7 +53,7 @@
 
         _spinnerService.Show();
 
-        Model.lstCategoriasHistoriaSalud = (await _miHistoriaSaludService.ObtenerCategoriasHistoriaSaludAsync()).OrderBy(c => c.BusquedaPor).ToList();
+        Model.lstCategoriasHistoriaSalud = (await _miHistoriaSaludService.ObtenerCategoriasHistoriaSaludAsync(null)).OrderBy(c => c.BusquedaPor).ToList();
         _spinnerService.Hide();
     }
 
@@ -80,12 +80,10 @@
         if (string.IsNullOrWhiteSpace(expresionSnomed))
             return;
 
-        var exprEncoded = Uri.EscapeDataString(expresionSnomed);
-        var tituloEncoded = Uri.EscapeDataString(titulo ?? string.Empty);
-
         var cfg = new ConexionServicios();
         Configuration.GetSection("urlServicios").Bind(cfg);
 
+        // Caso especial para certificado, que no tiene prestaciones sino un PDF fijo
         if (expresionSnomed == "103695000" && !cfg.usarProd)
         {
             await JSRuntime.InvokeVoidAsync("open", Nav.BaseUri + "docs/Certificado médico OLAVE.pdf", "_blank");
@@ -95,9 +93,11 @@
         else
         {
             if (expresionSnomed == "16076005") //Recetas
-                Nav.NavigateTo($"MisRecetas");
-            else
-                Nav.NavigateTo($"/historiasalud/categoria/{exprEncoded}?titulo={tituloEncoded}");
+                Navigation.NavigateTo($"MisRecetas");
+            else {
+                var encoded = Uri.EscapeDataString(expresionSnomed);
+                Navigation.NavigateTo($"/historiasalud/{encoded}");
+            }
         }
     }
 }
