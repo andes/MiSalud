@@ -14,10 +14,16 @@
     gap: 1.5rem;
 }
 
-.prestaciones-actions {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid #e0e0e0;
+.prestaciones-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.prestaciones-header__back {
+    flex-shrink: 0;
+    margin-top: .5rem;
 }
 
 /* Responsive Design */
