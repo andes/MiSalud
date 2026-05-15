@@ -5,15 +5,17 @@
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Components.Icons
+@using SaludPortal.Application.Models
 @using SaludPortal.Web.Services
 @using AndesServices.Interfaces
 @using System.Security.Claims
 @using AndesServices.Entities
 @using System.Linq
+@using SaludPortal.Application.UseCases
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject IMisTurnos _misTurnosService
+@inject ObtenerHistorialTurnosUseCase _obtenerHistorialTurnosUseCase
 
 @inherits AuthenticatedComponentBase
 
@@ -22,7 +24,7 @@
 <div class="turnos-historial-container">
     <PageHeader Title="Mis turnos: Historial" Subtitle="Historial de turnos médicos" />
 
-    @if (lstMisTurnos == null || !lstMisTurnos.Any())
+    @if (turnos == null || !turnos.Any())
     {
         <EmptyState Message="No se encontraron turnos en el historial." />
     }
@@ -30,26 +32,26 @@
     {
         numerar = 0;
 
-    var turnosAgrupados = lstMisTurnos
-        .Where(t => t.tipoPrestacion != null && !string.IsNullOrEmpty(t.tipoPrestacion.conceptId))
-        .GroupBy(t => t.tipoPrestacion.conceptId)
+    var turnosAgrupados = turnos
+        .Where(t => t.TipoPrestacion != null && !string.IsNullOrEmpty(t.TipoPrestacion.ConceptId))
+        .GroupBy(t => t?.TipoPrestacion?.ConceptId)
         .Select(g => new
         {
             TipoPrestacionConceptId = g.Key,
-                TipoPrestacionTerm = g.First().tipoPrestacion?.term,
+                TipoPrestacionTerm = g.First().TipoPrestacion?.Term,
             Turnos = g.ToList()
         })
         .ToList();
 
-    var turnosSinTipo = lstMisTurnos
-        .Where(t => t.tipoPrestacion == null || string.IsNullOrEmpty(t.tipoPrestacion.conceptId))
+    var turnosSinTipo = turnos
+        .Where(t => t.TipoPrestacion == null || string.IsNullOrEmpty(t?.TipoPrestacion?.ConceptId))
         .ToList();
 
         var sectionIndex = 0;
 
     @foreach (var grupo in turnosAgrupados)
     {
-            var turnosPasados = grupo.Turnos.Where(t => t.horaInicio < DateTime.Now).OrderByDescending(t => t.horaInicio).ToList();
+            var turnosPasados = grupo.Turnos.Where(t => t.FechaHora < DateTime.Now).OrderByDescending(t => t.FechaHora).ToList();
             
             @if (turnosPasados.Any())
         {
@@ -81,7 +83,7 @@
 
     @if (turnosSinTipo.Any())
     {
-            var turnosSinTipoPasados = turnosSinTipo.Where(t => t.horaInicio < DateTime.Now).OrderByDescending(t => t.horaInicio).ToList();
+            var turnosSinTipoPasados = turnosSinTipo.Where(t => t.FechaHora < DateTime.Now).OrderByDescending(t => t.FechaHora).ToList();
             
             @if (turnosSinTipoPasados.Any())
             {
@@ -113,17 +115,12 @@
 </div>
 
 @code {
-    private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
+    private List<Turno> turnos = new List<Turno>();
     private int numerar = 0;
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
-    private async Task HandleTurnoClick(MisTurnos turno)
-    {
-        await ShowModal(turno);
-    }
-
-    private async Task ShowModal(MisTurnos unTurno)
+    private async Task HandleTurnoClick(Turno turno)
     {
         var options = new ModalOptions()
         {
@@ -133,14 +130,14 @@
             HideHeader = true
         };
         var parameters = new ModalParameters()
-        .Add(nameof(MisTurnosDetalle.Paciente), unTurno.paciente.nombre + " " + unTurno.paciente.apellido)
-        .Add(nameof(MisTurnosDetalle.FechaHoraTurno), unTurno.horaInicio.ToString("dd/MM/yyyy") + " " + DateTimeHelper.ToArgentinaTime(unTurno.horaInicio).ToString("HH:mm"))
-        .Add(nameof(MisTurnosDetalle.DatosConsulta), unTurno.motivoConsulta)
-        .Add(nameof(MisTurnosDetalle.Lugar), unTurno.organizacion?.nombre);
+        .Add(nameof(MisTurnosDetalle.Paciente), turno.Paciente?.GetDisplayName() ?? "Paciente sin nombre")
+        .Add(nameof(MisTurnosDetalle.FechaHoraTurno), turno.FechaHora.ToString("dd/MM/yyyy HH:mm"))
+        .Add(nameof(MisTurnosDetalle.DatosConsulta), turno.MotivoConsulta ?? "No disponible")
+        .Add(nameof(MisTurnosDetalle.Lugar), turno.Organizacion?.Nombre ?? "No disponible");
 
         Modal.Show<MisTurnosDetalle>(parameters, options);
 
-    }
+    } 
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -150,7 +147,7 @@
             return;
 
         _spinnerService.Show();
-        lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(Documento ?? "");
+        turnos = await _obtenerHistorialTurnosUseCase.EjecutarAsync();
         _spinnerService.Hide();
     }
 }

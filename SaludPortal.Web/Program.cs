@@ -13,6 +13,7 @@ using SaludPortal.Web.Components;
 using SaludPortal.Web.Services;
 using AndesServices.Services;
 using AndesServices.Handlers;
+using SaludPortal.Application.UseCases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +73,10 @@ builder.Services.AddScoped<IOrganizacion, OrganizacionService>();
 builder.Services.AddScoped<IMisTurnos, MisTurnosService>();
 builder.Services.AddScoped<ITerritorio, TerritorioService>();
 builder.Services.AddScoped<ICentrosSalud, CentrosSaludService>();
+
+// Casos de uso
+builder.Services.AddScoped<ObtenerTurnosUseCase>();
+builder.Services.AddScoped<ObtenerHistorialTurnosUseCase>();
 
 // Register AndesTokenHandler as scoped to access HttpContext
 builder.Services.AddTransient<AndesTokenHandler>();

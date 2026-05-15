@@ -7,6 +7,8 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .turno-futuro-card::before {
@@ -22,8 +24,8 @@
 
 .turno-futuro-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
     border-bottom: 2px solid #f0f0f0;
@@ -31,8 +33,15 @@
     gap: 0.5rem;
 }
 
-.turno-futuro-badge {
-    display: inline-block;
+.turno-futuro-titulo {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    line-height: 1.2;
+    height: calc(1.4em * 2);
     color: var(--verde-nqn-2);
     padding: 0.25rem 0.5rem;
     border-radius: 8px;
@@ -44,19 +53,20 @@
     }
 }
 
-.turno-futuro-tipo {
+.turno-futuro-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #87b867 0%, #6a9a4f 100%);
-    color: #fff;
+    background: var(--beige-nqn-2);
+    color: #5a2d0c;
     padding: 0.25rem 0.75rem;
     border-radius: 15px;
     font-weight: 600;
     font-size: 0.85rem;
-    box-shadow: 0 2px 4px rgba(135, 184, 103, 0.2);
+    box-shadow: 0 2px 4px rgba(184, 122, 79, 0.2);
 }
 
 .turno-futuro-body {
     padding-top: 0.5rem;
+    flex: 1;
 }
 
 .turno-futuro-info-item {
@@ -84,33 +94,68 @@
     font-weight: 600;
 }
 
+.turno-futuro-profesionales {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 1.125rem;
+    color: #00374c;
+    font-weight: 600;
+}
+
 .turno-futuro-footer {
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid #f0f0f0;
     display: flex;
+    gap: 0.75rem;
     justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.turno-futuro-link-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    color: #2f7d32;
+    border: 2px solid #2f7d32;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.turno-futuro-link-button:hover {
+    background: rgba(47, 125, 50, 0.12);
+    box-shadow: none;
+}
+
+.turno-futuro-link-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(47, 125, 50, 0.2);
 }
 
 .turno-futuro-cancel-button {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: #fff;
-    border: none;
+    background: transparent;
+    color: #dc3545;
+    border: 2px solid #dc3545;
     border-radius: 8px;
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
 }
 
 .turno-futuro-cancel-button:hover {
-    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    background: rgba(220, 53, 69, 0.12);
+    box-shadow: none;
 }
 
 .turno-futuro-cancel-button:active {
@@ -128,12 +173,12 @@
         padding: 1.25rem;
     }
 
-    .turno-futuro-header {
-        flex-direction: column;
-        align-items: flex-start;
+    .turno-futuro-cancel-button {
+        width: 100%;
+        justify-content: center;
     }
 
-    .turno-futuro-cancel-button {
+    .turno-futuro-link-button {
         width: 100%;
         justify-content: center;
     }

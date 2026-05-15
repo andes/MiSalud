@@ -1,0 +1,55 @@
+@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@using SaludPortal.Application.Models
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Application.Utils
+
+@inject IJSRuntime JS
+
+<div class="turno-futuro-card">
+    <div class="turno-futuro-header">
+        <span class="turno-futuro-badge">Telesalud</span>
+        <span class="turno-futuro-titulo">@Turno?.TipoPrestacion?.Term</span>
+    </div>
+    <div class="turno-futuro-body">
+        <div class="turno-futuro-info-item">
+            <span class="turno-futuro-label">
+                <Icon Name="calendar-event" Size="16" Fill="#666" class="me-1" AriaLabel="Fecha y hora" />
+                Fecha de solicitud:
+            </span>
+            <span class="turno-futuro-value">@Turno?.FechaHora.ToString("dd/MM/yyyy")</span>
+        </div>
+    </div>
+    <div class="turno-futuro-footer">
+        <button class="turno-futuro-cancel-button" @onclick="HandleCancel" @onclick:stopPropagation="true"
+                title="Cancelar turno">
+            <Icon Name="cancelar-turno" Size="20" Fill="#dc3545" AriaLabel="Cancelar" />
+            <span>Cancelar</span>
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Turno Turno { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<Turno> OnCancel { get; set; }
+
+    private async Task HandleCancel()
+    {
+        if (OnCancel.HasDelegate)
+        {
+            await OnCancel.InvokeAsync(Turno);
+        }
+    }
+
+    private async Task HandleJoin()
+    {
+        if (!string.IsNullOrWhiteSpace(Turno.WebexLinks?.patientLink))
+        {
+            await JS.InvokeVoidAsync("open", Turno.WebexLinks.patientLink, "_blank", "noopener,noreferrer");
+        }
+    }
+}

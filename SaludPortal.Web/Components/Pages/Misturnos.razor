@@ -1,19 +1,24 @@
 ﻿@page "/misturnos"
 @rendermode InteractiveServer
 
-@using Microsoft.AspNetCore.Components.Authorization
-@using SaludPortal.Web.Components.Modals
-@using SaludPortal.Web.Components.Shared
-@using SaludPortal.Web.Components.Icons
-@using SaludPortal.Web.Services
-@using AndesServices.Interfaces
+@using System.Linq
 @using System.Security.Claims
 @using AndesServices.Entities
-@using System.Linq
+@using AndesServices.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Application.Models
+@using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Components.Modals
+@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Models
+@using SaludPortal.Web.Services
+@using SaludPortal.Application.UseCases
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject IMisTurnos _misTurnosService
+@inject ObtenerTurnosUseCase _obtenerTurnosUseCase
+@inject ILogger<MisTurnos> _logger
 
 @inherits AuthenticatedComponentBase
 
@@ -22,43 +27,6 @@
 <div class="misturnos-container">
     <PageHeader Title="Mis turnos" Subtitle="Turnos programados y próximos" />
     
-
-    @if (lstMisTurnos != null)
-    {
-        var turnosFuturosList = lstMisTurnos
-            .Where(t => t != null && t.horaInicio >= DateTime.Now)
-            .OrderBy(t => t.horaInicio)
-            .ToList();
-
-        @if (turnosFuturosList.Any())
-        {
-            <div class="turnos-futuros-section">
-                <div class="section-title-wrapper">
-                    <h2 class="section-title">
-                        <Icon Name="calendar-check" Size="24" Fill="#87b867" class="me-2" AriaLabel="Turnos" />
-                        Turnos Programados
-                    </h2>
-                </div>
-                <div class="turnos-futuros-grid">
-                    @foreach (var turno in turnosFuturosList)
-                    {
-                        <TurnoFuturoCard 
-                            Turno="turno" 
-                            EsTeleconsulta="EsTeleconsulta(turno.tipoPrestacion?.conceptId)" 
-                            OnCancel="HandleCancelarTurno" />
-                    }
-                </div>
-            </div>
-        }
-        else
-        {
-            <div class="calendar-icon-wrapper">
-                <Icon Name="calendar2-heart" Fill="#c33995" Size="32" />
-            </div>
-            <EmptyState Message="No tienes ningún turno programado" />
-        }
-    }
-
     <div class="misturnos-actions">
         <a href="/turnosNuevo" class="btn btn-success">
             <Icon Name="calendar-plus" Size="20" Fill="#fff" class="me-2" AriaLabel="Solicitar" />
@@ -73,11 +41,49 @@
             Telesalud
         </a>
     </div>
+
+    @if (turnos != null)
+    {
+        @if (turnos.Any())
+        {
+            <div class="turnos-futuros-section">
+                <div class="section-title-wrapper">
+                    <h2 class="section-title">
+                        <Icon Name="calendar-check" Size="24" Fill="#87b867" class="me-2" AriaLabel="Turnos" />
+                        Turnos Programados
+                    </h2>
+                </div>
+                <div class="turnos-futuros-grid">
+                    @foreach (var turno in turnos)
+                    {
+                        if (turno.EsTeleconsulta)
+                        {
+                            <TurnoTelesaludCard Turno="turno" OnCancel="HandleCancelarTurno" />
+                        }
+                        else if (turno.VideoConferencia)
+                        {
+                            <TurnoVideoconferenciaCard Turno="turno" OnCancel="HandleCancelarTurno" />
+                        }
+                        else
+                        {
+                            <TurnoPresencialCard Turno="turno" OnCancel="HandleCancelarTurno" />
+                        }
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="calendar-icon-wrapper">
+                <Icon Name="calendar2-heart" Fill="#c33995" Size="32" />
+            </div>
+            <EmptyState Message="No tienes ningún turno programado" />
+        }
+    }
 </div>
 
 @code {
-    private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
-    private HashSet<string> conceptosTeleconsulta = new HashSet<string>();
+    private List<Turno> turnos = new List<Turno>();
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
@@ -90,19 +96,11 @@
         _spinnerService.Show();
         try
         {
-            // Obtengo los conceptos de teleconsulta
-            var conceptosTurneables = await _misTurnosService.ObtenerConceptosTurneablesAsync(true);
-            if (conceptosTurneables != null && conceptosTurneables.Count > 0)
-            {
-                conceptosTeleconsulta = new HashSet<string>(conceptosTurneables.Select(c => c.conceptId));
-            }
-
-            // Obtengo los turnos
-            lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(Documento ?? "");
+            turnos = await _obtenerTurnosUseCase.EjecutarAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogError(ex, "Error al obtener los turnos");
         }
         finally
         {
@@ -110,29 +108,7 @@
         }
     }
 
-    private bool EsTeleconsulta(string? conceptId)
-    {
-        if (string.IsNullOrEmpty(conceptId))
-            return false;
-        return conceptosTeleconsulta.Contains(conceptId);
-    }
-
-    private async Task HandleCancelarTurno(MisTurnos turno)
-    {
-        var esTeleconsulta = EsTeleconsulta(turno.tipoPrestacion?.conceptId);
-        await ShowModalCancelarConfirmar(
-            turno.horaInicio,
-            DateTimeHelper.ToArgentinaTime(turno.horaInicio),
-            turno.tipoPrestacion?.term ?? string.Empty,
-            turno.organizacion?.nombre ?? string.Empty,
-            turno.agenda_id,
-            turno._id,
-            turno.bloque_id,
-            esTeleconsulta
-        );
-    }
-
-    private async Task ShowModalCancelarConfirmar(DateTime Fecha, DateTime Hora, string TipoPrestacion, string EfectorNombre, string IdAgenda, string IdTurno, string IdBloque, bool esTeleconsulta)
+    private async Task HandleCancelarTurno(Turno turno)
     {
         var options = new ModalOptions()
         {
@@ -143,13 +119,13 @@
         };
 
         var parameters = new ModalParameters()
-        .Add(nameof(MisTurnosCancelarConfirmar.FechaHoraTurno), Fecha.ToString("dd/MM/yyyy") + " " + Hora.ToString("HH:mm"))
-        .Add(nameof(MisTurnosCancelarConfirmar.EfectorNombre), EfectorNombre)
-        .Add(nameof(TurnoNuevoConfirmar.TipoPrestacion), TipoPrestacion)
-        .Add(nameof(MisTurnosCancelarConfirmar.IdTurno), IdTurno)
-        .Add(nameof(MisTurnosCancelarConfirmar.IdBloque), IdBloque)
-        .Add(nameof(MisTurnosCancelarConfirmar.IdAgenda), IdAgenda)
-        .Add(nameof(MisTurnosCancelarConfirmar.EsTeleconsulta), esTeleconsulta);
+            .Add(nameof(MisTurnosCancelarConfirmar.FechaHoraTurno), turno.FechaHora.ToString("dd/MM/yyyy HH:mm"))
+            .Add(nameof(MisTurnosCancelarConfirmar.EfectorNombre), turno.Organizacion?.Nombre ?? "Efector desconocido")
+            .Add(nameof(MisTurnosCancelarConfirmar.TipoPrestacion), turno.TipoPrestacion?.Term ?? "Prestación desconocida")
+            .Add(nameof(MisTurnosCancelarConfirmar.IdTurno), turno.Id)
+            .Add(nameof(MisTurnosCancelarConfirmar.IdBloque), turno.BloqueId)
+            .Add(nameof(MisTurnosCancelarConfirmar.IdAgenda), turno.AgendaId)
+            .Add(nameof(MisTurnosCancelarConfirmar.EsTeleconsulta), turno.EsTeleconsulta);
 
         Modal.Show<MisTurnosCancelarConfirmar>(parameters, options);
     }

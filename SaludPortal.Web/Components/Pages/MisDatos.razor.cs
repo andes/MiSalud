@@ -16,7 +16,7 @@ namespace SaludPortal.Web.Components.Pages
         [Inject] private IPaciente _pacienteService { get; set; } = default!;
         [Inject] private ITerritorio _territorioService { get; set; } = default!;
 
-        private Paciente? paciente;
+        private AndesServices.Entities.Paciente? paciente;
         private List<Provincia>? provincias;
         private List<Localidad>? localidades;
         private bool modoEdicion = false;

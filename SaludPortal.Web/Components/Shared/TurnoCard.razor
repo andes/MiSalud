@@ -1,94 +1,89 @@
-@using AndesServices.Entities
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Icons
-@using SaludPortal.Web.Utils
+@using SaludPortal.Application.Models
+@using SaludPortal.Application.Utils
 @using System.Linq
 
 <div class="turno-card" @onclick="HandleClick" tabindex="0">
     <div class="turno-header">
         <div class="turno-numero">#@Numero</div>
-        @if (Turno.tipoPrestacion != null && !string.IsNullOrWhiteSpace(Turno.tipoPrestacion.term))
+        @if (!string.IsNullOrWhiteSpace(Turno?.TipoPrestacion?.Term))
         {
-            <span class="turno-tipo-badge">@Turno.tipoPrestacion.term</span>
+            <span class="turno-tipo-badge">@Turno.TipoPrestacion.Term</span>
         }
     </div>
     <div class="turno-body">
         <div class="turno-info-item">
             <span class="turno-label">Fecha turno:</span>
-            <span class="turno-value">@GetFechaFormateada()</span>
+            <span class="turno-value"> @($"{Turno?.FechaHora:dd/MM/yyyy HH:mm}")</span>
         </div>
 
-        @if (Turno.asistencia != null)
+        @if (Turno?.Asistencia != null)
         {
             <div class="turno-asistencia">
-                @if (Turno.asistencia == "noAsistio")
+                @if (Turno.Asistencia == "noAsistio")
                 {
                     <span class="turno-badge inasistencia">SIN DATOS DE ASISTENCIA</span>
                 }
                 else
                 {
-                    @if (Turno.horaAsistencia != null)
+                    @if (Turno.FechaHoraAsistencia != null)
                     {
-                        <span class="turno-badge asistencia">ASISTENCIA A LAS @Turno.horaAsistencia.Value.ToString("HH:mm") HS</span>
-                    }
+                        <span class="turno-badge asistencia">ASISTENCIA A LAS @Turno.FechaHoraAsistencia.Value.ToString("HH:mm")
+                            HS</span>
+                        }
                     else
-                    {
-                        <span class="turno-badge asistencia">ASISTIÓ</span>
+                        {
+                            <span class="turno-badge asistencia">ASISTIÓ</span>
+                        }
                     }
-                }
-            </div>
-        }
-        else
-        {
-            <div class="turno-asistencia">
-                <span class="turno-badge inasistencia">SIN DATOS DE ASISTENCIA</span>
-            </div>
-        }
-
-        @if (Turno.profesionales != null && Turno.profesionales.Any())
-        {
-            <div class="turno-profesionales">
-                <div class="turno-label">
-                    <Icon Name="person-vcard" Size="16" Fill="#666" class="me-1" AriaLabel="Profesional" />
-                    Profesional:
                 </div>
-                <ul class="turno-profesionales-list">
-                    @foreach (var profesional in Turno.profesionales)
-                    {
-                        <li>@profesional.apellido @profesional.nombre</li>
-                    }
-                </ul>
-            </div>
-        }
+            }
+        else
+            {
+                <div class="turno-asistencia">
+                    <span class="turno-badge inasistencia">SIN DATOS DE ASISTENCIA</span>
+                </div>
+            }
 
-        @if (Turno.organizacion != null && !string.IsNullOrWhiteSpace(Turno.organizacion.nombre))
-        {
-            <div class="turno-info-item">
-                <span class="turno-label">
-                    <Icon Name="hospital" Size="16" Fill="#666" class="me-1" AriaLabel="Institución" />
-                    Institución:
-                </span>
-                <span class="turno-value">@Turno.organizacion.nombre</span>
-            </div>
-        }
+            @if (Turno?.Profesionales != null && Turno.Profesionales.Any())
+            {
+                <div class="turno-profesionales">
+                    <div class="turno-label">
+                        <Icon Name="person-vcard" Size="16" Fill="#666" class="me-1" AriaLabel="Profesional" />
+                        Profesional:
+                    </div>
+                    <ul class="turno-profesionales-list">
+                        @foreach (var profesional in Turno.Profesionales)
+                        {
+                            <li>@profesional.Apellido @profesional.Nombre</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Turno?.Organizacion?.Nombre))
+            {
+                <div class="turno-info-item">
+                    <span class="turno-label">
+                        <Icon Name="hospital" Size="16" Fill="#666" class="me-1" AriaLabel="Institución" />
+                        Institución:
+                    </span>
+                    <span class="turno-value">@($"{Turno?.Organizacion?.Nombre ?? "No disponible"}")</span>
+                </div>
+            }
+        </div>
     </div>
-</div>
 
 @code {
     [Parameter]
-    public MisTurnos Turno { get; set; } = new();
+    public Turno Turno { get; set; } = new();
 
     [Parameter]
     public int Numero { get; set; }
 
     [Parameter]
-    public EventCallback<MisTurnos> OnClick { get; set; }
-
-    private string GetFechaFormateada()
-    {
-        var fecha = DateTimeHelper.ToArgentinaTime(Turno.horaInicio);
-        return $"{Turno.horaInicio:dd/MM/yyyy} {fecha:HH:mm}";
-    }
+    public EventCallback<Turno> OnClick { get; set; }
 
     private async Task HandleClick()
     {

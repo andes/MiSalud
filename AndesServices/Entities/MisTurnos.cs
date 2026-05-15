@@ -29,6 +29,8 @@
         public string agenda_estado { get; set; }
         public string avisoSuspension { get; set; }
         public string motivoSuspension { get; set; }
+        public bool? videoConferencia { get; set; }
+        public WebexLinks? webexLinks { get; set; }
     }
 
     public class OrganizacionAgenda
@@ -202,5 +204,11 @@
         public long username { get; set; }
         public long documento { get; set; }
         public Organizacion organizacion { get; set; }
+    }
+
+    public class WebexLinks
+    {
+        public string professionalLink { get; set; }
+        public string patientLink { get; set; }
     }
 }

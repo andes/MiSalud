@@ -1,4 +1,5 @@
-﻿using AndesServices.DTOs;
+﻿using System.Net.Http.Headers;
+using AndesServices.DTOs;
 using AndesServices.Entities;
 using AndesServices.Interfaces;
 using Newtonsoft.Json;
@@ -14,11 +15,16 @@ namespace AndesServices.Services
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<Paciente> ObtenerPacientePorIdAsync(string idPaciente)
+        public async Task<Paciente> ObtenerPacientePorIdAsync(string idPaciente, string? token = null)
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("JWT", token);
+                }
 
                 using (HttpResponseMessage res = await client.GetAsync($"modules/mobileApp/paciente/{idPaciente}"))
                 {
