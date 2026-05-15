@@ -88,7 +88,13 @@
         if (AuthStateTask is null) return;
         var auth = await AuthStateTask;
         userName = auth.User.Identity?.IsAuthenticated == true ? auth.User.Identity.Name : null;
-        NombreUsuarioLogueado = auth.User.GetNombre();
+        var alias = auth.User.GetAlias();
+        var nombre = auth.User.GetNombre();
+        var apellido = auth.User.GetApellido();
+        var nombreCompleto = string.Join(" ", new[] { nombre, apellido }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        NombreUsuarioLogueado = !string.IsNullOrWhiteSpace(alias) ? alias
+            : !string.IsNullOrWhiteSpace(nombreCompleto) ? nombreCompleto
+            : userName;
     }
 
     private void CollapseNavMenu()

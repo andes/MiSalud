@@ -1,4 +1,5 @@
-﻿using AndesServices.Services;
+﻿using AndesServices.Entities;
+using AndesServices.Services;
 using AndesServices.DTOs.Login;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -33,6 +34,11 @@ namespace SaludPortal.Web.Controllers
             return new LoginService(_logger, _httpClientFactory);
         }
 
+        private PacienteService CreatePacienteService()
+        {
+            return new PacienteService(_httpClientFactory);
+        }
+
         [HttpPost("login")]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Login([FromBody] LoginViewModel model)
@@ -46,13 +52,22 @@ namespace SaludPortal.Web.Controllers
                 if (usuario == null || string.IsNullOrEmpty(usuario.token))
                     return Unauthorized("Credenciales inválidas");
 
+                var pacienteId = usuario.pacientes?.FirstOrDefault()?.id;
+                Paciente? paciente = null;
+                if (!string.IsNullOrEmpty(pacienteId))
+                {
+                    var pacienteService = CreatePacienteService();
+                    paciente = await pacienteService.ObtenerPacientePorIdAsync(pacienteId, usuario.token);
+                }
+
                 var claims = BuildClaims(
                     model.Email,
-                    usuario.pacientes?.FirstOrDefault()?.id,
+                    pacienteId,
                     usuario.documento,
                     usuario.token,
-                    usuario?.nombre,
-                    usuario?.apellido);
+                    paciente?.nombre ?? usuario?.nombre,
+                    paciente?.apellido ?? usuario?.apellido,
+                    paciente?.alias);
 
                 await SignInAsync(claims, model.RememberMe);
 
@@ -131,7 +146,7 @@ namespace SaludPortal.Web.Controllers
             return Ok(new AuthStatusDto { Authenticated = false });
         }
 
-        private static List<Claim> BuildClaims(string email, string? pacienteId, string? documento, string? token, string nombre, string apellido)
+        private static List<Claim> BuildClaims(string email, string? pacienteId, string? documento, string? token, string? nombre, string? apellido, string? alias = null)
         {
             return new List<Claim>
             {
@@ -140,7 +155,8 @@ namespace SaludPortal.Web.Controllers
                 new("Documento", documento ?? string.Empty),
                 new("Token", token ?? string.Empty),
                 new("Nombre", nombre ?? string.Empty),
-                new("Apellido", apellido ?? string.Empty)
+                new("Apellido", apellido ?? string.Empty),
+                new("Alias", alias ?? string.Empty)
             };
         }
 
