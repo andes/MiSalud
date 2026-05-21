@@ -23,36 +23,46 @@
 <PageTitle>Nuevo turno - Mi Salud</PageTitle>
 
 <div class="turnos-nuevo-container">
-    <PageHeader Title="Nuevo turno" Subtitle="Agendas disponibles" />
+    <PageHeaderWithBack Title="Nuevo turno"
+                        Subtitle="Agendas disponibles"
+                        BackHref="/misturnos"
+                        BackAriaLabel="Volver al Mis Turnos" />
 
     @if (lstAgendas != null && lstAgendas.Count > 0)
     {
         var tipoPrestacionIndex = 0;
+        var tipoPrestacioness = ObtenerTipoPrestacionesDisponibles().ToList();
+        var hayMasDeUnTipo = tipoPrestacioness.Count > 1;
         <div class="turnos-nuevo-accordion" id="accAgendas">
-            @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
+
+            @foreach (var tipoPrestaciones in tipoPrestacioness )
             {
                 var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
                 var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
+                var efectores = ObtenerEfectores(tipoPrestaciones.id);
+                var isExpanded = !hayMasDeUnTipo;
+
                 tipoPrestacionIndex++;
                 <div class="turnos-nuevo-accordion-item">
                     <h2 class="turnos-nuevo-accordion-header" id="@tipoId">
-                        <button class="turnos-nuevo-accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
+                        <button class="turnos-nuevo-accordion-button @(isExpanded ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="@(isExpanded ? "true" : "false")" aria-controls="@collapseTipoId">
                             <Icon Name="calendar-check" Size="20" Fill="#87b867" class="me-2" AriaLabel="Prestación" />
                             @tipoPrestaciones.term
                         </button>
                     </h2>
-                    <div id="@collapseTipoId" class="turnos-nuevo-accordion-collapse collapse show" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
+                    <div id="@collapseTipoId" class="turnos-nuevo-accordion-collapse collapse @(isExpanded ? "show" : "")" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
                         <div class="turnos-nuevo-accordion-body">
                             <div class="turnos-nuevo-efectores-list">
-                                @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
+                                
+                                @foreach (var efector in efectores)
                                 {
-                                    var efectorId = efectores.Efector._id;
+                                    var efectorId = efector.Efector._id;
                                     var turnosAgrupados = ObtenerTurnosAgrupadosPorFecha(tipoPrestaciones.id, efectorId);
-                                    <EfectorCard EfectorNombre="@efectores.Efector.nombre" Domicilio="@efectores.Domicilio">
+                                    <EfectorCard EfectorNombre="@efector.Efector.nombre" Domicilio="@efector.Domicilio">
                                         @if (turnosAgrupados.Any())
                                         {
                                             <TurnoHorarioGrid TurnosPorFecha="@turnosAgrupados" 
-                                                               OnTurnoSeleccionado="@(async (turno) => await HandleTurnoSeleccionado(turno, tipoPrestaciones.term, efectores.Efector.nombre, efectores.Domicilio, tipoPrestaciones.id, efectorId))" />
+                                                               OnTurnoSeleccionado="@(async (turno) => await HandleTurnoSeleccionado(turno, tipoPrestaciones.term, efector.Efector.nombre, efector.Domicilio, tipoPrestaciones.id, efectorId))" />
                                         }
                                     </EfectorCard>
                                 }
@@ -91,10 +101,8 @@
             HideHeader = true
         };
 
-        string Paciente = _unPaciente.nombre + " " + _unPaciente.apellido;
-
         var parameters = new ModalParameters()
-        .Add(nameof(TurnoNuevoConfirmar.Paciente), Paciente)
+        .Add(nameof(TurnoNuevoConfirmar.Paciente), _unPaciente?.GetDisplayName())
         .Add(nameof(TurnoNuevoConfirmar.FechaHoraTurno), Fecha.ToString("dd/MM/yyyy") + " " + Hora.ToString("HH:mm"))
         .Add(nameof(TurnoNuevoConfirmar.TipoPrestacion), TipoPrestacion)
         .Add(nameof(TurnoNuevoConfirmar.EfectorNombre), Efector)

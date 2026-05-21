@@ -22,7 +22,10 @@
 <PageTitle>Historial de turnos - Mi Salud</PageTitle>
 
 <div class="turnos-historial-container">
-    <PageHeader Title="Mis turnos: Historial" Subtitle="Historial de turnos médicos" />
+    <PageHeaderWithBack Title="Mis turnos: Historial" 
+                        Subtitle="Historial de turnos médicos"
+                        BackHref="/misturnos"
+                        BackAriaLabel="Volver al Mis Turnos" />
 
     @if (turnos == null || !turnos.Any())
     {

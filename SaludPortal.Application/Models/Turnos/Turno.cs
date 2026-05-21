@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SaludPortal.Application.Models;
 
@@ -30,10 +31,8 @@ public class Paciente
 
     public string? GetDisplayName()
     {
-        if (!string.IsNullOrWhiteSpace(Alias))
-            return Alias;
-        var nombreCompleto = string.Join(" ", new[] { Nombre, Apellido }.Where(s => !string.IsNullOrWhiteSpace(s)));
-        return !string.IsNullOrWhiteSpace(nombreCompleto) ? nombreCompleto : null;
+        var nombreAlias = string.IsNullOrEmpty(Nombre) ? Alias : Nombre;
+        return $"{nombreAlias} {Apellido}";
     }
 }
 

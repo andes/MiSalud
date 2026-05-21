@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AndesServices.Entities
 {
@@ -52,6 +53,17 @@ namespace AndesServices.Entities
         public List<object> ofertePrestacional { get; set; }
         public List<object> trasladosEspeciales { get; set; }
         public List<string>? adjuntos { get; set; }
+
+        public string? GetDisplayName()
+        {
+            return GetDisplayName(nombre, apellido, alias);
+        }
+
+        public static string? GetDisplayName(string? nombre, string? apellido, string? alias)
+        {
+            var nombreAlias = string.IsNullOrEmpty(nombre) ? alias : nombre;
+            return $"{nombreAlias} {apellido}";
+        }
     }
 
     public class LugarNacimiento

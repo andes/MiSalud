@@ -26,15 +26,10 @@
 <PageTitle>Mis laboratorios - Mi Salud</PageTitle>
 
 <div class="laboratorios-container">
-    <div class="laboratorios-header">
-        <PageHeader Title="Mis Laboratorios" Subtitle="Historial de informes de laboratorio" />
-        <div class="laboratorios-header__back">
-            <ButtonPrimaryOutlined Href="/"
-                                   Text="VOLVER"
-                                   AriaLabel="Volver al inicio"
-                                   Size="sm" />
-        </div>
-    </div>
+    <PageHeaderWithBack Title="Mis Laboratorios"
+                        Subtitle="Historial de informes de laboratorio"
+                        BackHref="/"
+                        BackAriaLabel="Volver al inicio" />
 
     @if (Model.LstMisLaboratorios != null && _visibleLabs != null && _visibleLabs.Any())
     {

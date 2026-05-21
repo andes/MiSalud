@@ -18,7 +18,10 @@
 <PageTitle>Mis vacunas - Mi Salud</PageTitle>
 
 <div class="vacunaciones-container">
-    <PageHeader Title="Mis Vacunas" Subtitle="Historial de vacunaciones aplicadas" />
+    <PageHeaderWithBack Title="Mis Vacunas"
+                        Subtitle="Historial de vacunaciones aplicadas"
+                        BackHref="/"
+                        BackAriaLabel="Volver al Inicio" />
 
     @if (lstVacunaciones != null && lstVacunaciones.Any())
     {

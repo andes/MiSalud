@@ -43,7 +43,7 @@
     line-height: 1.2;
     height: calc(1.4em * 2);
     color: var(--verde-nqn-2);
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem;
     border-radius: 8px;
     font-weight: bold; 
     font-size: 1.25rem;   
@@ -66,6 +66,7 @@
 
 .turno-futuro-body {
     padding-top: 0.5rem;
+    padding-left: 0.25rem;
     flex: 1;
 }
 

@@ -1,0 +1,28 @@
+@using Microsoft.AspNetCore.Components
+
+<div class="page-header-with-back">
+    <PageHeader Title="@Title" Subtitle="@Subtitle" />
+    <div class="page-header-with-back__back">
+        <ButtonPrimaryOutlined Href="@BackHref"
+                               Text="@BackText"
+                               AriaLabel="@BackAriaLabel"
+                               Size="sm" />
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Subtitle { get; set; }
+
+    [Parameter, EditorRequired]
+    public string BackHref { get; set; } = string.Empty;
+
+    [Parameter]
+    public string BackText { get; set; } = "VOLVER";
+
+    [Parameter, EditorRequired]
+    public string BackAriaLabel { get; set; } = string.Empty;
+}

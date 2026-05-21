@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Icons
 @inject NavigationManager Nav
 @inject IJSRuntime JS
@@ -78,7 +79,7 @@
 </CascadingAuthenticationState>
 @code {
 
-    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+        [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
     private string? userName;
     private string? NombreUsuarioLogueado;
     private bool isNavMenuOpen;
@@ -91,10 +92,8 @@
         var alias = auth.User.GetAlias();
         var nombre = auth.User.GetNombre();
         var apellido = auth.User.GetApellido();
-        var nombreCompleto = string.Join(" ", new[] { nombre, apellido }.Where(s => !string.IsNullOrWhiteSpace(s)));
-        NombreUsuarioLogueado = !string.IsNullOrWhiteSpace(alias) ? alias
-            : !string.IsNullOrWhiteSpace(nombreCompleto) ? nombreCompleto
-            : userName;
+        var nombreAlias = string.IsNullOrEmpty(nombre) ? alias : nombre;
+        NombreUsuarioLogueado = Paciente.GetDisplayName(nombre, apellido, alias);
     }
 
     private void CollapseNavMenu()

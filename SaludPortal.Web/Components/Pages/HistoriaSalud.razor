@@ -22,7 +22,10 @@
 <PageTitle>Historia de salud - Mi Salud</PageTitle>
 
 <div class="historia-salud-container">
-    <PageHeader Title="Historia de Salud" Subtitle="Categorías de prestaciones médicas" />
+    <PageHeaderWithBack Title="Historia de Salud"
+                        Subtitle="Categorías de prestaciones médicas" 
+                        BackHref="/"
+                        BackAriaLabel="Volver al Inicio" />
 
     @if (Model.lstCategoriasHistoriaSalud != null && Model.lstCategoriasHistoriaSalud.Any())
     {

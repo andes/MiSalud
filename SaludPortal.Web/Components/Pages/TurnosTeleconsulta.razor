@@ -24,7 +24,10 @@
 <PageTitle>Telesalud - Mi Salud</PageTitle>
 
 <div class="teleconsulta-container">
-    <PageHeader Title="Telesalud" Subtitle="Solicite atención médica a distancia" />
+    <PageHeaderWithBack Title="Telesalud" 
+                        Subtitle="Solicite atención médica a distancia"
+                        BackHref="/misturnos"
+                        BackAriaLabel="Volver al Mis Turnos" />
 
 @if (!consentimientoAceptado)
 {
@@ -109,9 +112,10 @@
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
-    private void AceptarConsentimiento()
+    private async Task AceptarConsentimiento()
     {
         consentimientoAceptado = true;
+        await ObtenerTurnosTeleconsulta();
         StateHasChanged();
     }
 
@@ -195,6 +199,12 @@
         if (string.IsNullOrEmpty(token))
             return;
 
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(pacienteId))
+            return;
+    }
+
+    private async Task ObtenerTurnosTeleconsulta() {
         var pacienteId = PacienteId;
         if (string.IsNullOrEmpty(pacienteId))
             return;

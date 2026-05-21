@@ -10,13 +10,10 @@
 <PageTitle>Turno confirmado - Mi Salud</PageTitle>
 
 <div class="turnos-mensaje-container">
-    <div class="turnos-mensaje-header">
-        <PageHeader Title="Mis turnos" />
-        <div class="turnos-mensaje-header__back">
-            <ButtonPrimaryOutlined Href="/misturnos" Text="Volver a mis turnos" AriaLabel="Volver a mis turnos"
-                                   Size="sm" />
-        </div>
-    </div>
+    <PageHeaderWithBack Title="Mis turnos"
+                        BackHref="/misturnos"
+                        BackText="Volver a mis turnos"
+                        BackAriaLabel="Volver a mis turnos" />
 
     <div class="turnos-mensaje-card turnos-mensaje-success">
         <div class="turnos-mensaje-icon-wrapper">

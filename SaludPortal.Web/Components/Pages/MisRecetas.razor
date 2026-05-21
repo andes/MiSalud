@@ -17,15 +17,10 @@
 <PageTitle>Mis recetas - Mi Salud</PageTitle>
 
 <div class="recetas-container">
-    <div class="recetas-header">
-        <PageHeader Title="Mis Recetas" Subtitle="Historial de recetas médicas" />
-        <div class="recetas-header__back">
-            <ButtonPrimaryOutlined Href="/historiasalud"
-                                   Text="VOLVER"
-                                   AriaLabel="Volver al historial de salud"
-                                   Size="sm" />
-        </div>
-    </div>
+    <PageHeaderWithBack Title="Mis Recetas"
+                        Subtitle="Historial de recetas médicas"
+                        BackHref="/historiasalud"
+                        BackAriaLabel="Volver al historial de salud" />
 
     @if (lstRecetas != null && lstRecetas.Any())
     {

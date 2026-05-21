@@ -14,18 +14,6 @@
     gap: 1.5rem;
 }
 
-.laboratorios-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-}
-
-.laboratorios-header__back {
-    flex-shrink: 0;
-    margin-top: .5rem;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .laboratorios-container {

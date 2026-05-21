@@ -1,14 +1,10 @@
-.centros-salud-page {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
+
 
 .centros-content {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
-    height: calc(100vh - 8rem);
+    height: calc(100vh - 14rem);
 }
 
 .mapa-column {

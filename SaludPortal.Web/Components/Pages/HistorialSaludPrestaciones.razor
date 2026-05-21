@@ -23,15 +23,10 @@
 <PageTitle>@($"Historia de salud - {categoriaSeleccionada?.Titulo} - Mi Salud")</PageTitle>
 
 <div class="prestaciones-container">
-    <div class="prestaciones-header">
-        <PageHeader Title="@categoriaSeleccionada?.Titulo" Subtitle="Historial de prestaciones médicas" />
-        <div class="prestaciones-header__back">
-            <ButtonPrimaryOutlined Href="/historiasalud"
-                                   Text="VOLVER"
-                                   AriaLabel="Volver a Historia de Salud"
-                                   Size="sm" />
-        </div>
-    </div>
+    <PageHeaderWithBack Title="@categoriaSeleccionada?.Titulo"
+                        Subtitle="Historial de prestaciones médicas"
+                        BackHref="/historiasalud"
+                        BackAriaLabel="Volver a Historia de Salud" />
 
     @if (cargando)
     {

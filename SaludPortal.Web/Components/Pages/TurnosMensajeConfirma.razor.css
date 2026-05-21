@@ -66,18 +66,6 @@
     margin-top: 2rem;
 }
 
-.turnos-mensaje-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-}
-
-.turnos-mensaje-header__back {
-    flex-shrink: 0;
-    margin-top: .5rem;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .turnos-mensaje-container {
