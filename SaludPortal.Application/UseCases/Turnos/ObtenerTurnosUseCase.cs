@@ -23,11 +23,14 @@ public class ObtenerTurnosUseCase
             conceptosTeleconsulta = [.. conceptosTurneablesList.Select(c => c.conceptId)];
         }
 
+        var ahora = DateTime.Now;
+
         // Obtengo los turnos
         return (await _misTurnosService.ObtenerMisTurnosAsync(""))
-            .Where(t => t != null && t.horaInicio >= DateTime.Now)
-            .OrderBy(t => t.horaInicio)
+            .Where(t => t != null)
             .Select(t => t.MapToTurno(conceptosTeleconsulta))
+            .Where(t => t.FechaHora >= ahora || (t.VideoConferencia && t.FechaHora.AddHours(1) >= ahora))
+            .OrderBy(t => t.FechaHora)
             .ToList();
     }
 }
