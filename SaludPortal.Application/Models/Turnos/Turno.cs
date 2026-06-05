@@ -12,6 +12,7 @@ public class Turno
     public TipoPrestacion? TipoPrestacion { get; set; }
     public Organizacion? Organizacion { get; set; }
     public DateTime FechaHora { get; set; }
+    public int DuracionMinutos { get; set; }
     public string? Asistencia { get; set; }
     public DateTime? FechaHoraAsistencia { get; set; }
     public string? AgendaId { get; set; }

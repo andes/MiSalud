@@ -29,7 +29,7 @@ public class ObtenerTurnosUseCase
         return (await _misTurnosService.ObtenerMisTurnosAsync(""))
             .Where(t => t != null)
             .Select(t => t.MapToTurno(conceptosTeleconsulta))
-            .Where(t => t.FechaHora >= ahora || (t.VideoConferencia && t.FechaHora.AddHours(1) >= ahora))
+            .Where(t => t.FechaHora >= ahora || (t.VideoConferencia && t.FechaHora.AddMinutes(t.DuracionMinutos) >= ahora))
             .OrderBy(t => t.FechaHora)
             .ToList();
     }
