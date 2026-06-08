@@ -2,6 +2,7 @@ using System;
 using AndesServices.Interfaces;
 using SaludPortal.Application.Mappers;
 using SaludPortal.Application.Models;
+using SaludPortal.Application.Utils;
 
 namespace SaludPortal.Application.UseCases;
 
@@ -23,7 +24,7 @@ public class ObtenerTurnosUseCase
             conceptosTeleconsulta = [.. conceptosTurneablesList.Select(c => c.conceptId)];
         }
 
-        var ahora = DateTime.Now;
+        var ahora = DateTimeHelper.ToArgentinaTime(DateTime.UtcNow);
 
         // Obtengo los turnos
         return (await _misTurnosService.ObtenerMisTurnosAsync(""))

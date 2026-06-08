@@ -1,14 +1,15 @@
-﻿using AndesServices.Entities;
+﻿using AndesServices.DTOs;
+using AndesServices.DTOs.Login;
+using AndesServices.Entities;
 using AndesServices.Interfaces;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Text;
+using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Net.Http;
-using AndesServices.DTOs.Login;
-using AndesServices.DTOs;
+using System.Text;
 
 namespace AndesServices.Services
 {
@@ -16,11 +17,13 @@ namespace AndesServices.Services
     {
         private readonly ILogger<LoginService> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly string _tokenRestablecerPassword;
 
-        public LoginService(ILogger<LoginService> logger, IHttpClientFactory httpClientFactory) // Inject logger via constructor
+        public LoginService(ILogger<LoginService> logger, IHttpClientFactory httpClientFactory, IConfiguration configuration) // Inject logger via constructor
         {
             _logger = logger; // Assign the injected logger
             _httpClientFactory = httpClientFactory;
+            _tokenRestablecerPassword = configuration["TokenRestablecerPassword"] ?? string.Empty;
         }
 
         public async Task<User?> Login(string email, string password)
@@ -145,6 +148,14 @@ namespace AndesServices.Services
             var client = _httpClientFactory.CreateClient("Andes-NoJWT");
             var response = await client.PostAsJsonAsync("modules/mobileApp/olvide-password", request);
             return await response.Content.ReadFromJsonAsync<OlvideContraseniaResponseDto>();
+        }
+
+        public async Task<bool> RestablecerPassword(string email)
+        {
+            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
+            client.DefaultRequestHeaders.Add("Authorization", "JWT " + _tokenRestablecerPassword);
+            var response = await client.GetFromJsonAsync<RestablecerPasswordDto>($"modules/mobileApp/restablecerPassword?email={email}");
+            return response != null && response.RestablecerPassword;
         }
 
         public async Task<ReestablecerPasswordResponseDto?> ReestablecerPassword(ReestablecerPasswordRequestDto request)

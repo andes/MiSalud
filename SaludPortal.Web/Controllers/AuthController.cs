@@ -15,6 +15,7 @@ namespace SaludPortal.Web.Controllers
     public class AuthController : ControllerBase
     {
         private readonly CustomAuthenticationStateProvider _authStateProvider; // Cambia el tipo
+        private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<LoginService> _logger;
 
@@ -25,13 +26,14 @@ namespace SaludPortal.Web.Controllers
             ILogger<LoginService> logger)
         {
             _authStateProvider = authStateProvider;
+            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
         private LoginService CreateLoginService()
         {
-            return new LoginService(_logger, _httpClientFactory);
+            return new LoginService(_logger, _httpClientFactory, _configuration);
         }
 
         private PacienteService CreatePacienteService()

@@ -107,6 +107,15 @@
 
             if (result != null && result.Valid)
             {
+                var restablecerPassword = await LoginService.RestablecerPassword(_model.Email);
+                if (restablecerPassword)
+                {
+                    Nav.NavigateTo("/reestablecer-password");
+                }
+                else
+                {
+                    Nav.NavigateTo("/ingresar-codigo-activacion");
+                }
                 mensajeExito = true;
             }
             else if (result != null && !result.Valid && !string.IsNullOrWhiteSpace(result.Error))

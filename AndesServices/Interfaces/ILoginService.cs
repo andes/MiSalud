@@ -13,6 +13,7 @@ namespace AndesServices.Interfaces
         Task<List<T>> GetAllUsers();
 
         Task<OlvideContraseniaResponseDto?> OlvideContrasenia(OlvideContraseniaRequestDto request);
+        Task<bool> RestablecerPassword(string email);
         Task<ReestablecerPasswordResponseDto?> ReestablecerPassword(ReestablecerPasswordRequestDto request);
         Task<bool> ValidarConexionXroadss();
 
