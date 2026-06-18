@@ -1,14 +1,12 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
-@using AndesServices.Interfaces
+@using SaludPortal.Application.UseCases.Turnos
 @using AndesServices.Entities
 
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject MessageService MessageService
-@inject IPaciente _unPacienteService
-@inject IMisTurnos _unTurnoService
+@inject CancelarTurnoUseCase _cancelarTurnoUseCase
 
 @inherits AuthenticatedComponentBase
 
@@ -30,7 +28,7 @@
         <hr />
         <p>
             <div><label><strong>Paciente</strong></label></div>
-            <div><label>@_unPaciente?.nombre @_unPaciente?.apellido</label></div>
+            <div><label>@NombrePaciente @ApellidoPaciente</label></div>
         </p>
         <hr />
         @if (!EsTeleconsulta)
@@ -55,29 +53,11 @@
     <button @onclick="Close" class="btn btn-outline-primary" title="Cerrar">Cerrar</button>
     <button @onclick="() => CancelarTurno()" class="btn btn-primary" title="Confirmar">Confirmar</button>
 </div>
+
 @code {
     [CascadingParameter] BlazoredModalInstance ModalCancelarConfirmarTurno { get; set; } = default!;
     [CascadingParameter] IModalService ModalService { get; set; } = default!;
-    private Paciente? _unPaciente = new Paciente();
-    private MisTurnos? _unTurno = new MisTurnos();
-    private string token = "";
 
-    protected override async Task OnAuthenticatedInitializedAsync()
-    {
-        token = BackendToken;
-        if (string.IsNullOrEmpty(token))
-            return;
-
-        var pacienteId = PacienteId;
-        if (string.IsNullOrEmpty(token))
-            return;
-
-        // Obtengo el paciente
-        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(pacienteId);
-
-    }
-
-    // [Parameter] public string Paciente { get; set; }
     [Parameter] public string FechaHoraTurno { get; set; }
     [Parameter] public string TipoPrestacion { get; set; }
     [Parameter] public string EfectorNombre { get; set; }
@@ -86,7 +66,8 @@
     [Parameter] public string IdBloque { get; set; }
     [Parameter] public string IdAgenda { get; set; }
     [Parameter] public bool EsTeleconsulta { get; set; }
-    [Parameter] public TipoPrestacion _unTipoPrestacion { get; set; }
+    [Parameter] public string NombrePaciente { get; set; }
+    [Parameter] public string ApellidoPaciente { get; set; }
 
     private async Task Close() => await ModalCancelarConfirmarTurno.CloseAsync();
 
@@ -94,25 +75,23 @@
     {
         _spinnerService.Show();
 
-        if (_unPaciente != null)
-        {
-            bool resultado = await _unTurnoService.CancelarTurnoAsync(IdTurno, IdBloque, IdAgenda, _unPaciente);
-            _spinnerService.Hide();
+        var pacienteId = PacienteId;
+        bool resultado = await _cancelarTurnoUseCase.EjecutarAsync(pacienteId, IdTurno, IdBloque, IdAgenda);
+        _spinnerService.Hide();
 
-            if (resultado)
-            {
-                await ModalCancelarConfirmarTurno.CloseAsync();
-                MessageService.Title = "Turno cancelado";
-                MessageService.Content = "El turno ha sido cancelado.";
-                Nav.NavigateTo("/turnosmensajecancelado");
-            }
-            else
-            {
-                await ModalCancelarConfirmarTurno.CloseAsync();
-                MessageService.Title = "Turno sin cancelar";
-                MessageService.Content = "No se pudo cancelar el turno. Posiblemente el turno ya no se encontraba disponible. Por favor, intente nuevamente.";
-                Nav.NavigateTo("/turnosmensajecancelado");
-            }
+        if (resultado)
+        {
+            await ModalCancelarConfirmarTurno.CloseAsync();
+            MessageService.Title = "Turno cancelado";
+            MessageService.Content = "El turno ha sido cancelado.";
+            Nav.NavigateTo("/turnosmensajecancelado");
+        }
+        else
+        {
+            await ModalCancelarConfirmarTurno.CloseAsync();
+            MessageService.Title = "Turno sin cancelar";
+            MessageService.Content = "No se pudo cancelar el turno. Posiblemente el turno ya no se encontraba disponible. Por favor, intente nuevamente.";
+            Nav.NavigateTo("/turnosmensajecancelado");
         }
     }
 }

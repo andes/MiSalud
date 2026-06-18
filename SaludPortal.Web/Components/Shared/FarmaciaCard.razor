@@ -1,5 +1,5 @@
-@using AndesServices.Entities
 @using Microsoft.AspNetCore.Components
+@using SaludPortal.Application.Models.Farmacias
 @using SaludPortal.Web.Components.Icons
 
 <div class="farmacia-card">
@@ -43,7 +43,7 @@
 
 @code {
     [Parameter]
-    public FarmaciasTurno Farmacia { get; set; } = new();
+    public Farmacia Farmacia { get; set; } = new();
 
     private string GetGoogleMapsUrl()
     {

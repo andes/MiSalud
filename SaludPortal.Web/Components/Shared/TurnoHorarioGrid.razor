@@ -1,8 +1,7 @@
 @using Microsoft.AspNetCore.Components
+@using SaludPortal.Application.Models
+@using SaludPortal.Application.Models.Turnos
 @using SaludPortal.Web.Components.Icons
-@using SaludPortal.Application.Utils
-@using AndesServices.Entities
-@using System.Linq
 
 <div class="turno-horario-grid">
     @foreach (var fechaGrupo in TurnosPorFecha)
@@ -19,11 +18,11 @@
             <div class="turno-horarios-container">
                 @foreach (var turno in fechaGrupo.Turnos)
                 {
-                    <button class="turno-horario-button" 
-                            title="Seleccionar turno @DateTimeHelper.ToArgentinaTime(turno.horaInicio).ToString("HH:mm")"
+                    <button class="turno-horario-button"
+                            title="Seleccionar turno @turno.FechaHora.ToString("HH:mm")"
                             @onclick="() => OnTurnoSeleccionado.InvokeAsync(turno)">
                         <Icon Name="clock-history" Size="16" Fill="currentColor" class="me-1" AriaLabel="Hora" />
-                        @DateTimeHelper.ToArgentinaTime(turno.horaInicio).ToString("HH:mm")
+                        @turno.FechaHora.ToString("HH:mm")
                     </button>
                 }
             </div>
@@ -36,12 +35,5 @@
     public List<TurnoFechaGrupo> TurnosPorFecha { get; set; } = new();
 
     [Parameter]
-    public EventCallback<MisTurnos> OnTurnoSeleccionado { get; set; }
-
-    public class TurnoFechaGrupo
-    {
-        public DateTime Fecha { get; set; }
-        public int Disponibles { get; set; }
-        public List<MisTurnos> Turnos { get; set; } = new();
-    }
+    public EventCallback<TurnoDisponible> OnTurnoSeleccionado { get; set; }
 }

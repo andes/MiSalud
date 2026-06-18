@@ -4,16 +4,13 @@
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
-@using SaludPortal.Web.Services
-@using AndesServices.Interfaces
-@using System.Security.Claims
-@using AndesServices.Entities
-@using System.Globalization
-@using System.Linq
+@using SaludPortal.Application.UseCases.Vacunaciones
+@using SaludPortal.Application.Models.Vacunaciones
+
 @inherits AuthenticatedComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject IVacunacion _vacunacionService
+@inject ObtenerVacunacionesUseCase _obtenerVacunacionesUseCase
 
 <PageTitle>Mis vacunas - Mi Salud</PageTitle>
 
@@ -42,7 +39,7 @@
 </div>
 
 @code {
-    private List<Vacunacion> lstVacunaciones = new List<Vacunacion>();
+    private List<VacunacionModel> lstVacunaciones = new List<VacunacionModel>();
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -53,7 +50,7 @@
         _spinnerService.Show();
         try
         {
-            lstVacunaciones = await _vacunacionService.ObtenerCampañasVacunacion();
+            lstVacunaciones = await _obtenerVacunacionesUseCase.EjecutarAsync();
         }
         finally
         {

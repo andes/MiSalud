@@ -4,17 +4,18 @@
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
 
-@using AndesServices.DTOs.Login
-@using AndesServices.Entities
-@using AndesServices.Interfaces
+@using SaludPortal.Application.UseCases.Auth
+@using SaludPortal.Application.UseCases.Account
 @using SaludPortal.Web.Models
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq
+
 @inject NavigationManager Nav
 @inject ILogger<Registro> Logger
-@inject ILoginService<User> LoginService
+@inject ValidarConexionXroadssUseCase ValidarConexionXroadssUseCase
+@inject RegistrarCuentaUseCase RegistrarCuentaUseCase
 @inject AppToastService ToastService
 
 <PageTitle>Registrarse - Mi Salud</PageTitle>
@@ -169,21 +170,6 @@
         await CheckXroadssConnectionAsync();
     }
 
-    private static bool EqualsNormalized(string? left, string? right)
-    {
-        return string.Equals(left?.Trim(), right?.Trim(), StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// Agrega con ceros a la izquierda el numero de tramite.
-    /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    private static string PadLeftNroTramite(string? value)
-    {
-        return (value ?? string.Empty).Trim().PadLeft(11, '0');
-    }
-
     private bool HasFieldError(string fieldName)
     {
         return _editForm?.EditContext?.GetValidationMessages(new FieldIdentifier(_model, fieldName)).Any() ?? false;
@@ -192,13 +178,11 @@
     private async Task CheckXroadssConnectionAsync()
     {
         if (_xroadssConnectionChecked)
-        {
             return;
-        }
 
         _xroadssConnectionChecked = true;
 
-        var xroadssConnection = await LoginService.ValidarConexionXroadss();
+        var xroadssConnection = await ValidarConexionXroadssUseCase.EjecutarAsync();
         if (!xroadssConnection)
         {
             ToastService.ShowError("Error al validar conexión con xroadss", 10000);
@@ -220,88 +204,20 @@
                 _ => throw new InvalidOperationException("Sexo inválido")
             };
 
-            VerificarUsuarioXroadssResponseDto? xroadssResultDto = null;
+            var result = await RegistrarCuentaUseCase.EjecutarAsync(
+                _model.Documento, sexo, _model.Email, _model.Telefono,
+                _model.Apellidos, _model.Nombres, _model.Ejemplar, _model.NroTramite, _model.FechaNacimiento);
 
-            try
+            if (!result.success)
             {
-                xroadssResultDto = await LoginService.VerificarUsuarioXroads(_model.Documento, sexo);
-            }
-            catch (Exception ex)
-            {
-                _errors.Add("Error al obtener datos del Xroadss: " + ex.Message);
-                throw ex;
-            }
-
-            if (xroadssResultDto != null && xroadssResultDto.Resultado == "error")
-            {
-                _errors.Add(xroadssResultDto.Mensaje ?? "Error desconocido");
+                _errors.Add(result.error ?? "Error desconocido al registrar usuario.");
                 return;
             }
 
-            if (xroadssResultDto?.Data == null)
-            {
-                _errors.Add("No se obtuvieron datos válidos del RENAPER.");
-                return;
-            }
-            var data = xroadssResultDto.Data;
-            var idTramitePrincipal = PadLeftNroTramite(data.IdTramitePrincipal);
-
-            if (!EqualsNormalized(data.Apellido, _model.Apellidos)
-                || !EqualsNormalized(data.Nombres, _model.Nombres)
-                || !EqualsNormalized(data.Ejemplar, _model.Ejemplar)
-                || !EqualsNormalized(idTramitePrincipal, _model.NroTramite)
-                || !DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaXroadss)
-                || fechaXroadss.Date != _model.FechaNacimiento.Date
-            )
-            {
-                _errors.Add("Datos incorrectos.");
-            }
-
-            if (_errors.Count > 0)
-            {
-                return;
-            }            
-
-            // registrar usuario
-            var scanText = $"{_model.NroTramite}@{_model.Apellidos.ToUpper()}@{_model.Nombres.ToUpper()}@{sexo}@{_model.Documento}@{_model.Ejemplar}@{_model.FechaNacimiento:dd/MM/yyyy}";
-            var registroResult = await LoginService.Registro(new RegistroRequestDto
-            {
-                ScanText = scanText,
-                Email = _model.Email,
-                Documento = _model.Documento,
-                Sexo = _model.Sexo,
-                Telefono = _model.Telefono
-            });
-
-            RegistroResponseDto? response = registroResult.response;
-            string? error = registroResult.errorMessage;
-           
-            if (response == null && error != null)
-            {
-                if (error != "Ya existe una cuenta activa con ese e-mail")
-                {
-                    throw new Exception(error);
-                }
-                Logger.LogError("Error desconocido al registrar usuario. Response: {@Response}, Error: {Error}", response, error);
-                _errors.Add(error);
-                return;
-            }
-            if (response != null && response.ActivacionApp)
-            {
-                _errors.Add("Ya existe una cuenta activa con ese e-mail");
-                return;
-            }
-            if (response != null && !response.ActivacionApp)
-            {
-                _success = "Cuenta creada exitosamente. Redirigiendo a validar código de activación...";
-                StateHasChanged();
-                await Task.Delay(2000);
-                Nav.NavigateTo("/ingresar-codigo-activacion?codigoEnviado=true", forceLoad: true);
-                return;
-            }
-            Logger.LogError("Error desconocido al registrar usuario. Response: {@Response}, Error: {Error}", response, error);
-            _errors.Add("Error desconocido al registrar usuario.");
-            return;
+            _success = "Cuenta creada exitosamente. Redirigiendo a validar código de activación...";
+            StateHasChanged();
+            await Task.Delay(2000);
+            Nav.NavigateTo("/ingresar-codigo-activacion?codigoEnviado=true", forceLoad: true);
         }
         catch (Exception ex)
         {
@@ -314,7 +230,7 @@
         }
     }
 
-    private void GoToLogin()
+    private async Task GoToLogin()
     {
         Nav.NavigateTo("/login", true);
     }

@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace SaludPortal.Application.Models;
+namespace SaludPortal.Application.Models.Turnos;
 
 public class Turno
 {
     public string Id { get; set; }
     public bool EsTeleconsulta { get; set; }
-    public Paciente? Paciente { get; set; }
+    public PacienteTurno? Paciente { get; set; }
     public TipoPrestacion? TipoPrestacion { get; set; }
     public Organizacion? Organizacion { get; set; }
     public DateTime FechaHora { get; set; }
@@ -21,9 +17,10 @@ public class Turno
     public List<Profesional>? Profesionales { get; set; }
     public bool VideoConferencia { get; set; }
     public WebexLinks? WebexLinks { get; set; }
+    public string? Estado { get; set; }
 }
 
-public class Paciente
+public class PacienteTurno
 {
     public string? Nombre { get; set; }
     public string? Apellido { get; set; }

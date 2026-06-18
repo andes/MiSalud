@@ -1,13 +1,13 @@
 ﻿@page "/home"
-@using AndesServices.Entities
-@using AndesServices.Interfaces
-@using SaludPortal.Web.Components.Shared
+
+@using SaludPortal.Application.UseCases.Auth
 @using SaludPortal.Web.Components.Modals
+
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 @inject IJSRuntime JS
-@inject ILoginService<User> LoginService
+@inject ValidarConexionXroadssUseCase ValidarConexionXroadssUseCase
 @inject AppToastService ToastService
 @inject ILogger<Home> Logger
 
@@ -74,7 +74,7 @@
 
         _xroadssConnectionChecked = true;
 
-        var xroadssConnection = await LoginService.ValidarConexionXroadss();
+        var xroadssConnection = await ValidarConexionXroadssUseCase.EjecutarAsync();
         if (!xroadssConnection)
         {
             ToastService.ShowError("Error al validar conexión con xroadss.", 10000);

@@ -1,44 +1,37 @@
-@using AndesServices.Entities
+@using SaludPortal.Application.Models.Vacunaciones
 @using Microsoft.AspNetCore.Components
-@using System.Globalization
 
 <div class="vacunacion-card">
     <div class="vacunacion-header">
-        @if (!string.IsNullOrWhiteSpace(Vacunacion.vacuna))
+        @if (!string.IsNullOrWhiteSpace(Vacunacion.Vacuna))
         {
-            <span class="vacunacion-tipo">@Vacunacion.vacuna</span>
+            <span class="vacunacion-tipo">@Vacunacion.Vacuna</span>
         }
     </div>
     <div class="vacunacion-body">
-        @if (!string.IsNullOrWhiteSpace(Vacunacion.efector))
+        @if (!string.IsNullOrWhiteSpace(Vacunacion.Efector))
         {
             <div class="vacunacion-info">
                 <span class="vacunacion-label">Lugar de vacunación:</span>
-                <span class="vacunacion-value">@Vacunacion.efector</span>
+                <span class="vacunacion-value">@Vacunacion.Efector</span>
             </div>
         }
-        @if (!string.IsNullOrWhiteSpace(Vacunacion.dosis))
+        @if (!string.IsNullOrWhiteSpace(Vacunacion.Dosis))
         {
             <div class="vacunacion-info">
                 <span class="vacunacion-label">Dosis:</span>
-                <span class="vacunacion-value">@Vacunacion.dosis</span>
+                <span class="vacunacion-value">@Vacunacion.Dosis</span>
             </div>
         }
-        @if (!string.IsNullOrWhiteSpace(Vacunacion.fechaAplicacion))
-        {
-            
-            var fechaAplicacion = DateTime.Parse(Vacunacion.fechaAplicacion.Substring(0, 10), new CultureInfo("es-ES"));
-            var fechaFormateada = $"{fechaAplicacion.ToString("dd")} de {fechaAplicacion.ToString("MMMM", new CultureInfo("es-ES"))} de {fechaAplicacion.ToString("yyyy")}";
-            
-            <div class="vacunacion-info">
-                <span class="vacunacion-label">Fecha de aplicación:</span>
-                <span class="vacunacion-value">@fechaFormateada</span>
+        <div class="vacunacion-info">
+            <span class="vacunacion-label">Fecha de aplicación:</span>
+            <span class="vacunacion-value">@Vacunacion.FechaAplicacion.ToString("dd 'de' MMMM 'de' yyyy", new
+                                System.Globalization.CultureInfo("es-ES"))</span>
             </div>
-        }
+        </div>
     </div>
-</div>
 
 @code {
     [Parameter]
-    public Vacunacion Vacunacion { get; set; } = new();
+    public VacunacionModel Vacunacion { get; set; } = new();
 }

@@ -20,6 +20,11 @@
     margin-bottom: 2rem;
 }
 
+.teleconsulta-alert p {
+    margin: 0;
+    padding: 0;
+}
+
 /* Acordeón de prestaciones */
 .teleconsulta-accordion {
     display: flex;

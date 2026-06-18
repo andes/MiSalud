@@ -2,34 +2,28 @@
 @rendermode InteractiveServer
 
 @using System.Linq
-@using System.Security.Claims
-@using AndesServices.Entities
-@using AndesServices.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
-@using SaludPortal.Application.Models
+@using SaludPortal.Application.Models.Turnos
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
-@using SaludPortal.Web.Models
-@using SaludPortal.Web.Services
-@using SaludPortal.Application.UseCases
+@using SaludPortal.Application.UseCases.Turnos
+@using SaludPortal.Application.Utils
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject IMisTurnos _misTurnosService
 @inject ObtenerTurnosUseCase _obtenerTurnosUseCase
-@inject ILogger<MisTurnos> _logger
+@inject ILogger<Misturnos> _logger
+@inject NavigationManager Nav
 
 @inherits AuthenticatedComponentBase
 
 <PageTitle>Mis turnos - Mi Salud</PageTitle>
 
 <div class="misturnos-container">
-    <PageHeaderWithBack Title="Mis turnos" 
-                        Subtitle="Turnos programados y próximos"
-                        BackHref="/"
+    <PageHeaderWithBack Title="Mis turnos" Subtitle="Turnos programados y próximos" BackHref="/"
                         BackAriaLabel="Volver al Inicio" />
-    
+
     <div class="misturnos-actions">
         <a href="/turnosNuevo" class="btn btn-success">
             <Icon Name="calendar-plus" Size="20" Fill="#fff" class="me-2" AriaLabel="Solicitar" />
@@ -39,10 +33,10 @@
             <Icon Name="clock-history" Size="20" Fill="#fff" class="me-2" AriaLabel="Historial" />
             Historial de turnos
         </a>
-        <a href="/turnosTelesalud" class="btn btn-secondary">
+        <button @onclick="HandleClickTelesalud" class="btn btn-secondary">
             <Icon Name="camera-video" Size="20" Fill="#fff" class="me-2" AriaLabel="Telesalud" />
             Telesalud
-        </a>
+        </button>
     </div>
 
     @if (turnos != null)
@@ -128,8 +122,51 @@
             .Add(nameof(MisTurnosCancelarConfirmar.IdTurno), turno.Id)
             .Add(nameof(MisTurnosCancelarConfirmar.IdBloque), turno.BloqueId)
             .Add(nameof(MisTurnosCancelarConfirmar.IdAgenda), turno.AgendaId)
-            .Add(nameof(MisTurnosCancelarConfirmar.EsTeleconsulta), turno.EsTeleconsulta);
+            .Add(nameof(MisTurnosCancelarConfirmar.EsTeleconsulta), turno.EsTeleconsulta)
+            .Add(nameof(MisTurnosCancelarConfirmar.NombrePaciente), turno.Paciente?.Nombre ?? "")
+            .Add(nameof(MisTurnosCancelarConfirmar.ApellidoPaciente), turno.Paciente?.Apellido ?? "");
 
         Modal.Show<MisTurnosCancelarConfirmar>(parameters, options);
+    }
+
+    private async Task HandleClickTelesalud()
+    {
+        // Verificar si ya tiene un turno de telesalud futuro activo
+        var turnosFuturos = turnos
+            .Where(t => t.EsTeleconsulta
+                && DateTimeHelper.ToArgentinaTime(t.FechaHora).Date >= DateTimeHelper.NowArgentina().Date
+                && (t.Estado == "programado" || t.Estado == "asignado" || t.Estado == "pendiente"))
+            .ToList();
+
+        if (turnosFuturos.Any())
+        {
+            // Si tiene un turno, mostrar modal con información y opción de cancelar
+            var turnoExistente = turnosFuturos.First();
+
+            var options = new ModalOptions()
+            {
+                Size = ModalSize.Medium,
+                Position = ModalPosition.TopCenter,
+                HideCloseButton = false,
+                HideHeader = false
+            };
+
+            var parameters = new ModalParameters()
+                .Add(nameof(MisTurnosTelesaludExistente.FechaTurno), turnoExistente.FechaHora.ToString("dd/MM/yyyy"))
+                .Add(nameof(MisTurnosTelesaludExistente.EfectorNombre), turnoExistente.Organizacion?.Nombre ?? "Efector desconocido")
+                .Add(nameof(MisTurnosTelesaludExistente.TipoPrestacion), turnoExistente.TipoPrestacion?.Term ?? "Prestación desconocida")
+                .Add(nameof(MisTurnosTelesaludExistente.IdTurno), turnoExistente.Id)
+                .Add(nameof(MisTurnosTelesaludExistente.IdBloque), turnoExistente.BloqueId)
+                .Add(nameof(MisTurnosTelesaludExistente.IdAgenda), turnoExistente.AgendaId)
+                .Add(nameof(MisTurnosTelesaludExistente.NombrePaciente), turnoExistente.Paciente?.Nombre ?? "")
+                .Add(nameof(MisTurnosTelesaludExistente.ApellidoPaciente), turnoExistente.Paciente?.Apellido ?? "");
+
+            Modal.Show<MisTurnosTelesaludExistente>(parameters, options);
+        }
+        else
+        {
+            // Si no tiene turno, navegar normalmente
+            Nav.NavigateTo("/turnosTelesalud");
+        }
     }
 }

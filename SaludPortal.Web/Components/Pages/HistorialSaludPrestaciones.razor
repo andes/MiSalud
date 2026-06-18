@@ -1,24 +1,19 @@
 ﻿@page "/historiasalud/{expresionSnomed}/"
 @rendermode InteractiveServer
 
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.WebUtilities
-@using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Components.Modals
-@using SaludPortal.Web.Services
-@using AndesServices.Interfaces
-@using AndesServices.Entities.ViewModels
-@using AndesServices.Entities
-@using System.Text.Json
+@using SaludPortal.Application.UseCases.HistoriaSalud
+@using SaludPortal.Application.Models.HistoriaSalud
 @using System.Linq
 
-@inject IHttpClientFactory HttpClientFactory
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
-@inject IHistoriaSalud _miHistoriaSaludService
+@inject ObtenerDetallePrestacionUseCase _obtenerDetalleUseCase
+@inject DescargarPdfPrestacionUseCase _descargarPdfUseCase
+@inject ObtenerUrlImagenPrestacionUseCase _obtenerUrlImagenUseCase
 
 <PageTitle>@($"Historia de salud - {categoriaSeleccionada?.Titulo} - Mi Salud")</PageTitle>
 
@@ -47,7 +42,7 @@
         <div class="prestaciones-section">
             <SectionTitle Title="Prestaciones" Icon="bi bi-clipboard2-heart" />
             <div class="prestaciones-grid">
-                @foreach (var p in prestaciones.OrderByDescending(p => p.ejecucion?.fecha))
+                @foreach (var p in prestaciones.OrderByDescending(p => p.Ejecucion?.Fecha))
                 {
                     if (p.EsCda())
                     {
@@ -61,7 +56,7 @@
                         <HistorialPrestacionCard Prestacion="p" OnDownload="DownloadPdfPrestacion"
                                                  OnViewImage="@(_fileToken != null ? OpenImagenPrestacion : default)"
                                                  OnCopyLink="@(_fileToken != null ? CopiarEnlacePrestacion : default)"
-                                                 LinkCopied="@(_copiedPrestacionId == p.id)" />
+                                                 LinkCopied="@(_copiedPrestacionId == p.Id)" />
                     }
                 }
             </div>
@@ -89,8 +84,8 @@
 
     [Parameter] public string? expresionSnomed { get; set; }
 
-    private CategoriaHistoriaSalud? categoriaSeleccionada;
-    private List<PrestacionHistoriaSalud>? prestaciones;
+    private CategoriaHistoriaSaludModel? categoriaSeleccionada;
+    private List<PrestacionHistoriaSaludModel>? prestaciones;
     private bool cargando;
     private string? error;
     private string? _fileToken;
@@ -116,10 +111,10 @@
         try
         {
             _spinnerService.Show();
-            prestaciones = await _miHistoriaSaludService.ObtenerPrestacionesAsync(expresionSnomed, pacienteId);
-            _fileToken = await _miHistoriaSaludService.ObtenerFileTokenAsync();
-            categoriaSeleccionada = (await _miHistoriaSaludService.ObtenerCategoriasHistoriaSaludAsync(expresionSnomed))
-                .FirstOrDefault();
+            var resultado = await _obtenerDetalleUseCase.EjecutarAsync(expresionSnomed, pacienteId);
+            prestaciones = resultado.Prestaciones;
+            _fileToken = resultado.FileToken;
+            categoriaSeleccionada = resultado.CategoriaSeleccionada;
         }
         catch (Exception ex)
         {
@@ -131,50 +126,37 @@
         }
     }
 
-    async Task DownloadPdfPrestacion(PrestacionHistoriaSalud prestacion)
+    async Task DownloadPdfPrestacion(PrestacionHistoriaSaludModel prestacion)
     {
-        string idPrestacion = prestacion?.id ?? "";
+        var idPrestacion = prestacion?.Id ?? "";
         var categoria = categoriaSeleccionada?.Titulo ?? "prestacion";
   
         _spinnerService.Show();
 
-        if (prestacion.EsCda())
+        try
         {
-            if (prestacion.paciente?.adjuntos != null
-                && prestacion.paciente.adjuntos.Count > 0
-                && !string.IsNullOrEmpty(prestacion.paciente.adjuntos[0]))
+            var archivo = await _descargarPdfUseCase.EjecutarAsync(
+                idPrestacion,
+                prestacion.EsCda(),
+                prestacion.Paciente?.Adjuntos);
+
+            if (archivo == null || archivo.Length == 0)
             {
-                var adjunto = prestacion.paciente.adjuntos[0];
-                idPrestacion = adjunto.Substring(adjunto.LastIndexOf('/') + 1, adjunto.LastIndexOf('.') - adjunto.LastIndexOf('/') - 1);
-            }
-            var token = BackendToken;
-            Byte[] archivoDescargar = await _miHistoriaSaludService.DescargarCDAFilePorIdAsync(idPrestacion);
-            if (archivoDescargar == null || archivoDescargar.Length == 0)
-            {
-                _spinnerService.Hide();
                 MostrarError("No se encontró el archivo de la prestación.");
                 return;
             }
 
-            string base64Pdf = Convert.ToBase64String(archivoDescargar);
+            string base64Pdf = Convert.ToBase64String(archivo);
             await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, categoria);
         }
-        else
+        catch (Exception ex)
         {
-            var pdfPrestacion = await _miHistoriaSaludService.DescargarPdfPrestacionAsync(idPrestacion);
-            if (pdfPrestacion == null || pdfPrestacion.Length == 0)
-            {
-                _spinnerService.Hide();
-                MostrarError("No se encontró el archivo de la prestación.");
-                return;
-            }
-            else
-            {
-                string base64Pdf = Convert.ToBase64String(pdfPrestacion);
-                await JSRuntime.InvokeVoidAsync("openPdf", base64Pdf, categoria);
-            }
+            MostrarError("Error al descargar la prestación: " + ex.Message);
         }
-        _spinnerService.Hide();
+        finally
+        {
+            _spinnerService.Hide();
+        }
     }
 
     private void Volver()
@@ -197,9 +179,9 @@
         Modal.Show<ErrorModal>(parameters, options);
     }
 
-    async Task OpenImagenPrestacion(PrestacionHistoriaSalud prestacion)
+    async Task OpenImagenPrestacion(PrestacionHistoriaSaludModel prestacion)
     {
-        var idPrestacion = prestacion?.id ?? "";
+        var idPrestacion = prestacion?.Id ?? "";
         if (string.IsNullOrEmpty(idPrestacion))
         {
             MostrarError("No se encontró el identificador de la prestación.");
@@ -209,7 +191,7 @@
         try
         {
             _spinnerService.Show();
-            var url = await _miHistoriaSaludService.ObtenerImagenPrestacionUrlAsync(idPrestacion, _fileToken!);
+            var url = await _obtenerUrlImagenUseCase.EjecutarAsync(idPrestacion, _fileToken!);
             if (string.IsNullOrEmpty(url))
             {
                 MostrarError("No se encontró imagen para esta prestación.");
@@ -227,9 +209,9 @@
         }
     }
 
-    async Task CopiarEnlacePrestacion(PrestacionHistoriaSalud prestacion)
+    async Task CopiarEnlacePrestacion(PrestacionHistoriaSaludModel prestacion)
     {
-        var idPrestacion = prestacion?.id ?? "";
+        var idPrestacion = prestacion?.Id ?? "";
         if (string.IsNullOrEmpty(idPrestacion))
         {
             MostrarError("No se encontró el identificador de la prestación.");
@@ -241,7 +223,7 @@
         try
         {
             _spinnerService.Show();
-            url = await _miHistoriaSaludService.ObtenerImagenPrestacionUrlAsync(idPrestacion, _fileToken!);
+            url = await _obtenerUrlImagenUseCase.EjecutarAsync(idPrestacion, _fileToken!);
             if (string.IsNullOrEmpty(url))
             {
                 MostrarError("No se encontró imagen para esta prestación.");
@@ -251,7 +233,6 @@
         }
         catch (OperationCanceledException)
         {
-            // reset cancelado por nueva copia, no hacer nada
         }
         catch (Exception ex)
         {

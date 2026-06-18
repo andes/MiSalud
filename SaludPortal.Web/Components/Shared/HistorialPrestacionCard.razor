@@ -1,3 +1,4 @@
+@using SaludPortal.Application.Models.HistoriaSalud
 @using AndesServices.Entities
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Icons
@@ -7,7 +8,7 @@
 
 <div class="prestacion-card" tabindex="0">
     <div class="prestacion-header">
-        <span class="prestacion-tipo">@(Prestacion.solicitud?.tipoPrestacion?.term ?? "Prestación")</span>
+        <span class="prestacion-tipo">@(Prestacion.Solicitud?.TipoPrestacion?.Term ?? "Prestación")</span>
         <div class="prestacion-actions">
             @if (OnViewImage.HasDelegate)
             {
@@ -31,18 +32,18 @@
     </div>
     
     <div class="prestacion-body">
-        @if (Prestacion.solicitud?.organizacion != null && !string.IsNullOrWhiteSpace(Prestacion.solicitud.organizacion.nombre))
+        @if (Prestacion.Solicitud?.Organizacion != null && !string.IsNullOrWhiteSpace(Prestacion.Solicitud.Organizacion.Nombre))
         {
             <div class="prestacion-info">
                 <span class="prestacion-label">
                     <Icon Name="hospital" Size="16" Fill="#666" class="me-1" AriaLabel="Institución" />
                     Institución:
                 </span>
-                <span class="prestacion-value prestacion-institucion">@Prestacion.solicitud.organizacion.nombre</span>
+                <span class="prestacion-value prestacion-institucion">@Prestacion.Solicitud.Organizacion.Nombre</span>
             </div>
         }
 
-        @if (Prestacion.ejecucion?.fecha != null)
+        @if (Prestacion.Ejecucion?.Fecha != null)
         {
             <div class="prestacion-info">
                 <span class="prestacion-label">Fecha:</span>
@@ -50,28 +51,28 @@
             </div>
         }
 
-        @if (Prestacion.solicitud?.profesional != null)
+        @if (Prestacion.Solicitud?.Profesional != null)
         {
             <div class="prestacion-info">
                 <span class="prestacion-label">Profesional:</span>
-                <span class="prestacion-value">@(Prestacion.solicitud.profesional.nombre ?? "Sin datos") @(Prestacion.solicitud.profesional.apellido ?? "Sin datos")</span>
+                <span class="prestacion-value">@(Prestacion.Solicitud.Profesional.Nombre ?? "Sin datos") @(Prestacion.Solicitud.Profesional.Apellido ?? "Sin datos")</span>
             </div>
-            @if (!string.IsNullOrWhiteSpace(Prestacion.solicitud.profesional.documento))
+            @if (!string.IsNullOrWhiteSpace(Prestacion.Solicitud.Profesional.Documento))
             {
                 <div class="prestacion-info">
                     <span class="prestacion-label">Documento:</span>
-                    <span class="prestacion-value">@Prestacion.solicitud.profesional.documento</span>
+                    <span class="prestacion-value">@Prestacion.Solicitud.Profesional.Documento</span>
                 </div>
             }
         }
 
-        @if (Prestacion.solicitud?.registros != null && Prestacion.solicitud.registros.Any())
+        @if (Prestacion.Solicitud?.Registros != null && Prestacion.Solicitud.Registros.Any())
         {
             <div class="prestacion-section">
                 <h4 class="prestacion-section-title">Detalles de Solicitud</h4>
-                @foreach (var registro in Prestacion.solicitud.registros)
+                @foreach (var registro in Prestacion.Solicitud.Registros)
                 {
-                    @if (registro.valor is { } ve && ve.ValueKind == JsonValueKind.Object)
+                    @if (registro.Valor is { } ve && ve.ValueKind == JsonValueKind.Object)
                     {
                         @if (ve.TryGetProperty("solicitudPrestacion", out _))
                         {
@@ -112,25 +113,25 @@
 
 @code {
     [Parameter]
-    public PrestacionHistoriaSalud Prestacion { get; set; } = new();
+    public PrestacionHistoriaSaludModel Prestacion { get; set; } = new();
 
     [Parameter]
-    public EventCallback<PrestacionHistoriaSalud> OnDownload { get; set; }
+    public EventCallback<PrestacionHistoriaSaludModel> OnDownload { get; set; }
 
     [Parameter]
-    public EventCallback<PrestacionHistoriaSalud> OnViewImage { get; set; }
+    public EventCallback<PrestacionHistoriaSaludModel> OnViewImage { get; set; }
 
     [Parameter]
-    public EventCallback<PrestacionHistoriaSalud> OnCopyLink { get; set; }
+    public EventCallback<PrestacionHistoriaSaludModel> OnCopyLink { get; set; }
 
     [Parameter]
     public bool LinkCopied { get; set; }
 
     private string GetFechaFormateada()
     {
-        if (Prestacion.ejecucion?.fecha != null)
+        if (Prestacion.Ejecucion?.Fecha != null)
         {
-            var fecha = DateTimeHelper.ToArgentinaTime(Prestacion.ejecucion.fecha);
+            var fecha = DateTimeHelper.ToArgentinaTime(Prestacion.Ejecucion.Fecha);
             if (fecha.HasValue)
             {
                 return $"{fecha.Value:dd/MM/yyyy} {fecha.Value:HH:mm}";

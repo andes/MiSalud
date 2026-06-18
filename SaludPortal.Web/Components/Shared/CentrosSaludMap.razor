@@ -1,6 +1,5 @@
-@using AndesServices.DTOs.CentrosDeSalud
 @using Microsoft.AspNetCore.Components
-@using SaludPortal.Web.Models
+@using SaludPortal.Application.Models.CentrosDeSalud
 @inject IJSRuntime JS
 
 <div class="centros-mapa-container">
@@ -14,10 +13,10 @@
 	private string _lastPatientSignature = string.Empty;
 
 	[Parameter]
-	public List<CentroSaludListItem> Centros { get; set; } = new();
+	public List<CentroSaludModel> Centros { get; set; } = new();
 
 	[Parameter]
-	public CentroSaludListItem? CentroSeleccionado { get; set; }
+	public CentroSaludModel? CentroSeleccionado { get; set; }
 
 	[Parameter]
 	public double? PacienteLatitud { get; set; }

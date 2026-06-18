@@ -1,9 +1,11 @@
-﻿using AndesServices.Entities;
-using AndesServices.Services;
-using AndesServices.DTOs.Login;
+﻿using AndesServices.DTOs.Login;
+using AndesServices.Entities;
+using AndesServices.Interfaces;
+using SaludPortal.Application.UseCases.Paciente;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using SaludPortal.Application.UseCases.Auth;
 using SaludPortal.Web.Models.AccountViewModels;
 using SaludPortal.Web.Services;
 using System.Security.Claims;
@@ -14,31 +16,24 @@ namespace SaludPortal.Web.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly CustomAuthenticationStateProvider _authStateProvider; // Cambia el tipo
-        private readonly IConfiguration _configuration;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<LoginService> _logger;
+        private readonly CustomAuthenticationStateProvider _authStateProvider;
+        private readonly ILogger<AuthController> _logger;
+        private readonly LoginUseCase _loginUseCase;
+        private readonly ILoginService<User> _loginService;
+        private readonly ObtenerPacienteUseCase _obtenerPacienteUseCase;
 
         public AuthController(
             CustomAuthenticationStateProvider authStateProvider,
-            IConfiguration configuration,
-            IHttpClientFactory httpClientFactory,
-            ILogger<LoginService> logger)
+            ILogger<AuthController> logger,
+            LoginUseCase loginUseCase,
+            ILoginService<User> loginService,
+            ObtenerPacienteUseCase obtenerPacienteUseCase)
         {
             _authStateProvider = authStateProvider;
-            _configuration = configuration;
-            _httpClientFactory = httpClientFactory;
             _logger = logger;
-        }
-
-        private LoginService CreateLoginService()
-        {
-            return new LoginService(_logger, _httpClientFactory, _configuration);
-        }
-
-        private PacienteService CreatePacienteService()
-        {
-            return new PacienteService(_httpClientFactory);
+            _loginUseCase = loginUseCase;
+            _loginService = loginService;
+            _obtenerPacienteUseCase = obtenerPacienteUseCase;
         }
 
         [HttpPost("login")]
@@ -49,27 +44,22 @@ namespace SaludPortal.Web.Controllers
             {
                 if (!ModelState.IsValid) return BadRequest("Datos inválidos");
 
-                var loginService = CreateLoginService();
-                var usuario = await loginService.Login(model.Email, model.Password);
-                if (usuario == null || string.IsNullOrEmpty(usuario.token))
-                    return Unauthorized("Credenciales inválidas");
+                var resultado = await _loginUseCase.EjecutarAsync(model.Email, model.Password);
+                if (!resultado.Exito || string.IsNullOrEmpty(resultado.Token))
+                    return Unauthorized(new { message = resultado.MensajeError ?? "Credenciales inválidas" });
 
-                var pacienteId = usuario.pacientes?.FirstOrDefault()?.id;
-                Paciente? paciente = null;
-                if (!string.IsNullOrEmpty(pacienteId))
-                {
-                    var pacienteService = CreatePacienteService();
-                    paciente = await pacienteService.ObtenerPacientePorIdAsync(pacienteId, usuario.token);
-                }
+                var paciente = !string.IsNullOrEmpty(resultado.PrimerPacienteId)
+                    ? await _obtenerPacienteUseCase.EjecutarAsync(resultado.PrimerPacienteId, resultado.Token)
+                    : null;
 
                 var claims = BuildClaims(
                     model.Email,
-                    pacienteId,
-                    usuario.documento,
-                    usuario.token,
-                    paciente?.nombre ?? usuario?.nombre,
-                    paciente?.apellido ?? usuario?.apellido,
-                    paciente?.alias);
+                    resultado.PrimerPacienteId,
+                    resultado.Documento,
+                    resultado.Token,
+                    paciente?.Nombre ?? resultado.Nombre,
+                    paciente?.Apellido ?? resultado.Apellido,
+                    paciente?.Alias);
 
                 await SignInAsync(claims, model.RememberMe);
 
@@ -77,7 +67,6 @@ namespace SaludPortal.Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error procesando login para usuario: {Email}", model.Email);
                 return StatusCode(500, "Error interno del servidor");
             }
         }
@@ -90,8 +79,7 @@ namespace SaludPortal.Web.Controllers
             {
                 if (!ModelState.IsValid) return BadRequest("Datos inválidos");
 
-                var loginService = CreateLoginService();
-                var result = await loginService.CrearContrasenia(model);
+                var result = await _loginService.CrearContrasenia(model);
 
                 if (result.response == null || string.IsNullOrEmpty(result.response.Token))
                     return BadRequest(new { message = result.errorMessage ?? "Error al crear contraseña" });
@@ -114,7 +102,6 @@ namespace SaludPortal.Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error procesando crear contraseña para usuario: {Email}", model.Email);
                 return StatusCode(500, new { message = "Error interno del servidor" });
             }
         }
@@ -158,6 +145,7 @@ namespace SaludPortal.Web.Controllers
                 new("Token", token ?? string.Empty),
                 new("Nombre", nombre ?? string.Empty),
                 new("Apellido", apellido ?? string.Empty),
+                new("SessionId", Guid.NewGuid().ToString("N")),
                 new("Alias", alias ?? string.Empty)
             };
         }

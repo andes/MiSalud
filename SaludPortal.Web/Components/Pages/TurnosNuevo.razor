@@ -2,21 +2,17 @@
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Application.Models.Turnos
+@using SaludPortal.Application.UseCases.Turnos
 @using SaludPortal.Web.Components.Modals
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Services
-@using AndesServices.Interfaces
-@using System.Security.Claims
-@using AndesServices.Entities
 @using System.Linq
 
-@inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject IPaciente _unPacienteService
-@inject IMisTurnos _misTurnosService
-@inject IOrganizacion _organizacionService
+@inject ObtenerTurnosDisponiblesUseCase _obtenerTurnosDisponiblesUseCase
 
 @inherits AuthenticatedComponentBase
 
@@ -28,41 +24,36 @@
                         BackHref="/misturnos"
                         BackAriaLabel="Volver al Mis Turnos" />
 
-    @if (lstAgendas != null && lstAgendas.Count > 0)
+    @if (listaTurnosPorTipoPrestacion != null && listaTurnosPorTipoPrestacion.Count > 0)
     {
-        var tipoPrestacionIndex = 0;
-        var tipoPrestacioness = ObtenerTipoPrestacionesDisponibles().ToList();
-        var hayMasDeUnTipo = tipoPrestacioness.Count > 1;
+        var hayMasDeUnTipo = listaTurnosPorTipoPrestacion.Count > 1;
         <div class="turnos-nuevo-accordion" id="accAgendas">
 
-            @foreach (var tipoPrestaciones in tipoPrestacioness )
+            @foreach (var tipoPrestaciones in listaTurnosPorTipoPrestacion)
             {
-                var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
-                var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
-                var efectores = ObtenerEfectores(tipoPrestaciones.id);
+                var tipoId = $"TipoPrestacion_{tipoPrestaciones.TipoPrestacionConceptId}";
+                var collapseTipoId = $"collapse_{tipoPrestaciones.TipoPrestacionConceptId}";
                 var isExpanded = !hayMasDeUnTipo;
 
-                tipoPrestacionIndex++;
                 <div class="turnos-nuevo-accordion-item">
                     <h2 class="turnos-nuevo-accordion-header" id="@tipoId">
                         <button class="turnos-nuevo-accordion-button @(isExpanded ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="@(isExpanded ? "true" : "false")" aria-controls="@collapseTipoId">
                             <Icon Name="calendar-check" Size="20" Fill="#87b867" class="me-2" AriaLabel="Prestación" />
-                            @tipoPrestaciones.term
+                            @tipoPrestaciones.TipoPrestacionTerm
                         </button>
                     </h2>
                     <div id="@collapseTipoId" class="turnos-nuevo-accordion-collapse collapse @(isExpanded ? "show" : "")" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
                         <div class="turnos-nuevo-accordion-body">
                             <div class="turnos-nuevo-efectores-list">
-                                
-                                @foreach (var efector in efectores)
+
+                                @foreach (var efector in tipoPrestaciones.Efectores)
                                 {
-                                    var efectorId = efector.Efector._id;
-                                    var turnosAgrupados = ObtenerTurnosAgrupadosPorFecha(tipoPrestaciones.id, efectorId);
-                                    <EfectorCard EfectorNombre="@efector.Efector.nombre" Domicilio="@efector.Domicilio">
-                                        @if (turnosAgrupados.Any())
+                                    var turnosAgrupados = AgruparTurnosPorFecha(efector.TurnosDisponibles);
+                                    <EfectorCard EfectorNombre="@efector.Nombre" Domicilio="@efector.Domicilio">
+                                        @if (efector.TurnosDisponibles.Any())
                                         {
-                                            <TurnoHorarioGrid TurnosPorFecha="@turnosAgrupados" 
-                                                               OnTurnoSeleccionado="@(async (turno) => await HandleTurnoSeleccionado(turno, tipoPrestaciones.term, efector.Efector.nombre, efector.Domicilio, tipoPrestaciones.id, efectorId))" />
+                                            <TurnoHorarioGrid TurnosPorFecha="@turnosAgrupados"
+                                                              OnTurnoSeleccionado="@(async (turno) => await HandleTurnoSeleccionado(turno))" />
                                         }
                                     </EfectorCard>
                                 }
@@ -80,18 +71,11 @@
 </div>
 
 @code {
-    private List<OrganizacionAgenda> lstAgendas = new List<OrganizacionAgenda>();
-    private Paciente? _unPaciente = new Paciente();
-    private Direccion _direccionGeoreferencia = new Direccion();
-    private userLocation _userLocation = new userLocation();
-    private int itemForeachtipoPrestaciones;
-    private int itemForeachOrganizaciones;
-    private Organizacion organizacion = new Organizacion();
-    private Dictionary<string, string> _domiciliosOrganizaciones = new();
+    private List<TurnosPorTipoPrestacion> listaTurnosPorTipoPrestacion = [];
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
-    private async Task ShowModalConfirmar(DateTime Fecha, DateTime Hora, string TipoPrestacion, string Efector, string EfectorDomicilio, string IdTipoPrestacion, string IdTurno, string IdBloque)
+    private async Task ShowModalConfirmar(TurnoDisponible turno)
     {
         var options = new ModalOptions()
         {
@@ -101,26 +85,17 @@
             HideHeader = true
         };
 
-        var parameters = new ModalParameters()
-        .Add(nameof(TurnoNuevoConfirmar.Paciente), _unPaciente?.GetDisplayName())
-        .Add(nameof(TurnoNuevoConfirmar.FechaHoraTurno), Fecha.ToString("dd/MM/yyyy") + " " + Hora.ToString("HH:mm"))
-        .Add(nameof(TurnoNuevoConfirmar.TipoPrestacion), TipoPrestacion)
-        .Add(nameof(TurnoNuevoConfirmar.EfectorNombre), Efector)
-        .Add(nameof(TurnoNuevoConfirmar.EfectorDomicilio), EfectorDomicilio)
-        .Add(nameof(TurnoNuevoConfirmar.IdTurno), IdTurno)
-        .Add(nameof(TurnoNuevoConfirmar.IdBloque), IdBloque)
-        .Add(nameof(TurnoNuevoConfirmar.IdAgenda), ObtenerAgendaPorIdBloque(IdBloque)._id)
-        .Add(nameof(TurnoNuevoConfirmar._unTipoPrestacion), ObtenerTipoPrestacionesDisponibles(IdTipoPrestacion));
+        string paciente = (User.GetNombre() ?? "") + " " + (User.GetApellido() ?? "");
 
-        Modal.Show<TurnoNuevoConfirmar>(parameters, options);
+        var parameters = new ModalParameters()
+            .Add(nameof(RegistrarTurnoConfirmar.Paciente), paciente)
+            .Add(nameof(RegistrarTurnoConfirmar.TurnoDisponible), turno);
+
+        Modal.Show<RegistrarTurnoConfirmar>(parameters, options);
     }
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
-        var token = BackendToken;
-        if (string.IsNullOrEmpty(token))
-            return;
-
         var pacienteId = PacienteId;
         if (string.IsNullOrEmpty(pacienteId))
             return;
@@ -129,42 +104,7 @@
 
         try
         {
-            // Obtengo el paciente
-            _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(pacienteId);
-
-            // Verifico que domicilio utilizar para referencia a las organizaciones
-            _direccionGeoreferencia = _unPacienteService.ObtenerDireccionPrioritaria(_unPaciente);
-            if (_direccionGeoreferencia == null) return;
-
-            if (_direccionGeoreferencia.valor == null || _direccionGeoreferencia.ubicacion.localidad == null || _direccionGeoreferencia.ubicacion.provincia == null)
-            {
-                return;
-            }
-            string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
-            _userLocation = await _unPacienteService.ObtenerGeoreferenciaPaciente(direccion);
-
-            if (_userLocation != null)
-            {
-                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(pacienteId, _userLocation, esTeleconsulta: false);
-
-                // Obtener todos los IDs de organizaciones únicos
-                var orgIds = lstAgendas
-                    .SelectMany(e => e.agendas)
-                    .Select(a => a.organizacion._id)
-                    .Distinct()
-                    .ToList();
-
-                // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
-                foreach (var orgId in orgIds)
-                {
-                    var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(orgId);
-                    if (organizacion != null && !_domiciliosOrganizaciones.ContainsKey(orgId))
-                    {
-                        // Asume que organizacion.direccion?.valor es el domicilio
-                        _domiciliosOrganizaciones[orgId] = organizacion.direccion?.valor ?? "";
-                    }
-                }
-            }
+            listaTurnosPorTipoPrestacion = await _obtenerTurnosDisponiblesUseCase.EjecutarAsync(pacienteId);
         }
         catch (Exception ex)
         {
@@ -176,129 +116,22 @@
         }
     }
 
-    private IEnumerable<(string term, string id)> ObtenerTipoPrestacionesDisponibles()
+    private List<TurnoFechaGrupo> AgruparTurnosPorFecha(List<TurnoDisponible> turnos)
     {
-        return lstAgendas?
-        .SelectMany(e => e.agendas)
-        .Where(a => a.bloques != null && a.bloques.Count > 0 && a.bloques.Any(b => b.restantesMobile > 0))
-        .SelectMany(a => (a.tipoPrestaciones ?? new List<TipoPrestacion>()))
-        .Where(tp => !string.IsNullOrWhiteSpace(tp.term))
-        .Select(tp => (term: tp.term, id: tp._id))
-        .Distinct()
-        .OrderBy(t => t)
-        ?? Enumerable.Empty<(string, string)>();
-    }
-
-    private TipoPrestacion? ObtenerTipoPrestacionesDisponibles(string id)
-    {
-        return lstAgendas?
-            .SelectMany(e => e.agendas)
-            .Where(a => a.bloques != null && a.bloques.Count > 0 && a.bloques.Any(b => b.restantesMobile > 0))
-            .SelectMany(a => a.tipoPrestaciones ?? new List<TipoPrestacion>())
-            .FirstOrDefault(tp => tp._id == id);
-    }
-
-    private Agenda? ObtenerAgendaPorIdBloque(string idBloque)
-    {
-        return lstAgendas?
-            .SelectMany(org => org.agendas ?? new List<Agenda>())
-            .FirstOrDefault(agenda =>
-                agenda.bloques != null &&
-                agenda.bloques.Any(bloque => bloque._id == idBloque)
-            );
-    }
-
-    private IEnumerable<(AgendaOrganizacion Efector, string Domicilio)> ObtenerEfectores(string _idTipoPrestacion)
-    {
-        return lstAgendas?
-            .SelectMany(e => e.agendas
-                .Where(a => a.bloques != null && a.bloques.Any(b => b.restantesMobile > 0))
-                .Where(a => (a.tipoPrestaciones ?? new List<TipoPrestacion>())
-                    .Any(tp => tp!._id == _idTipoPrestacion))
-                .Select(a => (
-                    a.organizacion,
-                    _domiciliosOrganizaciones.TryGetValue(a.organizacion._id, out var domicilio) ? domicilio : ""
-                ))
-            )
-            .Where(x => x.organizacion != null)
-            .DistinctBy(x => x.organizacion!._id)
-            ?? Enumerable.Empty<(AgendaOrganizacion, string)>();
-    }
-
-    private IEnumerable<Bloque> RecuperarAgendas(string _idTipoPrestacion, string Efector)
-    {
-        return lstAgendas?
-            .SelectMany(e => e.agendas
-                    .Where(a =>
-                a.bloques != null
-                && a.organizacion?._id == Efector
-                && (a.tipoPrestaciones ?? new List<TipoPrestacion>())
-                    .Any(tp => tp._id == _idTipoPrestacion)
-                && a.bloques.Any(b =>
-                    b.restantesMobile > 0
-                    && b.turnos.Any(c => c.estado == "disponible")
-                )
-            )
-            .SelectMany(a => a.bloques
-                .Where(b =>
-                    b.restantesMobile > 0
-                    && b.turnos.Any(c => c.estado == "disponible")
-                )
-            )
-        )
-        ?? Enumerable.Empty<Bloque>();
-    }
-
-    private List<TurnoHorarioGrid.TurnoFechaGrupo> ObtenerTurnosAgrupadosPorFecha(string tipoPrestacionId, string efectorId)
-    {
-        var grupos = new List<TurnoHorarioGrid.TurnoFechaGrupo>();
-        var bloques = RecuperarAgendas(tipoPrestacionId, efectorId).ToList();
-
-        foreach (var bloque in bloques)
-        {
-            var turnosDisponibles = bloque.turnos?
-                .Where(t => t.estado == "disponible")
-                .ToList() ?? new List<MisTurnos>();
-
-            if (!turnosDisponibles.Any())
-                continue;
-
-            var turnosPorFecha = turnosDisponibles
-                .GroupBy(t => t.horaInicio.Date)
-                .OrderBy(g => g.Key);
-
-            foreach (var grupoFecha in turnosPorFecha)
+        return turnos
+            .GroupBy(t => t.FechaHora.Date)
+            .Select(g => new TurnoFechaGrupo
             {
-                var fechaGrupo = grupos.FirstOrDefault(g => g.Fecha.Date == grupoFecha.Key.Date);
-                if (fechaGrupo == null)
-                {
-                    fechaGrupo = new TurnoHorarioGrid.TurnoFechaGrupo
-                    {
-                        Fecha = grupoFecha.Key,
-                        Disponibles = bloque.restantesMobile,
-                        Turnos = new List<MisTurnos>()
-                    };
-                    grupos.Add(fechaGrupo);
-                }
-
-                fechaGrupo.Turnos.AddRange(grupoFecha.OrderBy(t => t.horaInicio));
-            }
-        }
-
-        return grupos.OrderBy(g => g.Fecha).ToList();
+                Fecha = g.Key,
+                Disponibles = g.Count(),
+                Turnos = g.OrderBy(t => t.FechaHora).ToList()
+            })
+            .OrderBy(g => g.Fecha)
+            .ToList();
     }
 
-    private async Task HandleTurnoSeleccionado(MisTurnos turno, string tipoPrestacion, string efectorNombre, string efectorDomicilio, string tipoPrestacionId, string efectorId)
+    private async Task HandleTurnoSeleccionado(TurnoDisponible turno)
     {
-        // Encontrar el bloque que contiene este turno
-        var bloques = RecuperarAgendas(tipoPrestacionId, efectorId).ToList();
-        var bloqueEncontrado = bloques.FirstOrDefault(b => b.turnos?.Any(t => t._id == turno._id) == true);
-
-        if (bloqueEncontrado != null)
-        {
-            var fecha = turno.horaInicio.Date;
-            var hora = DateTimeHelper.ToArgentinaTime(turno.horaInicio);
-            await ShowModalConfirmar(fecha, hora, tipoPrestacion, efectorNombre, efectorDomicilio, tipoPrestacionId, turno._id, bloqueEncontrado._id);
-        }
+        await ShowModalConfirmar(turno);
     }
 }

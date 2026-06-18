@@ -1,6 +1,6 @@
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Icons
-@using SaludPortal.Web.Models
+@using SaludPortal.Application.Models.CentrosDeSalud
 
 <div class="centro-salud-card @(IsSelected ? "selected" : "")" @onclick="HandleClick" tabindex="0">
     <div class="centro-header">
@@ -48,13 +48,13 @@
 
 @code {
     [Parameter]
-    public CentroSaludListItem Centro { get; set; } = new();
+    public CentroSaludModel Centro { get; set; } = new();
 
     [Parameter]
     public bool IsSelected { get; set; }
 
     [Parameter]
-    public EventCallback<CentroSaludListItem> OnSelected { get; set; }
+    public EventCallback<CentroSaludModel> OnSelected { get; set; }
 
     private async Task HandleClick()
     {

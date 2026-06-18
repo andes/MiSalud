@@ -5,17 +5,17 @@
 @rendermode InteractiveServer
 
 @using SaludPortal.Web.Models.AccountViewModels
-@using AndesServices.Entities
-@using AndesServices.Interfaces
+@using SaludPortal.Application.UseCases.Auth
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq
+
 @inject NavigationManager Nav
 @inject CustomAuthenticationStateProvider AuthProvider
 @inject ILogger<LogIn> Logger
 @inject IJSRuntime JS
-@inject ILoginService<User> LoginService
+@inject ValidarConexionXroadssUseCase ValidarConexionXroadssUseCase
 @inject AppToastService ToastService
 
 <PageTitle>Ingresar - Mi Salud</PageTitle>
@@ -65,7 +65,7 @@
                                AriaLabel="@(_busy ? "Iniciando sesión..." : "Iniciar sesión")" />
             </EditForm>
             <div class="forgot-password-link">
-                <a href="/olvidocontrasenia" class="login-link">¿Olvidaste tu contraseña?</a>
+                <a href="/olvidocontrasenia" class="login-link" @onclick="GoToOlvidoContrasenia" @onclick:preventDefault>¿Olvidaste tu contraseña?</a>
             </div>
         </div>
 
@@ -111,7 +111,7 @@
 
         _xroadssConnectionChecked = true;
 
-        var xroadssConnection = await LoginService.ValidarConexionXroadss();
+        var xroadssConnection = await ValidarConexionXroadssUseCase.EjecutarAsync();
         if (!xroadssConnection)
         {
             ToastService.ShowError("Error al validar conexión con xroadss.", 10000);
@@ -137,8 +137,7 @@
             }
             else
             {
-                _error = ExtractMessage(result.Data) ?? "Credenciales inválidas";
-                // throw new Exception(_error);
+                _error = result.Message ?? "Credenciales inválidas";
             }
         }
         catch (Exception ex)
@@ -151,35 +150,7 @@
     {
         public bool Ok { get; set; }
         public int Status { get; set; }
-        public dynamic? Data { get; set; }
-    }
-
-    private static string? ExtractMessage(System.Text.Json.JsonElement data)
-    {
-        if (data.ValueKind == System.Text.Json.JsonValueKind.Object &&
-            data.TryGetProperty("message", out var msgProp))
-            return msgProp.GetString();
-
-        if (data.ValueKind == System.Text.Json.JsonValueKind.String)
-        {
-            var raw = data.GetString();
-            if (string.IsNullOrWhiteSpace(raw)) return null;
-
-            if (raw.TrimStart().StartsWith("{"))
-            {
-                try
-                {
-                    using var doc = System.Text.Json.JsonDocument.Parse(raw);
-                    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
-                        doc.RootElement.TryGetProperty("message", out var inner))
-                        return inner.GetString();
-                }
-                catch { }
-            }
-            return raw;
-        }
-
-        return null;
+        public string? Message { get; set; }
     }
 
     private async Task Register()
@@ -187,7 +158,12 @@
         Nav.NavigateTo("/registro", true);
     }
 
-    private void GoToActivacion()
+    private async Task GoToOlvidoContrasenia()
+    {
+        Nav.NavigateTo("/olvidocontrasenia");
+    }
+
+    private async Task GoToActivacion()
     {
         Nav.NavigateTo("/ingresar-codigo-activacion");
     }

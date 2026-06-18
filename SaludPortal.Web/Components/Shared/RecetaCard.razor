@@ -1,55 +1,55 @@
-@using AndesServices.Entities
 @using Microsoft.AspNetCore.Components
+@using SaludPortal.Application.Models.Recetas
 
 <div class="receta-card">
     <div class="receta-header">
-        <span class="receta-fecha">@Receta.fechaRegistro.ToString("dd/MM/yyyy HH:mm:ss")</span>
+        <span class="receta-fecha">@Receta.FechaRegistro.ToString("dd/MM/yyyy HH:mm:ss")</span>
         <span class="receta-estado @GetEstadoDispensaClass()">@GetEstadoDispensaTexto()</span>
     </div>
     
     <div class="receta-body">
-        @if (Receta.profesional != null)
+        @if (Receta.Profesional != null)
         {
             <div class="receta-section">
                 <h4 class="receta-section-title">Profesional</h4>
                 <div class="receta-info">
                     <span class="receta-label">Nombre:</span>
-                    <span class="receta-value">@Receta.profesional.apellido @Receta.profesional.nombre</span>
+                    <span class="receta-value">@Receta.Profesional.Apellido @Receta.Profesional.Nombre</span>
                 </div>
                 <div class="receta-info">
                     <span class="receta-label">MÉDICA - MP:</span>
-                    <span class="receta-value">@(Receta.profesional.matricula.HasValue ? Receta.profesional.matricula.Value.ToString() : "-")</span>
+                    <span class="receta-value">@(Receta.Profesional.Matricula.HasValue ? Receta.Profesional.Matricula.Value.ToString() : "-")</span>
                 </div>
                 <div class="receta-info">
                     <span class="receta-label">Especialidad:</span>
-                    <span class="receta-value">@(Receta.profesional.especialidad == null || Receta.profesional.especialidad.Length == 0 ? "-" : Receta.profesional.especialidad)</span>
+                    <span class="receta-value">@(string.IsNullOrWhiteSpace(Receta.Profesional.Especialidad) ? "-" : Receta.Profesional.Especialidad)</span>
                 </div>
             </div>
         }
 
-        @if (Receta.medicamento != null)
+        @if (Receta.Medicamento != null)
         {
             <div class="receta-section">
                 <h4 class="receta-section-title">Medicamento</h4>
                 <div class="receta-medicamento-table">
                     <div class="receta-medicamento-row">
                         <div class="receta-medicamento-label">Medicamento:</div>
-                        <div class="receta-medicamento-value">@Receta.medicamento.concepto.term</div>
+                        <div class="receta-medicamento-value">@Receta.Medicamento.Nombre</div>
                     </div>
                     <div class="receta-medicamento-row">
                         <div class="receta-medicamento-label">Cantidad:</div>
-                        <div class="receta-medicamento-value">@Receta.medicamento.cantEnvases envase(s) de @Receta.medicamento.cantidad @Receta.medicamento.presentacion</div>
+                        <div class="receta-medicamento-value">@Receta.Medicamento.CantEnvases envase(s) de @Receta.Medicamento.Cantidad @Receta.Medicamento.Presentacion</div>
                     </div>
                 </div>
             </div>
         }
 
-        @if (Receta.diagnostico != null && !string.IsNullOrWhiteSpace(Receta.diagnostico.term))
+        @if (!string.IsNullOrWhiteSpace(Receta.Diagnostico))
         {
             <div class="receta-section">
                 <h4 class="receta-section-title">Diagnóstico</h4>
                 <div class="receta-info">
-                    <span class="receta-value">@Receta.diagnostico.term</span>
+                    <span class="receta-value">@Receta.Diagnostico</span>
                 </div>
             </div>
         }
@@ -58,17 +58,17 @@
 
 @code {
     [Parameter]
-    public MisReceta Receta { get; set; } = new();
+    public Receta Receta { get; set; } = new();
 
     private string GetEstadoDispensaTexto()
     {
         if (EsVencidaPorAntiguedad())
             return "vencida";
 
-        if (string.IsNullOrWhiteSpace(Receta.estadoDispensaActual?.tipo))
+        if (string.IsNullOrWhiteSpace(Receta.EstadoDispensa))
             return "sin-dispensa";
 
-        return Receta.estadoDispensaActual.tipo;
+        return Receta.EstadoDispensa;
     }
 
     private string GetEstadoDispensaClass()
@@ -90,16 +90,16 @@
 
     private bool EsVencidaPorAntiguedad()
     {
-        var estadoTipo = Receta.estadoDispensaActual?.tipo;
+        var estadoTipo = Receta.EstadoDispensa;
         var normalizado = (estadoTipo ?? string.Empty).Trim().ToLowerInvariant().Replace("_", "-").Replace(" ", "-");
 
         var estaDispensada = normalizado.Contains("dispens") && !normalizado.Contains("sin-dispens");
         if (estaDispensada)
             return false;
 
-        var fechaBase = Receta.fechaRegistro != default
-            ? Receta.fechaRegistro
-            : Receta.fechaPrestacion;
+        var fechaBase = Receta.FechaRegistro != default
+            ? Receta.FechaRegistro
+            : Receta.FechaPrestacion;
 
         if (fechaBase == default)
             return false;

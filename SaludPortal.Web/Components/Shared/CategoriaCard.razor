@@ -1,4 +1,4 @@
-@using AndesServices.Entities
+@using SaludPortal.Application.Models.HistoriaSalud
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Icons
 
@@ -13,10 +13,10 @@
 
 @code {
     [Parameter]
-    public CategoriaHistoriaSalud Categoria { get; set; } = new();
+    public CategoriaHistoriaSaludModel Categoria { get; set; } = new();
 
     [Parameter]
-    public EventCallback<CategoriaHistoriaSalud> OnClick { get; set; }
+    public EventCallback<CategoriaHistoriaSaludModel> OnClick { get; set; }
 
     private async Task HandleClick()
     {

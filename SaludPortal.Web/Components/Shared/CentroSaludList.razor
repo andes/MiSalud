@@ -1,6 +1,6 @@
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Shared
-@using SaludPortal.Web.Models
+@using SaludPortal.Application.Models.CentrosDeSalud
 @using System.Linq
 
 <div class="centro-salud-list-container">
@@ -53,7 +53,7 @@
 
 @code {
     [Parameter]
-    public List<CentroSaludListItem> Centros { get; set; } = new();
+    public List<CentroSaludModel> Centros { get; set; } = new();
 
     [Parameter]
     public string? SelectedCentroId { get; set; }
@@ -62,14 +62,14 @@
     public string? SelectedOrigen { get; set; }
 
     [Parameter]
-    public EventCallback<CentroSaludListItem> OnCentroSelected { get; set; }
+    public EventCallback<CentroSaludModel> OnCentroSelected { get; set; }
 
     [Parameter]
     public EventCallback<string> OnOrigenChanged { get; set; }
 
     private string SearchTerm { get; set; } = string.Empty;
 
-    private IEnumerable<CentroSaludListItem> FilteredCentros
+    private IEnumerable<CentroSaludModel> FilteredCentros
     {
         get
         {
@@ -86,7 +86,7 @@
         }
     }
 
-    private async Task HandleSelectCentro(CentroSaludListItem centro)
+    private async Task HandleSelectCentro(CentroSaludModel centro)
     {
         if (OnCentroSelected.HasDelegate)
         {

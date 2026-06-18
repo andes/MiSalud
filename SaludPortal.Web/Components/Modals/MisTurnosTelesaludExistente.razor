@@ -1,0 +1,104 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Web.Components.Shared
+@using AndesServices.Interfaces
+@using AndesServices.Entities
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject BlazorSpinner.SpinnerService _spinnerService
+
+@inherits AuthenticatedComponentBase
+
+<div>
+    <h2>TURNO DE TELESALUD EXISTENTE</h2>
+    <h3>
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-camera-video" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2zm11.5 5.175 3.5 1.556V4.269l-3.5 1.556zM2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/>
+        </svg> Ya tiene un turno asignado
+    </h3>
+</div>
+<div class="alert alert-info" role="alert">
+    <strong>Importante:</strong> Solo puede tener un turno de telesalud asignado a la vez.
+</div>
+<div class="d-inline-flex flex-lg-row" style="background:#e7f3ff;color:#000;width:100%;">
+    <div class="p-sm-2 flex-shrink-1"></div>
+    <div class="p-lg-10 flex-fill flex-grow-1" style="padding:5px; width:100%; margin:5px;">
+        <p>
+            <div><label><strong>Prestación</strong></label></div>
+            <div><label>@TipoPrestacion</label></div>
+        </p>
+        <hr />
+        <p>
+            <div><label><strong>Fecha del turno</strong></label></div>
+            <div><label>@FechaTurno</label></div>
+        </p>
+        <hr />
+        <p>
+            <div><label><strong>Organización</strong></label></div>
+            <div><label>@EfectorNombre</label></div>
+        </p>
+        <hr />
+    </div>
+</div>
+<br />
+<br />
+<div><p>Si desea solicitar un nuevo turno de telesalud, primero debe cancelar el turno actual.</p></div>
+<div style="display: flex; justify-content: space-between; width: 100%;">
+    <button @onclick="Close" class="btn btn-outline-primary" title="Cerrar">Cerrar</button>
+    <button @onclick="() => MostrarConfirmacionCancelar()" class="btn btn-danger" title="Cancelar turno">Cancelar turno</button>
+</div>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance ModalTelesaludExistente { get; set; } = default!;
+    [CascadingParameter] IModalService ModalService { get; set; } = default!;
+    private Paciente? _unPaciente = new Paciente();
+
+    [Parameter] public string FechaTurno { get; set; }
+    [Parameter] public string TipoPrestacion { get; set; }
+    [Parameter] public string EfectorNombre { get; set; }
+    [Parameter] public string IdTurno { get; set; }
+    [Parameter] public string IdBloque { get; set; }
+    [Parameter] public string IdAgenda { get; set; }
+    [Parameter] public string NombrePaciente { get; set; }
+    [Parameter] public string ApellidoPaciente { get; set; }
+
+    protected override async Task OnAuthenticatedInitializedAsync()
+    {
+        var token = BackendToken;
+        if (string.IsNullOrEmpty(token))
+            return;
+
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(pacienteId))
+            return;
+    }
+
+    private async Task Close() => await ModalTelesaludExistente.CloseAsync();
+
+    private async Task MostrarConfirmacionCancelar()
+    {
+        // Cerrar el modal actual
+        await ModalTelesaludExistente.CloseAsync();
+
+        // Mostrar el modal de confirmación de cancelación
+        var options = new ModalOptions()
+        {
+            Size = ModalSize.Automatic,
+            Position = ModalPosition.TopCenter,
+            HideCloseButton = true,
+            HideHeader = true
+        };
+
+        var parameters = new ModalParameters()
+            .Add(nameof(MisTurnosCancelarConfirmar.FechaHoraTurno), FechaTurno)
+            .Add(nameof(MisTurnosCancelarConfirmar.EfectorNombre), EfectorNombre)
+            .Add(nameof(MisTurnosCancelarConfirmar.TipoPrestacion), TipoPrestacion)
+            .Add(nameof(MisTurnosCancelarConfirmar.IdTurno), IdTurno)
+            .Add(nameof(MisTurnosCancelarConfirmar.IdBloque), IdBloque)
+            .Add(nameof(MisTurnosCancelarConfirmar.IdAgenda), IdAgenda)
+            .Add(nameof(MisTurnosCancelarConfirmar.EsTeleconsulta), true)
+            .Add(nameof(MisTurnosCancelarConfirmar.NombrePaciente), NombrePaciente ?? "")
+            .Add(nameof(MisTurnosCancelarConfirmar.ApellidoPaciente), ApellidoPaciente ?? "");
+
+        ModalService.Show<MisTurnosCancelarConfirmar>(parameters, options);
+    }
+}

@@ -7,17 +7,13 @@
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Services
-@using AndesServices.Interfaces
-@using System.Security.Claims
-@using AndesServices.Entities
-@using System.Linq
+@using SaludPortal.Application.Models.Turnos
+@using SaludPortal.Application.UseCases.Turnos
 
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject IPaciente _unPacienteService
-@inject IMisTurnos _misTurnosService
-@inject IOrganizacion _organizacionService
+@inject ObtenerTurnosDisponiblesUseCase _obtenerTurnosDisponiblesUseCase
 
 @inherits AuthenticatedComponentBase
 
@@ -39,53 +35,40 @@
     <div class="teleconsulta-content">
         <div class="teleconsulta-alert">
             <Icon Name="info-circle" Size="20" Fill="#0dcaf0" class="me-2" AriaLabel="Información" />
-            <strong>Importante:</strong> Solo puede tener un turno de telesalud asignado.
+            <p>
+                <strong>Importante:</strong> Solo puede tener un turno de telesalud asignado.
+            </p>
         </div>
 
-        @if (lstAgendas != null && lstAgendas.Count > 0)
+        @if (listaTurnosPorTipoPrestacion.Count > 0)
         {
-            var tipoPrestacionIndex = 0;
             <div class="teleconsulta-accordion" id="accAgendas">
-                @foreach (var tipoPrestaciones in ObtenerTipoPrestacionesDisponibles())
+                @foreach (var tipoPrestacion in listaTurnosPorTipoPrestacion)
                 {
-                    var tipoId = $"TipoPrestacion_{tipoPrestacionIndex}";
-                    var collapseTipoId = $"collapse_{tipoPrestacionIndex}";
-                    var accOrgId = $"accOrganizaciones_{tipoPrestacionIndex}";
-                    var organizacionIndex = 0;
+                    var tipoId = $"TipoPrestacion_{tipoPrestacion.TipoPrestacionConceptId}";
+                    var collapseTipoId = $"collapse_{tipoPrestacion.TipoPrestacionConceptId}";
                     <div class="teleconsulta-accordion-item">
                         <h2 class="teleconsulta-accordion-header" id="@tipoId">
                             <button class="teleconsulta-accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseTipoId" aria-expanded="true" aria-controls="@collapseTipoId">
                                 <Icon Name="calendar-check" Size="20" Fill="#87b867" class="me-2" AriaLabel="Prestación" />
-                                @tipoPrestaciones.term
+                                @tipoPrestacion.TipoPrestacionTerm
                             </button>
                         </h2>
                         <div id="@collapseTipoId" class="teleconsulta-accordion-collapse collapse show" aria-labelledby="@tipoId" data-bs-parent="#accAgendas">
                             <div class="teleconsulta-accordion-body">
                                 <div class="teleconsulta-efectores-list">
-                                    @foreach (var efectores in ObtenerEfectores(tipoPrestaciones.id))
+                                    @foreach (var efector in tipoPrestacion.Efectores)
                                     {
-                                        var (primerTurnoDisponible, bloqueId) = ObtenerPrimerTurnoDisponible(tipoPrestaciones.id, efectores.Efector._id);
-                                        var tieneTurno = primerTurnoDisponible != null && bloqueId != null;
-                                        
-                                        <EfectorTelesaludCard 
-                                            EfectorNombre="@efectores.Efector.nombre"
-                                            TieneTurnoDisponible="@tieneTurno"
-                                            OnSolicitar="@(tieneTurno ? EventCallback.Factory.Create(this, async () => await ShowModalConfirmar(
-                                                primerTurnoDisponible!.horaInicio.Date, 
-                                                DateTimeHelper.ToArgentinaTime(primerTurnoDisponible.horaInicio), 
-                                                tipoPrestaciones.term, 
-                                                efectores.Efector.nombre, 
-                                                efectores.Domicilio, 
-                                                tipoPrestaciones.id, 
-                                                primerTurnoDisponible._id, 
-                                                bloqueId!)) : default(EventCallback))" />
-                                        organizacionIndex++;
+                                        var primerTurno = efector.TurnosDisponibles.FirstOrDefault();
+                                        <EfectorTelesaludCard
+                                            EfectorNombre="@efector.Nombre"
+                                            TieneTurnoDisponible="@(primerTurno != null)"
+                                            OnSolicitar="@(primerTurno != null ? EventCallback.Factory.Create(this, async () => await ShowModalConfirmar(primerTurno)) : default(EventCallback))" />
                                     }
                                 </div>
                             </div>
                         </div>
                     </div>
-                    tipoPrestacionIndex++;
                 }
             </div>
         }
@@ -99,16 +82,7 @@
 
 @code {
     private bool consentimientoAceptado = false;
-    private List<OrganizacionAgenda> lstAgendas = new List<OrganizacionAgenda>();
-    private Paciente? _unPaciente = new Paciente();
-    private Direccion _direccionGeoreferencia = new Direccion();
-    private userLocation _userLocation = new userLocation();
-    private int itemForeachtipoPrestaciones;
-    private int itemForeachOrganizaciones;
-    private Organizacion organizacion = new Organizacion();
-    private Dictionary<string, string> _domiciliosOrganizaciones = new();
-    private List<MisTurnos> lstMisTurnos = new List<MisTurnos>();
-    private HashSet<string> conceptosTeleconsulta = new HashSet<string>();
+    private List<TurnosPorTipoPrestacion> listaTurnosPorTipoPrestacion = [];
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
@@ -124,51 +98,8 @@
         Nav.NavigateTo("/misturnos", forceLoad: true);
     }
 
-    private async Task ShowModalConfirmar(
-        DateTime Fecha, 
-        DateTime Hora, 
-        string TipoPrestacion, 
-        string Efector, 
-        string EfectorDomicilio, 
-        string IdTipoPrestacion, 
-        string IdTurno, 
-        string IdBloque)
+    private async Task ShowModalConfirmar(TurnoDisponible turno)
     {
-        // Verificar si ya tiene un turno de telesalud con fecha mayor a hoy
-        if (lstMisTurnos != null && lstMisTurnos.Any())
-        {
-            var turnoFuturo = lstMisTurnos.FirstOrDefault(t => 
-                DateTimeHelper.ToArgentinaTime(t.horaInicio).Date > DateTimeHelper.NowArgentina().Date && 
-                t.tipoPrestacion != null &&
-                EsTeleconsulta(t.tipoPrestacion.conceptId) &&
-                (t.estado == "programado" || t.estado == "asignado" || t.estado == "pendiente"));
-
-            if (turnoFuturo != null)
-            {
-                // Obtener información del turno
-                var efectorNombre = turnoFuturo.organizacion?.nombre ?? "No especificado";
-                var fechaTurno = DateTimeHelper.ToArgentinaTime(turnoFuturo.horaInicio).Date.ToString("dd/MM/yyyy");
-
-                // Mostrar modal de error
-                var errorOptions = new ModalOptions()
-                {
-                    Size = ModalSize.Medium,
-                    Position = ModalPosition.TopCenter,
-                    HideCloseButton = false,
-                    HideHeader = false
-                };
-
-                var errorParameters = new ModalParameters()
-                    .Add(nameof(ErrorModal.Titulo), 
-                        "No se puede solicitar el turno")
-                    .Add(nameof(ErrorModal.Mensaje), 
-                        $"Ya tiene un turno de telesalud asignado. Efector: {efectorNombre}, Fecha: {fechaTurno}");
-
-                Modal.Show<ErrorModal>(errorParameters, errorOptions);
-                return;
-            }
-        }
-
         var options = new ModalOptions()
         {
             Size = ModalSize.Large,
@@ -177,34 +108,17 @@
             HideHeader = true
         };
 
-        string Paciente = _unPaciente.nombre + " " + _unPaciente.apellido;
+        string paciente = (User.GetNombre() ?? "") + " " + (User.GetApellido() ?? "");
 
         var parameters = new ModalParameters()
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.Paciente), Paciente)
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.FechaTurno), Fecha.ToString("dd/MM/yyyy"))
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.TipoPrestacion), TipoPrestacion)
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.EfectorNombre), Efector)
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.EfectorDomicilio), EfectorDomicilio)
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.IdTurno), IdTurno)
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.IdBloque), IdBloque)
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar.IdAgenda), ObtenerAgendaPorIdBloque(IdBloque)._id)
-        .Add(nameof(TurnoNuevoTeleconsultaConfirmar._unTipoPrestacion), ObtenerTipoPrestacionesDisponibles(IdTipoPrestacion));
+            .Add(nameof(RegistrarTurnoTeleconsultaConfirmar.Paciente), paciente)
+            .Add(nameof(RegistrarTurnoTeleconsultaConfirmar.turnoDisponible), turno);
 
-        Modal.Show<TurnoNuevoTeleconsultaConfirmar>(parameters, options);
+        Modal.Show<RegistrarTurnoTeleconsultaConfirmar>(parameters, options);
     }
 
-    protected override async Task OnAuthenticatedInitializedAsync()
+    private async Task ObtenerTurnosTeleconsulta()
     {
-        var token = BackendToken;
-        if (string.IsNullOrEmpty(token))
-            return;
-
-        var pacienteId = PacienteId;
-        if (string.IsNullOrEmpty(pacienteId))
-            return;
-    }
-
-    private async Task ObtenerTurnosTeleconsulta() {
         var pacienteId = PacienteId;
         if (string.IsNullOrEmpty(pacienteId))
             return;
@@ -213,54 +127,7 @@
 
         try
         {
-            // Obtengo los conceptos de teleconsulta
-            var conceptosTurneables = await _misTurnosService.ObtenerConceptosTurneablesAsync(true);
-            if (conceptosTurneables != null && conceptosTurneables.Count > 0)
-            {
-                conceptosTeleconsulta = new HashSet<string>(conceptosTurneables.Select(c => c.conceptId));
-            }
-
-            // Obtengo el paciente
-            _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(pacienteId);
-
-            // Verifico que domicilio utilizar para referencia a las organizaciones
-            _direccionGeoreferencia = _unPacienteService.ObtenerDireccionPrioritaria(_unPaciente);
-            
-            if (_direccionGeoreferencia == null) return;
-
-            if (_direccionGeoreferencia.valor == null || _direccionGeoreferencia.ubicacion.localidad == null || _direccionGeoreferencia.ubicacion.provincia == null)
-            {
-                return;
-            }
-            string direccion = _direccionGeoreferencia.valor + ", " + _direccionGeoreferencia.ubicacion.localidad.nombre + ", " + _direccionGeoreferencia.ubicacion.provincia.nombre;
-            _userLocation = await _unPacienteService.ObtenerGeoreferenciaPaciente(direccion);
-
-            if (_userLocation != null)
-            {
-                // Obtener los turnos del paciente para validar si ya tiene uno con fecha mayor a hoy
-                lstMisTurnos = await _misTurnosService.ObtenerMisTurnosAsync(Documento ?? "") ?? new List<MisTurnos>();
-
-                // La diferencia principal: esTeleconsulta: true
-                lstAgendas = await _misTurnosService.ObtenerAgendasOrganizaciones(pacienteId, _userLocation, esTeleconsulta: true);
-
-                // Obtener todos los IDs de organizaciones únicos
-                var orgIds = lstAgendas
-                    .SelectMany(e => e.agendas)
-                    .Select(a => a.organizacion._id)
-                    .Distinct()
-                    .ToList();
-
-                // Llamar a ObtenerOrganizacionPorIdAsync para cada organización y guardar el domicilio
-                foreach (var orgId in orgIds)
-                {
-                    var organizacion = await _organizacionService.ObtenerOrganizacionPorIdAsync(orgId);
-                    if (organizacion != null && !_domiciliosOrganizaciones.ContainsKey(orgId))
-                    {
-                        // Asume que organizacion.direccion?.valor es el domicilio
-                        _domiciliosOrganizaciones[orgId] = organizacion.direccion?.valor ?? "";
-                    }
-                }
-            }
+            listaTurnosPorTipoPrestacion = await _obtenerTurnosDisponiblesUseCase.EjecutarAsync(pacienteId, esTeleconsulta: true);
         }
         catch (Exception ex)
         {
@@ -270,103 +137,5 @@
         {
             _spinnerService.Hide();
         }
-    }
-
-    private IEnumerable<(string term, string id)> ObtenerTipoPrestacionesDisponibles()
-    {
-        return lstAgendas?
-        .SelectMany(e => e.agendas)
-        .Where(a => a.bloques != null && a.bloques.Count > 0 && a.bloques.Any(b => b.restantesMobile > 0))
-        .SelectMany(a => (a.tipoPrestaciones ?? new List<TipoPrestacion>()))
-        .Where(tp => !string.IsNullOrWhiteSpace(tp.term))
-        .Select(tp => (term: tp.term, id: tp._id))
-        .Distinct()
-        .OrderBy(t => t)
-        ?? Enumerable.Empty<(string, string)>();
-    }
-
-    private TipoPrestacion? ObtenerTipoPrestacionesDisponibles(string id)
-    {
-        return lstAgendas?
-            .SelectMany(e => e.agendas)
-            .Where(a => a.bloques != null && a.bloques.Count > 0 && a.bloques.Any(b => b.restantesMobile > 0))
-            .SelectMany(a => a.tipoPrestaciones ?? new List<TipoPrestacion>())
-            .FirstOrDefault(tp => tp._id == id);
-    }
-
-    private Agenda? ObtenerAgendaPorIdBloque(string idBloque)
-    {
-        return lstAgendas?
-            .SelectMany(org => org.agendas ?? new List<Agenda>())
-            .FirstOrDefault(agenda =>
-                agenda.bloques != null &&
-                agenda.bloques.Any(bloque => bloque._id == idBloque)
-            );
-    }
-
-    private IEnumerable<(AgendaOrganizacion Efector, string Domicilio)> ObtenerEfectores(string _idTipoPrestacion)
-    {
-        return lstAgendas?
-            .SelectMany(e => e.agendas
-                .Where(a => a.bloques != null && a.bloques.Any(b => b.restantesMobile > 0))
-                .Where(a => (a.tipoPrestaciones ?? new List<TipoPrestacion>())
-                    .Any(tp => tp!._id == _idTipoPrestacion))
-                .Select(a => (
-                    a.organizacion,
-                    _domiciliosOrganizaciones.TryGetValue(a.organizacion._id, out var domicilio) ? domicilio : ""
-                ))
-            )
-            .Where(x => x.organizacion != null)
-            .DistinctBy(x => x.organizacion!._id)
-            ?? Enumerable.Empty<(AgendaOrganizacion, string)>();
-    }
-
-    private IEnumerable<Bloque> RecuperarAgendas(string _idTipoPrestacion, string Efector)
-    {
-        return lstAgendas?
-            .SelectMany(e => e.agendas
-                    .Where(a =>
-                a.bloques != null
-                && a.organizacion?._id == Efector
-                && (a.tipoPrestaciones ?? new List<TipoPrestacion>())
-                    .Any(tp => tp._id == _idTipoPrestacion)
-                && a.bloques.Any(b =>
-                    b.restantesMobile > 0
-                    && b.turnos.Any(c => c.estado == "disponible")
-                )
-            )
-            .SelectMany(a => a.bloques
-                .Where(b =>
-                    b.restantesMobile > 0
-                    && b.turnos.Any(c => c.estado == "disponible")
-                )
-            )
-        )
-        ?? Enumerable.Empty<Bloque>();
-    }
-
-    /// <summary>
-    /// Obtiene el primer turno disponible para un tipo de prestación y efector
-    /// </summary>
-    /// <param name="tipoPrestacionId">ID del tipo de prestación</param>
-    /// <param name="efectorId">ID del efector</param>
-    /// <returns>Tupla con el primer turno disponible y el ID del bloque</returns>
-    private (MisTurnos?, string?) ObtenerPrimerTurnoDisponible(string tipoPrestacionId, string efectorId)
-    {
-        foreach (var bloque in RecuperarAgendas(tipoPrestacionId, efectorId))
-        {
-            var primerTurnoDisponible = bloque.turnos
-                .FirstOrDefault(t => t.estado == "disponible");
-
-            return (primerTurnoDisponible, bloque._id);
-        }
-        return (null, null);
-    }
-
-    private bool EsTeleconsulta(string? conceptId)
-    {
-        if (string.IsNullOrEmpty(conceptId))
-            return false;
-        return conceptosTeleconsulta.Contains(conceptId);
     }
 }

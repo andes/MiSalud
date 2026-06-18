@@ -1,9 +1,9 @@
 using System;
 using AndesServices.Interfaces;
 using SaludPortal.Application.Mappers;
-using SaludPortal.Application.Models;
+using SaludPortal.Application.Models.Turnos;
 
-namespace SaludPortal.Application.UseCases;
+namespace SaludPortal.Application.UseCases.Turnos;
 
 public class ObtenerHistorialTurnosUseCase
 {

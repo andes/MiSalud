@@ -1,19 +1,27 @@
 ﻿using AndesServices.Entities;
-using AndesServices.Entities.ViewModels;
 using AndesServices.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using Blazored.Modal;
 using BlazorSpinner;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.DataProtection;
 using SaludPortal.Web;
 using SaludPortal.Web.Components;
 using SaludPortal.Web.Services;
 using AndesServices.Services;
 using AndesServices.Handlers;
-using SaludPortal.Application.UseCases;
+using SaludPortal.Application.UseCases.Paciente;
+using SaludPortal.Application.UseCases.Turnos;
+using SaludPortal.Application.UseCases.Farmacias;
+using SaludPortal.Web.Models;
+using SaludPortal.Application.UseCases.Auth;
+using SaludPortal.Application.UseCases.Recetas;
+using SaludPortal.Application.UseCases.Vacunaciones;
+using SaludPortal.Application.UseCases.HistoriaSalud;
+using SaludPortal.Application.UseCases.CentrosDeSalud;
+using SaludPortal.Application.UseCases.Laboratorios;
+using SaludPortal.Application.UseCases.GrupoFamiliar;
+using SaludPortal.Application.UseCases.Account;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,8 +59,6 @@ builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddScoped<AppToastService>();
 builder.Services.AddScoped<UserContext>();
 builder.Services.AddScoped<VMFarmaciasTurno>();
-builder.Services.AddScoped<VMMisLaboratorios>();
-builder.Services.AddScoped<VMHistoriaSalud>();
 builder.Services.AddSingleton<MessageService>();
 builder.Services.AddTransient<IEmailService, SmtpEmailService>();
 
@@ -77,6 +83,31 @@ builder.Services.AddScoped<ICentrosSalud, CentrosSaludService>();
 // Casos de uso
 builder.Services.AddScoped<ObtenerTurnosUseCase>();
 builder.Services.AddScoped<ObtenerHistorialTurnosUseCase>();
+builder.Services.AddScoped<RegistrarTurnoUseCase>();
+builder.Services.AddScoped<SolicitarTeleconsultaUseCase>();
+builder.Services.AddScoped<CancelarTurnoUseCase>();
+builder.Services.AddScoped<ObtenerTurnosDisponiblesUseCase>();
+builder.Services.AddScoped<ObtenerPacienteUseCase>();
+builder.Services.AddScoped<ObtenerFarmaciasTurnoUseCase>();
+builder.Services.AddScoped<ObtenerLocalidadesDeFarmaciasUseCase>();
+builder.Services.AddScoped<LoginUseCase>();
+builder.Services.AddScoped<ValidarConexionXroadssUseCase>();
+builder.Services.AddScoped<ObtenerRecetasUseCase>();
+builder.Services.AddScoped<ObtenerVacunacionesUseCase>();
+builder.Services.AddScoped<ObtenerCategoriasHistoriaSaludUseCase>();
+builder.Services.AddScoped<ObtenerPrestacionesHistoriaSaludUseCase>();
+builder.Services.AddScoped<ObtenerDetallePrestacionUseCase>();
+builder.Services.AddScoped<ObtenerUrlImagenPrestacionUseCase>();
+builder.Services.AddScoped<DescargarPdfPrestacionUseCase>();
+builder.Services.AddScoped<ObtenerDireccionPacienteUseCase>();
+builder.Services.AddScoped<ObtenerCentrosSaludUseCase>();
+builder.Services.AddScoped<ObtenerTodosLosLaboratoriosUseCase>();
+builder.Services.AddScoped<DescargarInformeLaboratorioUseCase>();
+builder.Services.AddScoped<ObtenerGrupoFamiliarUseCase>();
+builder.Services.AddScoped<RegistrarCuentaUseCase>();
+builder.Services.AddScoped<ValidarCodigoActivacionUseCase>();
+builder.Services.AddScoped<SolicitarRecuperacionContraseniaUseCase>();
+builder.Services.AddScoped<ReestablecerContraseniaUseCase>();
 
 // Register AndesTokenHandler as scoped to access HttpContext
 builder.Services.AddTransient<AndesTokenHandler>();

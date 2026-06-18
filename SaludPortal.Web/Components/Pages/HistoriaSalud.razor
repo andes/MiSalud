@@ -4,20 +4,18 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Services
-@using AndesServices.Interfaces
-@using AndesServices.Entities.ViewModels
+@using SaludPortal.Application.UseCases.HistoriaSalud
+@using SaludPortal.Application.Models.HistoriaSalud
 @using AndesServices.Entities
 @using System.Linq
 
-@inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IConfiguration Configuration
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject AndesServices.Entities.ViewModels.VMHistoriaSalud Model
 @inject IJSRuntime JSRuntime
 @inherits AuthenticatedComponentBase
-@inject IHistoriaSalud _miHistoriaSaludService
+@inject ObtenerCategoriasHistoriaSaludUseCase _obtenerCategoriasUseCase
+@inject ObtenerPrestacionesHistoriaSaludUseCase _obtenerPrestacionesUseCase
 
 <PageTitle>Historia de salud - Mi Salud</PageTitle>
 
@@ -27,12 +25,12 @@
                         BackHref="/"
                         BackAriaLabel="Volver al Inicio" />
 
-    @if (Model.lstCategoriasHistoriaSalud != null && Model.lstCategoriasHistoriaSalud.Any())
+    @if (lstCategorias != null && lstCategorias.Any())
     {
         <div class="categorias-section">
             <SectionTitle Title="Categorías" Icon="bi bi-clipboard2-heart" />
             <div class="categorias-grid">
-                @foreach (var categoria in Model.lstCategoriasHistoriaSalud)
+                @foreach (var categoria in lstCategorias)
                 {
                     <CategoriaCard Categoria="categoria" OnClick="IrACategoria" />
                 }
@@ -44,9 +42,9 @@
         <EmptyState Message="No se encontraron categorías disponibles." />
     }
 </div>
+
 @code {
-    private VMHistoriaSalud vmHistoriaSalud = new VMHistoriaSalud();
-    private List<AndesServices.Entities.CategoriaHistoriaSalud> lstCategorias = new List<AndesServices.Entities.CategoriaHistoriaSalud>();
+    private List<CategoriaHistoriaSaludModel> lstCategorias = new();
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -55,9 +53,15 @@
             return;
 
         _spinnerService.Show();
-
-        Model.lstCategoriasHistoriaSalud = (await _miHistoriaSaludService.ObtenerCategoriasHistoriaSaludAsync(null)).OrderBy(c => c.BusquedaPor).ToList();
-        _spinnerService.Hide();
+        try
+        {
+            var categorias = await _obtenerCategoriasUseCase.EjecutarAsync();
+            lstCategorias = categorias.OrderBy(c => c.BusquedaPor).ToList();
+        }
+        finally
+        {
+            _spinnerService.Hide();
+        }
     }
 
     protected async Task BuscarHistoriaSalud(string idTipoPrestacion)
@@ -71,11 +75,17 @@
             return;
 
         _spinnerService.Show();
-        Model.lstPrestacionesHistoriaSalud = await _miHistoriaSaludService.ObtenerPrestacionesAsync(idTipoPrestacion, pacienteId);
-        _spinnerService.Hide();
+        try
+        {
+            await _obtenerPrestacionesUseCase.EjecutarAsync(idTipoPrestacion, pacienteId);
+        }
+        finally
+        {
+            _spinnerService.Hide();
+        }
     }
 
-    private async Task IrACategoria(CategoriaHistoriaSalud categoria)
+    private async Task IrACategoria(CategoriaHistoriaSaludModel categoria)
     {
         var expresionSnomed = categoria.ExpresionSnomed;
         var titulo = categoria.Titulo;
@@ -86,18 +96,16 @@
         var cfg = new ConexionServicios();
         Configuration.GetSection("urlServicios").Bind(cfg);
 
-        // Caso especial para certificado, que no tiene prestaciones sino un PDF fijo
         if (expresionSnomed == "103695000" && !cfg.usarProd)
         {
             await JSRuntime.InvokeVoidAsync("open", Nav.BaseUri + "docs/Certificado médico OLAVE.pdf", "_blank");
-            // Nav.NavigateTo($"/docs/Certificado médico OLAVE.pdf",true);
-            // return;
         }
         else
         {
-            if (expresionSnomed == "16076005") //Recetas
+            if (expresionSnomed == "16076005")
                 Navigation.NavigateTo($"MisRecetas");
-            else {
+            else
+            {
                 var encoded = Uri.EscapeDataString(expresionSnomed);
                 Navigation.NavigateTo($"/historiasalud/{encoded}");
             }

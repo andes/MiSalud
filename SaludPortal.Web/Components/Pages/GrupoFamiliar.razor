@@ -1,18 +1,14 @@
 ﻿@page "/grupofamiliar"
 @rendermode InteractiveServer
 
-@using Microsoft.AspNetCore.Components.Authorization
-@using SaludPortal.Web.Services
-@using AndesServices.Interfaces
-@using AndesServices.Entities
 @using SaludPortal.Web.Components.Shared
-@using System.Linq
+@using SaludPortal.Application.UseCases.GrupoFamiliar
+@using PacienteEntity = AndesServices.Entities.Paciente
 
 @inherits AuthenticatedComponentBase
-@* @inject NavigationManager Nav *@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject IPaciente _pacienteService
+@inject ObtenerGrupoFamiliarUseCase _obtenerGrupoFamiliarUseCase
 
 <PageTitle>Grupo familiar - Mi Salud</PageTitle>
 
@@ -56,20 +52,16 @@
 </div>
 
 @code {
-    private AndesServices.Entities.Paciente unPaciente = new AndesServices.Entities.Paciente();
+    private PacienteEntity? unPaciente;
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
-        var token = BackendToken;
-        if (string.IsNullOrEmpty(token))
-            return;
-
         var pacienteId = PacienteId;
-        if (string.IsNullOrEmpty(token))
+        if (string.IsNullOrEmpty(pacienteId))
             return;
 
         _spinnerService.Show();
-        unPaciente = await _pacienteService.ObtenerPacientePorIdAsync(pacienteId);
+        unPaciente = await _obtenerGrupoFamiliarUseCase.EjecutarAsync(pacienteId);
         _spinnerService.Hide();
     }
 }

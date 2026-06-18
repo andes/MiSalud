@@ -7,12 +7,11 @@
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Forms
-@using AndesServices.Interfaces
-@using AndesServices.Entities
-@using AndesServices.DTOs.Login
+@using SaludPortal.Application.UseCases.Account
 @using System.Linq
+
 @inject NavigationManager Nav
-@inject ILoginService<User> LoginService
+@inject ValidarCodigoActivacionUseCase ValidarCodigoActivacionUseCase
 @inject ILogger<IngresarCodigoActivacion> Logger
 
 <PageTitle>Activar cuenta - Mi Salud</PageTitle>
@@ -120,27 +119,11 @@
 
         try
         {
-            var result = await LoginService.ValidarCodigoActivacion(new ValidarCodigoActivacionRequestDto
-            {
-                Email = _model.Email,
-                CodigoActivacion = _model.CodigoActivacion
-            });
+            var result = await ValidarCodigoActivacionUseCase.EjecutarAsync(_model.Email, _model.CodigoActivacion);
 
-            if (result == null)
+            if (!result.valid)
             {
-                _errors.Add("Error al validar el código de activación.");
-                return;
-            }
-
-            if (result?.Error != null)
-            {
-                _errors.Add(result.Error);
-                return;
-            }
-
-            if (result?.Message != "new_password_needed")
-            {
-                _errors.Add("Código de activación inválido.");
+                _errors.Add(result.error ?? "Error al validar el código de activación.");
                 return;
             }
 

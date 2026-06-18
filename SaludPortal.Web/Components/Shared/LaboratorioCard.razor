@@ -1,13 +1,13 @@
-@using AndesServices.Entities
+@using SaludPortal.Application.Models.Laboratorios
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Icons
 
 <div class="laboratorio-card" @onclick="HandleDownloadClick" title="Descargar" tabindex="0">
     <div class="laboratorio-header">
         <div class="laboratorio-header-info">
-            @if (!string.IsNullOrWhiteSpace(Laboratorio.fecha))
+            @if (!string.IsNullOrWhiteSpace(Laboratorio.Fecha))
             {
-                <span class="laboratorio-fecha">@Laboratorio.fecha</span>
+                <span class="laboratorio-fecha">@Laboratorio.Fecha</span>
             }
             <span class="laboratorio-tipo">Informe De Laboratorio</span>
         </div>
@@ -28,11 +28,11 @@
                 <span class="laboratorio-value">@Laboratorio.Laboratorio</span>
             </div>
         }
-        @if (!string.IsNullOrWhiteSpace(Laboratorio.medicoSolicitante))
+        @if (!string.IsNullOrWhiteSpace(Laboratorio.MedicoSolicitante))
         {
             <div class="laboratorio-info">
                 <span class="laboratorio-label">Solicitante:</span>
-                <span class="laboratorio-value">@Laboratorio.medicoSolicitante</span>
+                <span class="laboratorio-value">@Laboratorio.MedicoSolicitante</span>
             </div>
         }
     </div>
@@ -40,14 +40,14 @@
 
 @code {
     [Parameter]
-    public AndesServices.Entities.MisLaboratorios Laboratorio { get; set; } = new();
+    public LaboratorioModel Laboratorio { get; set; } = new();
 
     [Parameter]
-    public EventCallback<AndesServices.Entities.MisLaboratorios> OnDownload { get; set; }
+    public EventCallback<LaboratorioModel> OnDownload { get; set; }
 
     private async Task HandleDownloadClick()
     {
-        if (OnDownload.HasDelegate && !string.IsNullOrEmpty(Laboratorio.idProtocolo))
+        if (OnDownload.HasDelegate && !string.IsNullOrEmpty(Laboratorio.IdProtocolo))
         {
             await OnDownload.InvokeAsync(Laboratorio);
         }

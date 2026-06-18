@@ -1,14 +1,13 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@using AndesServices.Entities
+@using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Application.Models.Turnos
+@using SaludPortal.Application.UseCases.Turnos
 @using SaludPortal.Web.Components.Shared
-@using SaludPortal.Web.Services
-@using AndesServices.Interfaces
-@using AndesServices.Entities
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject MessageService MessageService
-@inject IPaciente _unPacienteService
-@inject IMisTurnos _unTurnoService
+@inject RegistrarTurnoUseCase _registrarTurnoUseCase
 
 @inherits AuthenticatedComponentBase
 
@@ -25,7 +24,7 @@
     <div class="p-lg-10 flex-fill flex-grow-1" style="padding:5px; width:100%; margin:5px;">
         <p>
             <div><label><strong>Prestación</strong></label></div>
-            <div><label>@TipoPrestacion</label></div>
+            <div><label>@TurnoDisponible.TipoPrestacion</label></div>
         </p>
         <hr />
         <p>
@@ -35,12 +34,12 @@
         <hr />
         <p>
             <div><label><strong>Fecha y hora del turno</strong></label></div>
-            <div><label>@FechaHoraTurno</label></div>
+            <div><label>@TurnoDisponible.FechaHora.ToString("dd/MM/yyyy HH:mm")</label></div>
         </p>
         <hr />
         <p>
-            <div><label><strong>@EfectorNombre</strong></label></div>
-            <div><label>@EfectorDomicilio</label></div>
+            <div><label><strong>@TurnoDisponible.NombreEfector</strong></label></div>
+            <div><label>@TurnoDisponible.DomicilioEfector</label></div>
         </p>
         <hr />
     </div>
@@ -54,18 +53,9 @@
 @code {
     [CascadingParameter] BlazoredModalInstance ModalConfirmarTurno { get; set; } = default!;
     [CascadingParameter] IModalService ModalService { get; set; } = default!;
-    private Paciente? _unPaciente = new Paciente();
-    private MisTurnos? _unTurno = new MisTurnos();
 
     [Parameter] public string Paciente { get; set; }
-    [Parameter] public string FechaHoraTurno { get; set; }
-    [Parameter] public string TipoPrestacion { get; set; }
-    [Parameter] public string EfectorNombre { get; set; }
-    [Parameter] public string EfectorDomicilio { get; set; }
-    [Parameter] public string IdTurno { get; set; }
-    [Parameter] public string IdBloque { get; set; }
-    [Parameter] public string IdAgenda { get; set; }
-    [Parameter] public TipoPrestacion _unTipoPrestacion { get; set; }
+    [Parameter] public TurnoDisponible TurnoDisponible { get; set; }
 
     private async Task Close() => await ModalConfirmarTurno.CloseAsync();
 
@@ -76,33 +66,27 @@
             return;
 
         var pacienteId = PacienteId;
-        if (string.IsNullOrEmpty(token))
+        if (string.IsNullOrEmpty(pacienteId))
             return;
 
         _spinnerService.Show();
-        // Obtengo el paciente
-        _unPaciente = await _unPacienteService.ObtenerPacientePorIdAsync(pacienteId);
+        bool resultado = await _registrarTurnoUseCase.EjecutarAsync(pacienteId, TurnoDisponible);
+        _spinnerService.Hide();
 
-        if (_unPaciente != null)
+        if (resultado)
         {
-            bool resultado = await _unTurnoService.RegistrarTurnoAsync(IdTurno, IdBloque, IdAgenda, _unPaciente, _unTipoPrestacion);
-            _spinnerService.Hide();
+            await ModalConfirmarTurno.CloseAsync();
+            MessageService.Title = "Turno confirmado";
+            MessageService.Content = "El turno ha sido confirmado exitosamente.";
+            Nav.NavigateTo("/turnosmensajeconfirma");
 
-            if (resultado)
-            {
-                await ModalConfirmarTurno.CloseAsync();
-                MessageService.Title = "Turno confirmado";
-                MessageService.Content = "El turno ha sido confirmado exitosamente.";
-                Nav.NavigateTo("/turnosmensajeconfirma");
-
-            }
-            else
-            {
-                await ModalConfirmarTurno.CloseAsync();
-                MessageService.Title = "Turno no confirmado";
-                MessageService.Content = "No se pudo confirmar el turno. Posiblemente el turno ya no se encontraba disponible. Por favor, intente nuevamente.";
-                Nav.NavigateTo("/turnosmensajenoconfirma");
-            }
+        }
+        else
+        {
+            await ModalConfirmarTurno.CloseAsync();
+            MessageService.Title = "Turno no confirmado";
+            MessageService.Content = "No se pudo confirmar el turno. Posiblemente el turno ya no se encontraba disponible. Por favor, intente nuevamente.";
+            Nav.NavigateTo("/turnosmensajenoconfirma");
         }
     }
 }

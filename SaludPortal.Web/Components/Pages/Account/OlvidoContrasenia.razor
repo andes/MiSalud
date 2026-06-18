@@ -1,18 +1,16 @@
 ﻿@page "/olvidocontrasenia"
 @page "/recuperocontrasenia"
 @using System.ComponentModel.DataAnnotations
-@using AndesServices.DTOs.Login
-@using AndesServices.Interfaces
-@using AndesServices.Entities
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
 @using SaludPortal.Web.Models
+@using SaludPortal.Application.UseCases.Account
 @using Microsoft.AspNetCore.Components.Forms
 
 @layout LoginLayout
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
-@inject ILoginService<User> LoginService
+@inject SolicitarRecuperacionContraseniaUseCase SolicitarRecuperacionContraseniaUseCase
 @inject NavigationManager Nav
 @inject ILogger<OlvidoContrasenia> _logger
 
@@ -98,34 +96,20 @@
 
         try
         {
-            var result = await LoginService.OlvideContrasenia(new OlvideContraseniaRequestDto
-            {
-                Email = _model.Email,
-                Origen = "Portal Mi Salud" // Asi lo pidieron
-            });
+            var result = await SolicitarRecuperacionContraseniaUseCase.EjecutarAsync(_model.Email);
 
-
-            if (result != null && result.Valid)
+            if (result.success)
             {
-                var restablecerPassword = await LoginService.RestablecerPassword(_model.Email);
-                if (restablecerPassword)
-                {
-                    Nav.NavigateTo("/reestablecer-password");
-                }
-                else
-                {
+                if (result.needsActivation)
                     Nav.NavigateTo("/ingresar-codigo-activacion");
-                }
+                else
+                    Nav.NavigateTo("/reestablecer-password");
+
                 mensajeExito = true;
-            }
-            else if (result != null && !result.Valid && !string.IsNullOrWhiteSpace(result.Error))
-            {
-                _error = result.Error;
             }
             else
             {
-                _logger.LogWarning("El servicio de olvide contraseña devolvió un resultado nulo para el email: {Email}", _model.Email);
-                _error = "No se pudo procesar su solicitud en este momento. Por favor, intente nuevamente más tarde.";
+                _error = result.error;
             }
         }
         catch (Exception ex)

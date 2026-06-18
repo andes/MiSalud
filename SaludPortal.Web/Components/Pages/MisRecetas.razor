@@ -2,15 +2,13 @@
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Application.Models.Recetas
+@using SaludPortal.Application.UseCases.Recetas
 @using SaludPortal.Web.Components.Shared
-@using SaludPortal.Web.Services
-@using AndesServices.Interfaces
-@using AndesServices.Entities
-@using System.Linq
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
-@inject IMisRecetas _recetasService
+@inject ObtenerRecetasUseCase _obtenerRecetasUseCase
 
 @inherits AuthenticatedComponentBase
 
@@ -22,12 +20,12 @@
                         BackHref="/historiasalud"
                         BackAriaLabel="Volver al historial de salud" />
 
-    @if (lstRecetas != null && lstRecetas.Any())
+    @if (recetas != null && recetas.Any())
     {
         <div class="recetas-section">
             <SectionTitle Title="Recetas Médicas" Icon="bi bi-file-medical" />
             <div class="recetas-grid">
-                @foreach (var receta in lstRecetas.OrderByDescending(r => r.fechaRegistro))
+                @foreach (var receta in recetas.OrderByDescending(r => r.FechaRegistro))
                 {
                     <RecetaCard Receta="receta" />
                 }
@@ -41,7 +39,7 @@
 </div>
 
 @code {
-    private List<AndesServices.Entities.MisReceta> lstRecetas = new List<AndesServices.Entities.MisReceta>();
+    private List<Receta> recetas = new List<Receta>();
 
     protected override async Task OnAuthenticatedInitializedAsync()
     {
@@ -50,7 +48,7 @@
             return;
 
         _spinnerService.Show();
-        lstRecetas = await _recetasService.ObtenerRecetasPacienteAsync(PacienteId);
+        recetas = await _obtenerRecetasUseCase.EjecutarAsync(PacienteId);
         _spinnerService.Hide();
     }
 }
