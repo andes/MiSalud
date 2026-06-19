@@ -22,7 +22,7 @@ public class RegistroViewModel
     public string Telefono { get; set; } = string.Empty;
 
     [Required(AllowEmptyStrings = false, ErrorMessage = "El número de trámite es requerido.")]
-    [RegularExpression(@"^\d{11}$", ErrorMessage = "El número de trámite debe tener 11 dígitos.")]
+    [RegularExpression(@"^\d{1,11}$", ErrorMessage = "El número de trámite debe tener hasta 11 dígitos.")]
     public string NroTramite { get; set; } = string.Empty;
 
     [Required(AllowEmptyStrings = false, ErrorMessage = "El apellido es requerido.")]

@@ -139,6 +139,18 @@
     box-shadow: 0 2px 4px rgba(47, 125, 50, 0.2);
 }
 
+.turno-futuro-link-button:disabled {
+    color: #999;
+    border-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.turno-futuro-link-button:disabled:hover {
+    background: transparent;
+    box-shadow: none;
+}
+
 .turno-futuro-cancel-button {
     display: flex;
     align-items: center;

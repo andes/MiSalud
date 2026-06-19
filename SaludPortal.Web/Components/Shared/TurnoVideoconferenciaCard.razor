@@ -43,8 +43,10 @@
     </div>
     <div class="turno-futuro-footer">
         <button class="turno-futuro-link-button" @onclick="HandleJoin" @onclick:stopPropagation="true"
-                title="Ingresar a la videollamada" type="button">
-            <Icon Name="camera-video" Size="20" Fill="#2f7d32" AriaLabel="Videollamada" />
+                disabled="@(!(Turno?.EsDiaDelTurno ?? false))"
+                title="@((Turno?.EsDiaDelTurno ?? false) ? "Ingresar a la videollamada" : "Solo disponible el día del turno")"
+                type="button">
+            <Icon Name="camera-video" Size="20" Fill="@((Turno?.EsDiaDelTurno ?? false) ? "#2f7d32" : "#999")" AriaLabel="Videollamada" />
             <span>Ingresar</span>
         </button>
         <button class="turno-futuro-cancel-button" @onclick="HandleCancel" @onclick:stopPropagation="true"

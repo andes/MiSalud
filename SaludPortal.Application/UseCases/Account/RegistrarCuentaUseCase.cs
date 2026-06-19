@@ -41,14 +41,27 @@ public class RegistrarCuentaUseCase
         var data = xroadssResultDto.Data;
         var idTramitePrincipal = (data.IdTramitePrincipal ?? string.Empty).Trim().PadLeft(11, '0');
 
-        if (!string.Equals(data.Apellido?.Trim(), apellidos?.Trim(), StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(data.Nombres?.Trim(), nombres?.Trim(), StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(data.Ejemplar?.Trim(), ejemplar?.Trim(), StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(idTramitePrincipal, nroTramite)
-            || !DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaXroadss)
+        var errores = new List<string>();
+
+        if (!string.Equals(data.Apellido?.Trim(), apellidos?.Trim(), StringComparison.OrdinalIgnoreCase))
+            errores.Add("El apellido no coincide con el registrado en el RENAPER.");
+
+        if (!string.Equals(data.Nombres?.Trim(), nombres?.Trim(), StringComparison.OrdinalIgnoreCase))
+            errores.Add("El nombre no coincide con el registrado en el RENAPER.");
+
+        if (!string.Equals(data.Ejemplar?.Trim(), ejemplar?.Trim(), StringComparison.OrdinalIgnoreCase))
+            errores.Add("El ejemplar no coincide con el registrado en el RENAPER.");
+
+        if (!string.Equals(idTramitePrincipal, nroTramite))
+            errores.Add("El número de trámite no coincide con el registrado en el RENAPER.");
+
+        if (!DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaXroadss)
             || fechaXroadss.Date != fechaNacimiento.Date)
+            errores.Add("La fecha de nacimiento no coincide con la registrada en el RENAPER.");
+
+        if (errores.Count > 0)
         {
-            return (false, "Datos incorrectos.", false);
+            return (false, string.Join(" ", errores), false);
         }
 
         var scanText = $"{nroTramite}@{apellidos.ToUpper()}@{nombres.ToUpper()}@{sexo}@{documento}@{ejemplar}@{fechaNacimiento:dd/MM/yyyy}";

@@ -99,11 +99,7 @@
                                         HasError="@HasFieldError(nameof(_model.Documento))"
                                         ValidationFor="@(() => _model.Documento)" />
 
-                    <InputNroTramiteField @bind-Value="_model.NroTramite"
-                                         IconName="person-vcard"
-                                         AriaLabel="Número de trámite"
-                                         HasError="@HasFieldError(nameof(_model.NroTramite))"
-                                         ValidationFor="@(() => _model.NroTramite)" />
+                    
 
                     <InputTextField @bind-Value="_model.Ejemplar"
                                     Id="txtEjemplar"
@@ -116,6 +112,28 @@
                                     Uppercase="true"
                                     HasError="@HasFieldError(nameof(_model.Ejemplar))"
                                     ValidationFor="@(() => _model.Ejemplar)" />
+
+                    
+                    <div class="mb-3">
+                        <InputNroTramiteField @bind-Value="_model.NroTramite"
+                                              IconName="person-vcard"
+                                              AriaLabel="Número de trámite"
+                                              HasError="@HasFieldError(nameof(_model.NroTramite))"
+                                              ValidationFor="@(() => _model.NroTramite)" />
+                        <p class="text-muted text-decoration-none"
+                           style="font-size: 0.8rem; margin-top: 1rem; margin-bottom: 0">
+                            <Icon Name="info-circle" Size="14" Fill="#6c757d" class="me-1" AriaLabel="Ayuda" />
+                            Encontrá el número de trámite en la parte inferior de tu DNI
+                        </p>
+                            <div class="mt-2 text-center">
+                                <img src="images/ejemplo-nro-tramite-dni.jpg"
+                                     alt="Ejemplo de ubicación del número de trámite en el DNI"
+                                     class="img-fluid rounded border"
+                                     style="max-height: 100px;" />
+                            </div>
+                    </div>
+
+                   
                 </div>
 
                 @if (_errors.Count > 0)
@@ -206,7 +224,8 @@
 
             var result = await RegistrarCuentaUseCase.EjecutarAsync(
                 _model.Documento, sexo, _model.Email, _model.Telefono,
-                _model.Apellidos, _model.Nombres, _model.Ejemplar, _model.NroTramite, _model.FechaNacimiento);
+                _model.Apellidos, _model.Nombres, _model.Ejemplar,
+                _model.NroTramite.PadLeft(11, '0'), _model.FechaNacimiento);
 
             if (!result.success)
             {
