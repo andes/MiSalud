@@ -5,6 +5,7 @@ using SaludPortal.Application.UseCases.Paciente;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using SaludPortal.Application.Mappers;
 using SaludPortal.Application.UseCases.Auth;
 using SaludPortal.Web.Models.AccountViewModels;
 using SaludPortal.Web.Services;
@@ -53,13 +54,15 @@ namespace SaludPortal.Web.Controllers
                     : null;
 
                 var claims = BuildClaims(
-                    model.Email,
-                    resultado.PrimerPacienteId,
-                    resultado.Documento,
+                    resultado.Email,
+                    paciente?.Id,
+                    paciente?.Documento,
                     resultado.Token,
-                    paciente?.Nombre ?? resultado.Nombre,
-                    paciente?.Apellido ?? resultado.Apellido,
-                    paciente?.Alias);
+                    paciente?.Nombre,
+                    paciente?.Apellido,
+                    paciente?.Alias,
+                    paciente?.Sexo,
+                    paciente?.FechaNacimiento?.ToString("yyyy-MM-dd"));
 
                 await SignInAsync(claims, model.RememberMe);
 
@@ -93,8 +96,9 @@ namespace SaludPortal.Web.Controllers
                     result.response.User?.documento,
                     result.response.Token,
                     result.response.User?.nombre,
-                    result.response.User?.apellido
-                    );
+                    result.response.User?.apellido,
+                    sexo: result.response.User?.sexo,
+                    fechaNacimiento: result.response.User?.MapToResultadoLogin().FechaNacimiento?.ToString("yyyy-MM-dd"));
 
                 await SignInAsync(claims, true);
 
@@ -135,7 +139,7 @@ namespace SaludPortal.Web.Controllers
             return Ok(new AuthStatusDto { Authenticated = false });
         }
 
-        private static List<Claim> BuildClaims(string email, string? pacienteId, string? documento, string? token, string? nombre, string? apellido, string? alias = null)
+        private static List<Claim> BuildClaims(string email, string? pacienteId, string? documento, string? token, string? nombre, string? apellido, string? alias = null, string? sexo = null, string? fechaNacimiento = null)
         {
             return new List<Claim>
             {
@@ -146,7 +150,9 @@ namespace SaludPortal.Web.Controllers
                 new("Nombre", nombre ?? string.Empty),
                 new("Apellido", apellido ?? string.Empty),
                 new("SessionId", Guid.NewGuid().ToString("N")),
-                new("Alias", alias ?? string.Empty)
+                new("Alias", alias ?? string.Empty),
+                new("Sexo", sexo ?? string.Empty),
+                new("FechaNacimiento", fechaNacimiento ?? string.Empty)
             };
         }
 

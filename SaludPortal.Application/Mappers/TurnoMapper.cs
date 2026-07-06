@@ -29,6 +29,7 @@ public static class TurnoMapper
                 Nombre = t.organizacion.nombre
             },
             FechaHora = DateTimeHelper.ToArgentinaTime(t.horaInicio),
+            EsDiaDelTurno =  DateTimeHelper.NowArgentina().Date == DateTimeHelper.ToArgentinaTime(t.horaInicio).Date,
             DuracionMinutos = t.duracionTurno,
             Asistencia = t.asistencia,
             FechaHoraAsistencia = t.horaAsistencia.HasValue ? DateTimeHelper.ToArgentinaTime(t.horaAsistencia.Value) : (DateTime?)null,

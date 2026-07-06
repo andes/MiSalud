@@ -22,6 +22,7 @@ using SaludPortal.Application.UseCases.CentrosDeSalud;
 using SaludPortal.Application.UseCases.Laboratorios;
 using SaludPortal.Application.UseCases.GrupoFamiliar;
 using SaludPortal.Application.UseCases.Account;
+using SaludPortal.Application.UseCases.Consentimiento;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +80,7 @@ builder.Services.AddScoped<IOrganizacion, OrganizacionService>();
 builder.Services.AddScoped<IMisTurnos, MisTurnosService>();
 builder.Services.AddScoped<ITerritorio, TerritorioService>();
 builder.Services.AddScoped<ICentrosSalud, CentrosSaludService>();
+builder.Services.AddScoped<IConsentimientoProgramaCuidadoIntegral, ConsentimientoProgramaCuidadoIntegralService>();
 
 // Casos de uso
 builder.Services.AddScoped<ObtenerTurnosUseCase>();
@@ -108,6 +110,10 @@ builder.Services.AddScoped<RegistrarCuentaUseCase>();
 builder.Services.AddScoped<ValidarCodigoActivacionUseCase>();
 builder.Services.AddScoped<SolicitarRecuperacionContraseniaUseCase>();
 builder.Services.AddScoped<ReestablecerContraseniaUseCase>();
+builder.Services.AddScoped<EvaluarConsentimientoProgramaUseCase>();
+builder.Services.AddScoped<GuardarRespuestaConsentimientoUseCase>();
+builder.Services.AddScoped<ObtenerConsentimientosUseCase>();
+builder.Services.AddScoped<ObtenerVersionProgramaUseCase>();
 
 // Register AndesTokenHandler as scoped to access HttpContext
 builder.Services.AddTransient<AndesTokenHandler>();

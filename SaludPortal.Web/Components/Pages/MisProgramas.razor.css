@@ -1,0 +1,25 @@
+.programas-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.programas-section {
+    margin-bottom: 3rem;
+}
+
+.programas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .programas-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .programas-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,4 +1,6 @@
-﻿namespace SaludPortal.Application.Utils
+﻿using System.Globalization;
+
+namespace SaludPortal.Application.Utils
 {
     /// <summary>
     /// Helper para manejo de fechas con zona horaria de Argentina (UTC-3)
@@ -69,6 +71,20 @@
         public static DateTime NowArgentina()
         {
             return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ArgentinaTimeZone);
+        }
+
+        public static DateTime? ParseDateTime(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+                return fecha.Date;
+
+            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha))
+                return fecha.Date;
+
+            return null;
         }
     }
 }

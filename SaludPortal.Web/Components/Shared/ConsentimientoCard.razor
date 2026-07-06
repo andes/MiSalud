@@ -1,0 +1,47 @@
+@using SaludPortal.Application.Models.Consentimiento
+
+<div class="consentimiento-card">
+    <div class="consentimiento-header">
+        <span class="consentimiento-programa">@Consentimiento.Programa</span>
+        <span class="consentimiento-estado @GetEstadoClass()">@GetEstadoTexto()</span>
+    </div>
+
+    <div class="consentimiento-body">
+        <div class="consentimiento-info">
+            <span class="consentimiento-label">Versión:</span>
+            <span class="consentimiento-value">@Consentimiento.Version</span>
+        </div>
+        <div class="consentimiento-info">
+            <span class="consentimiento-label">Última respuesta:</span>
+            <span class="consentimiento-value">@Consentimiento.FechaResp.ToString("dd/MM/yyyy HH:mm")</span>
+        </div>
+    </div>
+
+    <div class="consentimiento-footer">
+        <button type="button" class="btn btn-azul btn-revisar" @onclick="HandleRevisar">
+            Revisar
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ConsentimientoModel Consentimiento { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<ConsentimientoModel> OnRevisar { get; set; }
+
+    private string GetEstadoTexto() => Consentimiento.Aceptacion ? "Aceptado" : "Rechazado";
+
+    private string GetEstadoClass() => Consentimiento.Aceptacion
+        ? "consentimiento-estado--aceptado"
+        : "consentimiento-estado--rechazado";
+
+    private async Task HandleRevisar()
+    {
+        if (OnRevisar.HasDelegate)
+        {
+            await OnRevisar.InvokeAsync(Consentimiento);
+        }
+    }
+}

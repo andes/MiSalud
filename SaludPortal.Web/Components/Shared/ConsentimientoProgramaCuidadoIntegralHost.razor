@@ -1,0 +1,115 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Application.Models.Consentimiento
+@using SaludPortal.Application.UseCases.Consentimiento
+@using SaludPortal.Application.UseCases.Paciente
+@using SaludPortal.Web.Services
+
+@inject EvaluarConsentimientoProgramaUseCase EvaluarConsentimientoUseCase
+@inject GuardarRespuestaConsentimientoUseCase GuardarRespuestaUseCase
+@inject ObtenerPacienteUseCase ObtenerPacienteUseCase
+@inject IJSRuntime JS
+@inject ILogger<ConsentimientoProgramaCuidadoIntegralHost> Logger
+
+@if (_mostrarModal && _version is not null)
+{
+    <ConsentimientoProgramaCuidadoIntegral Titulo="@_version.Titulo"
+                                           Texto="@_version.Texto"
+                                           OnRespuesta="HandleRespuesta" />
+}
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    private bool _mostrarModal;
+    private bool _inicializado;
+    private string? _idPaciente;
+    private string? _dni;
+    private string? _sexo;
+    private DateTime? _fechaNacimiento;
+    private ConsentVersionModel? _version;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _inicializado || AuthenticationState is null)
+        {
+            return;
+        }
+
+        _inicializado = true;
+
+        try
+        {
+            var debeConsultar = await JS.InvokeAsync<bool>("authApi.consumirConsentimientoPendiente");
+            if (!debeConsultar)
+            {
+                return;
+            }
+
+            var authState = await AuthenticationState;
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                return;
+            }
+
+            _idPaciente = user.GetPacienteId();
+            _dni = user.GetDocumento();
+            _sexo = user.GetSexo();
+            _fechaNacimiento = user.GetFechaNacimiento();
+
+            if (string.IsNullOrWhiteSpace(_idPaciente) ||
+                string.IsNullOrWhiteSpace(_dni) ||
+                string.IsNullOrWhiteSpace(_sexo) ||
+                _fechaNacimiento == null)
+            {
+                return;
+            }
+
+            var evaluacion = await EvaluarConsentimientoUseCase.EjecutarAsync(
+                _idPaciente,
+                _dni,
+                _sexo,
+                _fechaNacimiento);
+
+            if (evaluacion.MostrarPopup && evaluacion.Version is not null)
+            {
+                _version = evaluacion.Version;
+                _mostrarModal = true;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error al consultar consentimiento del programa de cuidado integral");
+        }
+    }
+
+    private async Task HandleRespuesta(bool aceptado)
+    {
+        if (string.IsNullOrWhiteSpace(_idPaciente) || _version is null)
+        {
+            _mostrarModal = false;
+            return;
+        }
+
+        try
+        {
+            await GuardarRespuestaUseCase.EjecutarAsync(
+                _version.Programa,
+                _version.Version,
+                _idPaciente,
+                aceptado);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error al registrar consentimiento del programa de cuidado integral");
+        }
+        finally
+        {
+            _mostrarModal = false;
+            _version = null;
+        }
+    }
+}

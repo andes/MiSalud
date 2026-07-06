@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.Text.Json;
 using AndesServices.Entities;
 using SaludPortal.Application.Models.Auth;
+using SaludPortal.Application.Utils;
 
 namespace SaludPortal.Application.Mappers;
 
@@ -12,9 +14,13 @@ public static class LoginMapper
         {
             Exito = !string.IsNullOrEmpty(user.token),
             Token = user.token,
+            UserId = user._id,
+            Email = user.email,
             Documento = user.documento,
             Nombre = user.nombre,
             Apellido = user.apellido,
+            Sexo = user.sexo,
+            FechaNacimiento = DateTimeHelper.ParseDateTime(user.fechaNacimiento),
             PrimerPacienteId = user.pacientes?.FirstOrDefault()?.id
         };
     }

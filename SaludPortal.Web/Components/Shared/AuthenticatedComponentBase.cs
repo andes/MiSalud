@@ -14,6 +14,7 @@ public abstract class AuthenticatedComponentBase : ComponentBase
     protected string? PacienteId => User.FindFirst("PacienteId")?.Value;
     protected string? Documento => User.FindFirst("Documento")?.Value;
     protected string? BackendToken => User.FindFirst("TokenBackend")?.Value ?? User.FindFirst("Token")?.Value;
+    protected string? Sexo => User.FindFirst("Sexo")?.Value;
 
     protected override async Task OnInitializedAsync()
     {

@@ -1,0 +1,76 @@
+@using SaludPortal.Web.Components.Icons
+
+<div class="pci-modal-overlay" @onclick="HandleOverlayClick">
+    <div class="pci-modal" role="dialog" aria-modal="true" aria-labelledby="pci-modal-titulo" @onclick:stopPropagation="true">
+        <div class="pci-modal-header">
+            <div class="pci-modal-header-icon" aria-hidden="true">
+                <Icon Name="calendar2-heart" Size="28" Fill="#ffecc1" AriaLabel="Programa de cuidado integral" />
+            </div>
+            <h2 id="pci-modal-titulo" class="pci-modal-title">
+                @Titulo
+            </h2>
+            @if (PermitirCerrarSinRespuesta)
+            {
+                <button type="button" class="pci-modal-close" @onclick="HandleCerrar" aria-label="Cerrar">
+                    <Icon Name="x-circle" Size="18" Fill="#ffecc1" AriaLabel="Cerrar" />
+                </button>
+            }
+        </div>
+
+        <div class="pci-modal-body">
+            <section class="pci-modal-section">
+                <p class="pci-modal-text pci-modal-texto-contenido">@Texto</p>
+            </section>
+        </div>
+
+        <div class="pci-modal-footer">
+            <button type="button" class="btn btn-naranja" @onclick="() => HandleRespuesta(false)">
+                Rechazar
+            </button>
+            <button type="button" class="btn btn-azul" @onclick="() => HandleRespuesta(true)">
+                Aceptar
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Titulo { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Texto { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool PermitirCerrarSinRespuesta { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OnRespuesta { get; set; }
+
+    [Parameter]
+    public EventCallback OnCerrar { get; set; }
+
+    private async Task HandleRespuesta(bool aceptado)
+    {
+        if (OnRespuesta.HasDelegate)
+        {
+            await OnRespuesta.InvokeAsync(aceptado);
+        }
+    }
+
+    private async Task HandleCerrar()
+    {
+        if (OnCerrar.HasDelegate)
+        {
+            await OnCerrar.InvokeAsync();
+        }
+    }
+
+    private async Task HandleOverlayClick()
+    {
+        if (PermitirCerrarSinRespuesta)
+        {
+            await HandleCerrar();
+        }
+    }
+}

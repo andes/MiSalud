@@ -1,8 +1,11 @@
 ﻿@using AndesServices.Entities
 @using Microsoft.AspNetCore.Components.Authorization
+@using SaludPortal.Application.UseCases.Consentimiento
 @using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Services
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject ObtenerConsentimientosUseCase ObtenerConsentimientosUseCase
 
 <CascadingAuthenticationState>
     <div class="top-row ps-3 navbar navbar-dark">
@@ -74,12 +77,17 @@
                     <span class="bi bi-hospital-fill"></span> Centros de Salud
                 </NavLink>
             </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="mis-programas" title="Mis Programas" @onclick="CollapseNavMenu">
+                    <span class="bi bi-clipboard2-heart"></span> Mis Programas
+                </NavLink>
+            </div>
         </nav>
     </div>
 </CascadingAuthenticationState>
 @code {
 
-        [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
     private string? userName;
     private string? NombreUsuarioLogueado;
     private bool isNavMenuOpen;

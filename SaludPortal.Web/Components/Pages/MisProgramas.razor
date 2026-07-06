@@ -1,0 +1,138 @@
+@page "/mis-programas"
+@rendermode InteractiveServer
+
+@using SaludPortal.Application.Models.Consentimiento
+@using SaludPortal.Application.UseCases.Consentimiento
+@using SaludPortal.Web.Components.Shared
+
+@inject BlazorSpinner.SpinnerService _spinnerService
+@inject ObtenerConsentimientosUseCase _obtenerConsentimientosUseCase
+@inject ObtenerVersionProgramaUseCase _obtenerVersionProgramaUseCase
+@inject GuardarRespuestaConsentimientoUseCase _guardarRespuestaUseCase
+@inject ILogger<MisProgramas> Logger
+
+@inherits AuthenticatedComponentBase
+
+<PageTitle>Mis Programas - Mi Salud</PageTitle>
+
+<div class="programas-container">
+    <PageHeaderWithBack Title="Mis Programas"
+                        Subtitle="Programas de salud en los que participa"
+                        BackHref="/home"
+                        BackAriaLabel="Volver al inicio" />
+
+    @if (consentimientos != null && consentimientos.Any())
+    {
+        <div class="programas-section">
+            <SectionTitle Title="Mis consentimientos" Icon="bi bi-calendar2-heart" />
+            <div class="programas-grid">
+                @foreach (var consentimiento in consentimientos)
+                {
+                    <ConsentimientoCard Consentimiento="consentimiento"
+                                        OnRevisar="HandleRevisar" />
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <EmptyState Message="No se encontraron programas registrados." />
+    }
+</div>
+
+@if (_mostrarModal && _versionRevisar is not null)
+{
+    <ConsentimientoProgramaCuidadoIntegral Titulo="@_versionRevisar.Titulo"
+                                           Texto="@_versionRevisar.Texto"
+                                           PermitirCerrarSinRespuesta="true"
+                                           OnCerrar="HandleCerrarModal"
+                                           OnRespuesta="HandleRespuestaModal" />
+}
+
+@code {
+    private List<ConsentimientoModel> consentimientos = [];
+    private bool _mostrarModal;
+    private ConsentVersionModel? _versionRevisar;
+
+    protected override async Task OnAuthenticatedInitializedAsync()
+    {
+        await CargarConsentimientosAsync();
+    }
+
+    private async Task CargarConsentimientosAsync()
+    {
+        if (string.IsNullOrWhiteSpace(PacienteId))
+        {
+            return;
+        }
+
+        _spinnerService.Show();
+        try
+        {
+            consentimientos = await _obtenerConsentimientosUseCase.EjecutarAsync(PacienteId);
+        }
+        finally
+        {
+            _spinnerService.Hide();
+        }
+    }
+
+    private async Task HandleRevisar(ConsentimientoModel consentimiento)
+    {
+        _spinnerService.Show();
+        try
+        {
+            _versionRevisar = await _obtenerVersionProgramaUseCase.EjecutarAsync(consentimiento.Programa);
+            if (_versionRevisar is not null)
+            {
+                _mostrarModal = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error al obtener versión del programa {Programa}", consentimiento.Programa);
+        }
+        finally
+        {
+            _spinnerService.Hide();
+        }
+    }
+
+    private void HandleCerrarModal()
+    {
+        _mostrarModal = false;
+        _versionRevisar = null;
+    }
+
+    private async Task HandleRespuestaModal(bool aceptado)
+    {
+        if (string.IsNullOrWhiteSpace(PacienteId) || _versionRevisar is null)
+        {
+            _mostrarModal = false;
+            _versionRevisar = null;
+            return;
+        }
+
+        _spinnerService.Show();
+        try
+        {
+            await _guardarRespuestaUseCase.EjecutarAsync(
+                _versionRevisar.Programa,
+                _versionRevisar.Version,
+                PacienteId,
+                aceptado);
+
+            await CargarConsentimientosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error al guardar respuesta de consentimiento");
+        }
+        finally
+        {
+            _spinnerService.Hide();
+            _mostrarModal = false;
+            _versionRevisar = null;
+        }
+    }
+}
