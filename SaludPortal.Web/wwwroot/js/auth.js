@@ -1,5 +1,23 @@
 window.authApi = (function () {
 
+    const PENDING_CONSENT_KEY = 'PendingConsentimientoPCI';
+
+    function marcarConsentimientoPendiente() {
+        sessionStorage.setItem(PENDING_CONSENT_KEY, '1');
+    }
+
+    function consumirConsentimientoPendiente() {
+        const value = sessionStorage.getItem(PENDING_CONSENT_KEY);
+        if (value) {
+            sessionStorage.removeItem(PENDING_CONSENT_KEY);
+        }
+        return value === '1';
+    }
+
+    function limpiarConsentimientoPendiente() {
+        sessionStorage.removeItem(PENDING_CONSENT_KEY);
+    }
+
     async function login(data) {
         const resp = await fetch('api/auth/login', {
             method: 'POST',
@@ -7,7 +25,11 @@ window.authApi = (function () {
             credentials: 'include'
             , body: JSON.stringify(data)
         });
-        return await parse(resp);
+        const result = await parse(resp);
+        if (result.ok) {
+            marcarConsentimientoPendiente();
+        }
+        return result;
     }
 
     async function logout() {
@@ -16,6 +38,7 @@ window.authApi = (function () {
                 method: 'POST',
                 credentials: 'include'
             });
+            limpiarConsentimientoPendiente();
             if (resp.ok) {
                 expireCookie('MiSalud');
                 window.location.replace('/login');
@@ -38,7 +61,11 @@ window.authApi = (function () {
             credentials: 'include'
             , body: JSON.stringify(data)
         });
-        return await parse(resp);
+        const result = await parse(resp);
+        if (result.ok) {
+            marcarConsentimientoPendiente();
+        }
+        return result;
     }
 
     async function parse(resp) {
@@ -48,7 +75,7 @@ window.authApi = (function () {
         return { ok: resp.ok, status: resp.status, data, raw };
     }
 
-    return { login, logout, crearContrasenia };
+    return { login, logout, crearContrasenia, consumirConsentimientoPendiente };
 
 })();
 
