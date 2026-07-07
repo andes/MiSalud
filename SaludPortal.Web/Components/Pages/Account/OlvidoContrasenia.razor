@@ -100,11 +100,7 @@
 
             if (result.success)
             {
-                if (result.needsActivation)
-                    Nav.NavigateTo("/ingresar-codigo-activacion");
-                else
-                    Nav.NavigateTo("/reestablecer-password");
-
+                Nav.NavigateTo($"/reestablecer-password?email={Uri.EscapeDataString(_model.Email)}");
                 mensajeExito = true;
             }
             else

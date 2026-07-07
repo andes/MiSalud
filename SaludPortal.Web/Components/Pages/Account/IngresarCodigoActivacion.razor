@@ -120,17 +120,24 @@
         try
         {
             var result = await ValidarCodigoActivacionUseCase.EjecutarAsync(_model.Email, _model.CodigoActivacion);
-
             if (!result.valid)
             {
                 _errors.Add(result.error ?? "Error al validar el código de activación.");
                 return;
             }
 
-            _success = "Código validado. Redirigiendo...";
-            StateHasChanged();
-            await Task.Delay(2000);
-            Nav.NavigateTo($"/crear-contrasenia?email={Uri.EscapeDataString(_model.Email)}&codigo={Uri.EscapeDataString(_model.CodigoActivacion)}", forceLoad: true);
+            if (result.restablecerPassword)
+            {
+                Nav.NavigateTo($"/reestablecer-password?email={Uri.EscapeDataString(_model.Email)}&codigo={Uri.EscapeDataString(_model.CodigoActivacion)}", forceLoad: true);
+            }
+            else
+            {
+                _success = "Código validado. Redirigiendo...";
+
+                StateHasChanged();
+                await Task.Delay(2000);
+                Nav.NavigateTo($"/crear-contrasenia?email={Uri.EscapeDataString(_model.Email)}&codigo={Uri.EscapeDataString(_model.CodigoActivacion)}", forceLoad: true);
+            }
         }
         catch (Exception ex)
         {

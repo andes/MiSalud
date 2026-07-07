@@ -27,7 +27,6 @@ public class SolicitarRecuperacionContraseniaUseCase
         if (!result.Valid)
             return (false, false, result.Error);
 
-        var restablecerPassword = await _loginService.RestablecerPassword(email);
-        return (true, !restablecerPassword, null);
+        return (true, false, result.Error);
     }
 }

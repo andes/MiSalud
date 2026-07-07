@@ -74,7 +74,7 @@ public class ConsentimientoProgramaCuidadoIntegralService : IConsentimientoProgr
         try
         {
             var client = _httpClientFactory.CreateClient("Andes");
-            var url = $"core/tm/consentVersion?programa={Uri.EscapeDataString(programa)}&activo=true";
+            var url = $"core/tm/consentimientoVersion?programa={Uri.EscapeDataString(programa)}&activo=true";
             var response = await client.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 

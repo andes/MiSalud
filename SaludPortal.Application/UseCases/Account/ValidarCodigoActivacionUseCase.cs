@@ -13,8 +13,14 @@ public class ValidarCodigoActivacionUseCase
         _loginService = loginService;
     }
 
-    public async Task<(bool valid, bool needsPassword, string? error)> EjecutarAsync(string email, string codigoActivacion)
+    public async Task<(bool valid, bool restablecerPassword, string? error)> EjecutarAsync(string email, string codigoActivacion)
     {
+        var restablecerPassword = await _loginService.RestablecerPassword(email);
+        if (restablecerPassword)
+        {
+            return (true, true, null);
+        }
+
         var result = await _loginService.ValidarCodigoActivacion(new ValidarCodigoActivacionRequestDto
         {
             Email = email,
