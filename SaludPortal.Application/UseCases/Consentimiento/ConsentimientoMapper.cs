@@ -1,5 +1,4 @@
 using AndesServices.DTOs;
-using AndesServices.Interfaces;
 using SaludPortal.Application.Models.Consentimiento;
 using SaludPortal.Application.Utils;
 
@@ -28,8 +27,24 @@ public static class ConsentimientoMapper
         Programa = dto.Programa ?? string.Empty,
         Version = dto.Version,
         Titulo = dto.Titulo ?? string.Empty,
-        Texto = dto.Texto ?? string.Empty
+        Texto = dto.Texto ?? string.Empty,
+        FormatoContenido = MapFormatoContenido(dto.Formato)
     };
+
+    private static FormatoContenidoConsentimiento MapFormatoContenido(string? formato)
+    {
+        if (string.Equals(formato, "markdown", StringComparison.OrdinalIgnoreCase))
+        {
+            return FormatoContenidoConsentimiento.Markdown;
+        }
+
+        if (string.Equals(formato, "html", StringComparison.OrdinalIgnoreCase))
+        {
+            return FormatoContenidoConsentimiento.Html;
+        }
+
+        return FormatoContenidoConsentimiento.TextoPlano;
+    }
 
     public static List<ConsentimientoModel> UltimoEstadoPorPrograma(IEnumerable<ConsentimientoDto> consentimientos)
     {

@@ -61,6 +61,7 @@ builder.Services.AddScoped<AppToastService>();
 builder.Services.AddScoped<UserContext>();
 builder.Services.AddScoped<VMFarmaciasTurno>();
 builder.Services.AddSingleton<MessageService>();
+builder.Services.AddSingleton<ConsentimientoContenidoRenderer>();
 builder.Services.AddTransient<IEmailService, SmtpEmailService>();
 
 builder.Services.AddAuthorization();

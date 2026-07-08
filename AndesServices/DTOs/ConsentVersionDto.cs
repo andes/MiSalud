@@ -19,6 +19,9 @@ public class ConsentVersionDto
     [JsonPropertyName("texto")]
     public string? Texto { get; set; }
 
+    [JsonPropertyName("formato")]
+    public string? Formato { get; set; }
+
     [JsonPropertyName("activo")]
     public bool Activo { get; set; }
 

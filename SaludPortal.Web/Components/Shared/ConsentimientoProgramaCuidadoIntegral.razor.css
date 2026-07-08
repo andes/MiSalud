@@ -116,7 +116,105 @@
 }
 
 .pci-modal-texto-contenido {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #4b5563;
+}
+
+.pci-modal-texto-plano {
     white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ::deep requerido: el HTML viene de MarkupString y no recibe el atributo scope de Blazor */
+.pci-modal-texto-contenido ::deep p {
+    margin: 0 0 0.75rem;
+}
+
+.pci-modal-texto-contenido ::deep p:last-child {
+    margin-bottom: 0;
+}
+
+.pci-modal-texto-contenido ::deep strong,
+.pci-modal-texto-contenido ::deep b {
+    font-weight: 600;
+}
+
+.pci-modal-texto-contenido ::deep ul,
+.pci-modal-texto-contenido ::deep ol {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.pci-modal-texto-contenido ::deep li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.pci-modal-texto-contenido ::deep li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #00374c;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.pci-modal-texto-contenido ::deep h1,
+.pci-modal-texto-contenido ::deep h2,
+.pci-modal-texto-contenido ::deep h3,
+.pci-modal-texto-contenido ::deep h4 {
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+    color: #00374c;
+    line-height: 1.4;
+}
+
+.pci-modal-texto-contenido ::deep h1 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid #00374c;
+    padding-bottom: 0.25rem;
+}
+
+.pci-modal-texto-contenido ::deep h2 {
+    font-size: 1rem;
+    border-bottom: 2px solid #00374c;
+    padding-bottom: 0.25rem;
+}
+
+.pci-modal-texto-contenido ::deep h3,
+.pci-modal-texto-contenido ::deep h4 {
+    font-size: 0.95rem;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.pci-modal-texto-contenido ::deep hr {
+    height: 1px;
+    border: none;
+    background-color: #e2e8ef;
+    margin: 1.25rem 0;
+    opacity: 1;
+}
+
+.pci-modal-texto-contenido ::deep a {
+    color: #006bb7;
+    text-decoration: underline;
+}
+
+.pci-modal-texto-contenido ::deep a:hover {
+    text-decoration: none;
+}
+
+.pci-modal-texto-contenido ::deep blockquote {
+    margin: 0 0 0.75rem;
+    padding-left: 1rem;
+    border-left: 3px solid #00374c;
+    color: #4b5563;
 }
 
 .pci-modal-list {

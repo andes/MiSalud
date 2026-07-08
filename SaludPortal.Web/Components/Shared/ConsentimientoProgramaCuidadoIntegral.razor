@@ -1,4 +1,7 @@
+@using SaludPortal.Application.Models.Consentimiento
 @using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Services
+@inject ConsentimientoContenidoRenderer Renderer
 
 <div class="pci-modal-overlay" @onclick="HandleOverlayClick">
     <div class="pci-modal" role="dialog" aria-modal="true" aria-labelledby="pci-modal-titulo" @onclick:stopPropagation="true">
@@ -19,7 +22,19 @@
 
         <div class="pci-modal-body">
             <section class="pci-modal-section">
-                <p class="pci-modal-text pci-modal-texto-contenido">@Texto</p>
+                @if (!string.IsNullOrWhiteSpace(Texto))
+                {
+                    @if (FormatoContenido == FormatoContenidoConsentimiento.TextoPlano)
+                    {
+                        <div class="pci-modal-texto-contenido pci-modal-texto-plano">@Texto</div>
+                    }
+                    else
+                    {
+                        <div class="pci-modal-texto-contenido">
+                            @Renderer.Render(Texto, FormatoContenido)
+                        </div>
+                    }
+                }
             </section>
         </div>
 
@@ -40,6 +55,9 @@
 
     [Parameter]
     public string Texto { get; set; } = string.Empty;
+
+    [Parameter]
+    public FormatoContenidoConsentimiento FormatoContenido { get; set; } = FormatoContenidoConsentimiento.Html;
 
     [Parameter]
     public bool PermitirCerrarSinRespuesta { get; set; }
