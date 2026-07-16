@@ -20,6 +20,6 @@ public class ObtenerConsentimientosUseCase
         }
 
         var consentimientos = await _consentimientoService.ObtenerConsentimientosAsync(pacienteId);
-        return ConsentimientoMapper.UltimoEstadoPorPrograma(consentimientos);
+        return ConsentimientoMapper.ToModelList(consentimientos);
     }
 }
