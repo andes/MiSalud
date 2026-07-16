@@ -39,12 +39,18 @@
         </div>
 
         <div class="pci-modal-footer">
-            <button type="button" class="btn btn-naranja" @onclick="() => HandleRespuesta(false)">
-                Rechazar
-            </button>
-            <button type="button" class="btn btn-azul" @onclick="() => HandleRespuesta(true)">
-                Aceptar
-            </button>
+            @if (EstadoAceptacion != false)
+            {
+                <button type="button" class="btn btn-naranja" @onclick="() => HandleRespuesta(false)">
+                    Rechazar
+                </button>
+            }
+            @if (EstadoAceptacion != true)
+            {
+                <button type="button" class="btn btn-azul" @onclick="() => HandleRespuesta(true)">
+                    Aceptar
+                </button>
+            }
         </div>
     </div>
 </div>
@@ -61,6 +67,9 @@
 
     [Parameter]
     public bool PermitirCerrarSinRespuesta { get; set; }
+
+    [Parameter]
+    public bool? EstadoAceptacion { get; set; }
 
     [Parameter]
     public EventCallback<bool> OnRespuesta { get; set; }

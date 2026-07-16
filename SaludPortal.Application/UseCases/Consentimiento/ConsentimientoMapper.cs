@@ -46,13 +46,13 @@ public static class ConsentimientoMapper
         return FormatoContenidoConsentimiento.TextoPlano;
     }
 
-    public static List<ConsentimientoModel> UltimoEstadoPorPrograma(IEnumerable<ConsentimientoDto> consentimientos)
+    public static List<ConsentimientoModel> ToModelList(IEnumerable<ConsentimientoDto> consentimientos)
     {
         return consentimientos
             .Where(c => !string.IsNullOrWhiteSpace(c.Programa))
-            .GroupBy(c => c.Programa!, StringComparer.OrdinalIgnoreCase)
-            .Select(g => ToModel(g.OrderByDescending(c => c.FechaResp).First()))
+            .Select(ToModel)
             .OrderByDescending(c => c.FechaResp)
             .ToList();
     }
 }
+

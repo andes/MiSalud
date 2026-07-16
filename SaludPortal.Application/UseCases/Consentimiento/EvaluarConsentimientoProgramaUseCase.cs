@@ -33,7 +33,9 @@ public class EvaluarConsentimientoProgramaUseCase
             return resultado;
         }
 
-        var consentimientos = await _consentimientoService.ObtenerConsentimientosAsync(pacienteId);
+        var consentimientos = await _consentimientoService.ObtenerConsentimientosAsync(
+            pacienteId,
+            ConsentimientoConstants.ProgramaCuidar65);
         if (consentimientos.Count > 0)
         {
             return resultado;

@@ -25,12 +25,17 @@ public class ConsentimientoProgramaCuidadoIntegralService : IConsentimientoProgr
         _logger = logger;
     }
 
-    public async Task<List<ConsentimientoDto>> ObtenerConsentimientosAsync(string pacienteId, CancellationToken ct = default)
+    public async Task<List<ConsentimientoDto>> ObtenerConsentimientosAsync(
+        string pacienteId,
+        string? programa = null,
+        int? version = null,
+        CancellationToken ct = default)
     {
         try
         {
             var client = _httpClientFactory.CreateClient("Andes");
-            var response = await client.GetAsync($"core/tm/consentimiento?pacienteId={Uri.EscapeDataString(pacienteId)}", ct);
+            var url = BuildConsentimientoUrl(pacienteId, programa, version);
+            var response = await client.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
             var consentimientos = await response.Content.ReadFromJsonAsync<List<ConsentimientoDto>>(JsonOptions, ct);
@@ -109,12 +114,31 @@ public class ConsentimientoProgramaCuidadoIntegralService : IConsentimientoProgr
             var response = await client.PostAsJsonAsync("core/tm/consentimiento", body, JsonOptions, ct);
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadFromJsonAsync<ConsentimientoDto>(JsonOptions, ct);
+            var consentimientos = await response.Content.ReadFromJsonAsync<List<ConsentimientoDto>>(JsonOptions, ct);
+            return consentimientos?.FirstOrDefault();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al guardar consentimiento para paciente {PacienteId}, programa {Programa}", pacienteId, programa);
             return null;
         }
+    }
+
+    private static string BuildConsentimientoUrl(string pacienteId, string? programa, int? version)
+    {
+        var url = new StringBuilder("core/tm/consentimiento?pacienteId=")
+            .Append(Uri.EscapeDataString(pacienteId));
+
+        if (!string.IsNullOrWhiteSpace(programa))
+        {
+            url.Append("&programa=").Append(Uri.EscapeDataString(programa));
+        }
+
+        if (version.HasValue)
+        {
+            url.Append("&version=").Append(version.Value);
+        }
+
+        return url.ToString();
     }
 }
