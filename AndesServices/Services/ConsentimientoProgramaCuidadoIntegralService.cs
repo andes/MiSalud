@@ -53,15 +53,8 @@ public class ConsentimientoProgramaCuidadoIntegralService : IConsentimientoProgr
         try
         {
             var client = _httpClientFactory.CreateClient("Andes");
-            var body = new ValidarPacienteRequest { Documento = documento, Sexo = sexo };
-            var json = JsonSerializer.Serialize(body, JsonOptions);
-
-            var request = new HttpRequestMessage(HttpMethod.Get, "core/tm/validarpaciente")
-            {
-                Content = new StringContent(json, Encoding.UTF8, "application/json")
-            };
-
-            var response = await client.SendAsync(request, ct);
+            var url = $"core/tm/validarpaciente?documento={Uri.EscapeDataString(documento)}&sexo={Uri.EscapeDataString(sexo)}";
+            var response = await client.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<ValidarPacienteResponse>(JsonOptions, ct);
