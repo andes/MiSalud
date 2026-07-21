@@ -21,7 +21,16 @@
         <button class="btn-homeprivacidad" @onclick="() => ShowModal()">Quiénes pueden verla</button>
     </div>
     <div class="home-img-banner">
-        <img src="../images/bannermisalud.png" alt="Mi Salud Banner" />
+        <img 
+            srcset="../images/bannermisalud-270x296.png 270w,
+                    ../images/bannermisalud-540x593.png 540w,
+                    ../images/bannermisalud-810x889.png 810w,
+                    ../images/bannermisalud-1080x1185.png 1080w"
+            sizes="(max-width: 640px) 100vw,
+                   (max-width: 1024px) 90vw,
+                   1080px"
+            src="../images/bannermisalud-1080x1185.png"
+            alt="Mi Salud Banner" />
 
     </div>
 </div>

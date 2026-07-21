@@ -6,12 +6,22 @@
 <div class="pci-modal-overlay" @onclick="HandleOverlayClick">
     <div class="pci-modal" role="dialog" aria-modal="true" aria-labelledby="pci-modal-titulo" @onclick:stopPropagation="true">
         <div class="pci-modal-header">
-            <div class="pci-modal-header-icon" aria-hidden="true">
-                <Icon Name="calendar2-heart" Size="28" Fill="#ffecc1" AriaLabel="Programa de cuidado integral" />
+            @if (!esProgramaCuidar65)
+            {
+                <div class="pci-modal-header-icon" aria-hidden="true">
+                    <Icon Name="calendar2-heart" Size="28" Fill="#ffecc1" AriaLabel="Programa de cuidado integral" />
+                </div>
+            }
+
+            <div class="pci-modal-title-wrapper" style="display:flex;align-items:center;gap:0.5rem;">
+                @if (esProgramaCuidar65)
+                {
+                    <img src="/images/cuidar-65.JPG" alt="Cuidar 65" class="pci-modal-program-logo" />
+                }
+                
+                <h2 id="pci-modal-titulo" class="pci-modal-title">@Titulo</h2>
             </div>
-            <h2 id="pci-modal-titulo" class="pci-modal-title">
-                @Titulo
-            </h2>
+
             @if (PermitirCerrarSinRespuesta)
             {
                 <button type="button" class="pci-modal-close" @onclick="HandleCerrar" aria-label="Cerrar">
@@ -60,6 +70,9 @@
     public string Titulo { get; set; } = string.Empty;
 
     [Parameter]
+    public string Programa { get; set; } = string.Empty;
+
+    [Parameter]
     public string Texto { get; set; } = string.Empty;
 
     [Parameter]
@@ -76,6 +89,8 @@
 
     [Parameter]
     public EventCallback OnCerrar { get; set; }
+
+    private bool esProgramaCuidar65 => string.Equals(Programa, "Cuidar65", StringComparison.OrdinalIgnoreCase);
 
     private async Task HandleRespuesta(bool aceptado)
     {

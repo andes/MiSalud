@@ -47,6 +47,11 @@
     flex-shrink: 0;
 }
 
+.pci-modal-program-logo {
+    border-radius: 8px;
+    height: 54px;
+}
+
 .pci-modal-title {
     margin: 0;
     font-size: 1.25rem;
