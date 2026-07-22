@@ -1,7 +1,8 @@
 @using System.Linq.Expressions
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
 @using SaludPortal.Web.Components.Icons
-@using System.Text.RegularExpressions
+@inject IJSRuntime JS
 
 <div class="input-field-group">
     @if (!string.IsNullOrWhiteSpace(Label))
@@ -16,9 +17,11 @@
                inputmode="numeric"
                class="input-field"
                placeholder="@Placeholder"
-               @bind="DocumentoValue"
-               @bind:event="oninput"
+               @ref="_inputRef"
+               value="@Value"
+               @oninput="OnInput"
                onkeydown="numericInput.preventNonNumeric(event)"
+               onpaste="numericInput.pasteDigitsOnly(event)"
                maxlength="@LONGITUD_MAXIMA"
                disabled="@Disabled" />
     </div>
@@ -42,17 +45,35 @@
     private const int LONGITUD_MINIMA = 7;
     private const int LONGITUD_MAXIMA = 8;
 
-    private static readonly Regex SoloNumerosRegex = new Regex(@"[^\d]", RegexOptions.Compiled);
+    private ElementReference _inputRef;
+    private bool _sanitizeAttached;
+    private int _inputSeq;
+    private string _latest = "";
 
-    private string DocumentoValue
+    private async Task OnInput(ChangeEventArgs e)
     {
-        get => Value ?? "";
-        set
+        // Valor ya sanitizado en JS (capture). Solo el último keystroke actualiza el modelo.
+        _latest = e.Value?.ToString() ?? "";
+        var seq = ++_inputSeq;
+        await Task.Yield();
+        if (seq != _inputSeq)
+            return;
+
+        await ValueChanged.InvokeAsync(_latest);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_sanitizeAttached)
+            return;
+
+        try
         {
-            string valor = SoloNumerosRegex.Replace(value ?? "", "");
-            if (valor.Length > LONGITUD_MAXIMA)
-                valor = valor[..LONGITUD_MAXIMA];
-            ValueChanged.InvokeAsync(valor);
+            await JS.InvokeVoidAsync("numericInput.attachSanitize", _inputRef);
+            _sanitizeAttached = true;
+        }
+        catch (JSException)
+        {
         }
     }
 }

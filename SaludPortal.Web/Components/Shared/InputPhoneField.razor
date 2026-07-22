@@ -1,7 +1,9 @@
 @using System.Linq.Expressions
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
 @using SaludPortal.Web.Components.Icons
 @using System.Text.RegularExpressions
+@inject IJSRuntime JS
 
 <div class="input-field-group">
     @if (!string.IsNullOrWhiteSpace(Label))
@@ -17,9 +19,10 @@
                class="input-field phone-area-input"
                placeholder="Cód. área (sin 0)"
                @ref="codigoAreaInputRef"
-               @bind="CodigoAreaValue"
-               @bind:event="oninput"
+               value="@codigoArea"
+               @oninput="OnCodigoAreaInput"
                onkeydown="numericInput.preventNonNumeric(event)"
+               onpaste="numericInput.pasteDigitsOnly(event)"
                maxlength="@maxLengthCodigoArea"
                disabled="@Disabled" />
         <span class="phone-separator">|</span>
@@ -27,9 +30,10 @@
                class="input-field"
                placeholder="Número (sin 15)"
                @ref="telefonoInputRef"
-               @bind="TelefonoValue"
-               @bind:event="oninput"
+               value="@telefono"
+               @oninput="OnTelefonoInput"
                onkeydown="numericInput.preventNonNumeric(event)"
+               onpaste="numericInput.pasteDigitsOnly(event)"
                maxlength="@maxLengthTelefono"
                disabled="@Disabled" />
     </div>
@@ -68,8 +72,10 @@
 
     private ElementReference codigoAreaInputRef;
     private ElementReference telefonoInputRef;
+    private bool _sanitizeAttached;
     private bool _pendingFocusCodigoArea = false;
     private bool _pendingFocusTelefono = false;
+    private int _inputSeq;
 
     private string codigoArea = "";
     private string telefono = "";
@@ -78,72 +84,74 @@
     private int maxLengthCodigoArea = LONGITUD_MAXIMA_CODIGO_AREA;
     private int maxLengthTelefono = LONGITUD_MAXIMA_TELEFONO;
 
-    private static readonly Regex SoloNumerosRegex = new Regex(@"[^\d]", RegexOptions.Compiled);
     private static readonly Regex IniciaConCeroRegex = new Regex(@"^0+", RegexOptions.Compiled);
     private static readonly Regex IniciaConQuinceRegex = new Regex(@"^15", RegexOptions.Compiled);
 
-    private string CodigoAreaValue
+    private async Task OnCodigoAreaInput(ChangeEventArgs e)
     {
-        get => codigoArea;
-        set
-        {
-            string valor = SoloNumerosRegex.Replace(value ?? "", "");
+        // Ya viene solo dígitos desde JS sanitize (capture).
+        string valor = e.Value?.ToString() ?? "";
 
-            if (IniciaConCeroRegex.IsMatch(valor))
-                valor = IniciaConCeroRegex.Replace(valor, "");
+        if (IniciaConCeroRegex.IsMatch(valor))
+            valor = IniciaConCeroRegex.Replace(valor, "");
 
-            int maxPermitido = Math.Max(
-                LONGITUD_MINIMA_CODIGO_AREA,
-                Math.Min(LONGITUD_MAXIMA_CODIGO_AREA, LONGITUD_MAXIMA_TOTAL - telefono.Length)
-            );
+        int maxPermitido = Math.Max(
+            LONGITUD_MINIMA_CODIGO_AREA,
+            Math.Min(LONGITUD_MAXIMA_CODIGO_AREA, LONGITUD_MAXIMA_TOTAL - telefono.Length)
+        );
 
-            if (valor.Length > maxPermitido)
-                valor = valor[..maxPermitido];
+        if (valor.Length > maxPermitido)
+            valor = valor[..maxPermitido];
 
-            codigoArea = valor;
-            errorCodigoArea = codigoArea.StartsWith("0");
+        var seq = ++_inputSeq;
+        codigoArea = valor;
+        errorCodigoArea = codigoArea.StartsWith("0");
 
-            maxLengthTelefono = Math.Min(LONGITUD_MAXIMA_TELEFONO, LONGITUD_MAXIMA_TOTAL - codigoArea.Length);
-            if (telefono.Length > maxLengthTelefono)
-                telefono = telefono[..maxLengthTelefono];
+        maxLengthTelefono = Math.Min(LONGITUD_MAXIMA_TELEFONO, LONGITUD_MAXIMA_TOTAL - codigoArea.Length);
+        if (telefono.Length > maxLengthTelefono)
+            telefono = telefono[..maxLengthTelefono];
 
-            if (!errorCodigoArea && codigoArea.Length >= maxPermitido)
-                _pendingFocusTelefono = true;
+        if (!errorCodigoArea && codigoArea.Length >= maxPermitido)
+            _pendingFocusTelefono = true;
 
-            NotifyValueChanged();
-        }
+        await Task.Yield();
+        if (seq != _inputSeq)
+            return;
+
+        await NotifyValueChanged();
     }
 
-    private string TelefonoValue
+    private async Task OnTelefonoInput(ChangeEventArgs e)
     {
-        get => telefono;
-        set
-        {
-            string valor = SoloNumerosRegex.Replace(value ?? "", "");
+        string valor = e.Value?.ToString() ?? "";
 
-            if (IniciaConQuinceRegex.IsMatch(valor))
-                valor = IniciaConQuinceRegex.Replace(valor, "");
+        if (IniciaConQuinceRegex.IsMatch(valor))
+            valor = IniciaConQuinceRegex.Replace(valor, "");
 
-            int maxPermitido = Math.Min(LONGITUD_MAXIMA_TELEFONO, LONGITUD_MAXIMA_TOTAL - codigoArea.Length);
+        int maxPermitido = Math.Min(LONGITUD_MAXIMA_TELEFONO, LONGITUD_MAXIMA_TOTAL - codigoArea.Length);
 
-            if (valor.Length > maxPermitido)
-                valor = valor[..maxPermitido];
+        if (valor.Length > maxPermitido)
+            valor = valor[..maxPermitido];
 
-            telefono = valor;
-            errorTelefono = telefono.StartsWith("15");
+        var seq = ++_inputSeq;
+        telefono = valor;
+        errorTelefono = telefono.StartsWith("15");
 
-            maxLengthCodigoArea = Math.Max(
-                LONGITUD_MINIMA_CODIGO_AREA,
-                Math.Min(LONGITUD_MAXIMA_CODIGO_AREA, LONGITUD_MAXIMA_TOTAL - telefono.Length)
-            );
-            if (codigoArea.Length > maxLengthCodigoArea)
-                codigoArea = codigoArea[..maxLengthCodigoArea];
+        maxLengthCodigoArea = Math.Max(
+            LONGITUD_MINIMA_CODIGO_AREA,
+            Math.Min(LONGITUD_MAXIMA_CODIGO_AREA, LONGITUD_MAXIMA_TOTAL - telefono.Length)
+        );
+        if (codigoArea.Length > maxLengthCodigoArea)
+            codigoArea = codigoArea[..maxLengthCodigoArea];
 
-            if (telefono.Length == 0)
-                _pendingFocusCodigoArea = true;
+        if (telefono.Length == 0)
+            _pendingFocusCodigoArea = true;
 
-            NotifyValueChanged();
-        }
+        await Task.Yield();
+        if (seq != _inputSeq)
+            return;
+
+        await NotifyValueChanged();
     }
 
     public bool EsValido =>
@@ -157,13 +165,26 @@
         !errorCodigoArea &&
         !errorTelefono;
 
-    private void NotifyValueChanged()
+    private async Task NotifyValueChanged()
     {
-        ValueChanged.InvokeAsync($"{codigoArea}{telefono}");
+        await ValueChanged.InvokeAsync($"{codigoArea}{telefono}");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!_sanitizeAttached)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("numericInput.attachSanitize", codigoAreaInputRef);
+                await JS.InvokeVoidAsync("numericInput.attachSanitize", telefonoInputRef);
+                _sanitizeAttached = true;
+            }
+            catch (JSException)
+            {
+            }
+        }
+
         if (_pendingFocusCodigoArea)
         {
             _pendingFocusCodigoArea = false;

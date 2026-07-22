@@ -225,7 +225,7 @@
             var result = await RegistrarCuentaUseCase.EjecutarAsync(
                 _model.Documento, sexo, _model.Email, _model.Telefono,
                 _model.Apellidos, _model.Nombres, _model.Ejemplar,
-                _model.NroTramite.PadLeft(11, '0'), _model.FechaNacimiento);
+                _model.NroTramite, _model.FechaNacimiento);
 
             if (!result.success)
             {

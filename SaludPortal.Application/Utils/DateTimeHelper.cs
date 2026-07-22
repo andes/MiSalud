@@ -78,10 +78,17 @@ namespace SaludPortal.Application.Utils
             if (string.IsNullOrWhiteSpace(value))
                 return null;
 
-            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+            value = value.Trim();
+
+            // RENAPER / Andes usan dd/MM/yyyy: probar exacto primero para no invertir día/mes
+            // con TryParse + InvariantCulture (MM/dd/yyyy).
+            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
                 return fecha.Date;
 
-            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha))
+            if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha))
+                return fecha.Date;
+
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha))
                 return fecha.Date;
 
             return null;

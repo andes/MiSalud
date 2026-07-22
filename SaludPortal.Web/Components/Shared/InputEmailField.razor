@@ -16,8 +16,9 @@
                inputmode="email"
                class="input-field"
                placeholder="@Placeholder"
-               @bind="EmailValue"
-               @bind:event="oninput"
+               value="@Value"
+               @oninput="OnInput"
+               @onchange="OnChange"
                maxlength="@MaxLength"
                disabled="@Disabled" />
     </div>
@@ -38,13 +39,16 @@
 
     private static readonly Regex EspaciosRegex = new Regex(@"\s", RegexOptions.Compiled);
 
-    private string EmailValue
+    private async Task OnInput(ChangeEventArgs e)
     {
-        get => Value ?? "";
-        set
-        {
-            string valor = EspaciosRegex.Replace(value ?? "", "").ToLowerInvariant();
-            ValueChanged.InvokeAsync(valor);
-        }
+        // Actualizar el modelo en cada tecla sin mutar, para que OnValidSubmit vea el valor.
+        await ValueChanged.InvokeAsync(e.Value?.ToString() ?? "");
+    }
+
+    private async Task OnChange(ChangeEventArgs e)
+    {
+        string valor = EspaciosRegex.Replace(e.Value?.ToString() ?? "", "").ToLowerInvariant();
+        if (!string.Equals(valor, Value, StringComparison.Ordinal))
+            await ValueChanged.InvokeAsync(valor);
     }
 }

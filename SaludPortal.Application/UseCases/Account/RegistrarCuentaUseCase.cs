@@ -1,6 +1,8 @@
+using System.Globalization;
 using AndesServices.DTOs.Login;
 using AndesServices.Entities;
 using AndesServices.Interfaces;
+using SaludPortal.Application.Utils;
 
 namespace SaludPortal.Application.UseCases.Account;
 
@@ -39,19 +41,20 @@ public class RegistrarCuentaUseCase
         }
 
         var data = xroadssResultDto.Data;
-        var idTramitePrincipal = (data.IdTramitePrincipal ?? string.Empty).Trim().PadLeft(11, '0');
+        var fechaXroadss = DateTimeHelper.ParseDateTime(data.FechaNacimiento?.Trim());
 
-        if (!string.Equals(data.Apellido?.Trim(), apellidos?.Trim(), StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(data.Nombres?.Trim(), nombres?.Trim(), StringComparison.OrdinalIgnoreCase)
+        if (!TextosIguales(data.Apellido, apellidos)
+            || !TextosIguales(data.Nombres, nombres)
             || !string.Equals(data.Ejemplar?.Trim(), ejemplar?.Trim(), StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(idTramitePrincipal, nroTramite)
-            || !DateTime.TryParseExact(data.FechaNacimiento, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fechaXroadss)
-            || fechaXroadss.Date != fechaNacimiento.Date)
+            || !TramitesIguales(data.IdTramitePrincipal, nroTramite)
+            || fechaXroadss is null
+            || fechaXroadss.Value.Date != fechaNacimiento.Date)
         {
             return (false, "Datos incorrectos.", false);
         }
 
-        var scanText = $"{nroTramite}@{apellidos.ToUpper()}@{nombres.ToUpper()}@{sexo}@{documento}@{ejemplar}@{fechaNacimiento:dd/MM/yyyy}";
+        var nroTramiteNormalizado = (data.IdTramitePrincipal ?? string.Empty).Trim().PadLeft(11, '0');
+        var scanText = $"{nroTramiteNormalizado}@{data.Apellido?.ToUpper()}@{data.Nombres?.ToUpper()}@{sexo}@{documento}@{data.Ejemplar}@{fechaNacimiento:dd/MM/yyyy}";
         var registroResult = await _loginService.Registro(new RegistroRequestDto
         {
             ScanText = scanText,
@@ -84,4 +87,15 @@ public class RegistrarCuentaUseCase
 
         return (false, "Error desconocido al registrar usuario.", false);
     }
+
+    private static bool TextosIguales(string? a, string? b) =>
+        CultureInfo.InvariantCulture.CompareInfo.Compare(
+            (a ?? string.Empty).Trim(),
+            (b ?? string.Empty).Trim(),
+            CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) == 0;
+
+    private static bool TramitesIguales(string? a, string? b) =>
+        long.TryParse((a ?? string.Empty).Trim(), out var x)
+        && long.TryParse((b ?? string.Empty).Trim(), out var y)
+        && x == y;
 }

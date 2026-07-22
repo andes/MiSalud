@@ -1,11 +1,24 @@
-<button type="@Type" 
-        class="button-primary @(Size == "sm" ? "button-primary--sm" : "")"
-        disabled="@Disabled"
-        aria-label="@AriaLabel"
-        @onclick="OnClick"
-        @attributes="AdditionalAttributes">
-    <span>@Text</span>
-</button>
+@if (OnClick.HasDelegate)
+{
+    <button type="@Type"
+            class="button-primary @(Size == "sm" ? "button-primary--sm" : "")"
+            disabled="@Disabled"
+            aria-label="@AriaLabel"
+            @onclick="OnClick"
+            @attributes="AdditionalAttributes">
+        <span>@Text</span>
+    </button>
+}
+else
+{
+    <button type="@Type"
+            class="button-primary @(Size == "sm" ? "button-primary--sm" : "")"
+            disabled="@Disabled"
+            aria-label="@AriaLabel"
+            @attributes="AdditionalAttributes">
+        <span>@Text</span>
+    </button>
+}
 
 @code {
     [Parameter] public string Type { get; set; } = "button";
