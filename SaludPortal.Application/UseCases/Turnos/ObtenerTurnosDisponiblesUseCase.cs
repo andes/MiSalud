@@ -94,10 +94,10 @@ public class ObtenerTurnosDisponiblesUseCase
             .Where(t => t.Estado != null && EstadosActivos.Contains(t.Estado))
             .ToList();
 
-        var fechaMaxPorTipo = turnosActivos
+        var conceptIdsConTurnoActivo = turnosActivos
             .Where(t => t.TipoPrestacion?.ConceptId != null)
-            .GroupBy(t => t.TipoPrestacion!.ConceptId!)
-            .ToDictionary(g => g.Key, g => g.Max(t => t.FechaHora));
+            .Select(t => t.TipoPrestacion!.ConceptId!)
+            .ToHashSet();
 
         // Construir HashSet con todas las fechas ocupadas (solo turnos activos)
         var fechasOcupadas = turnosActivos
@@ -116,9 +116,10 @@ public class ObtenerTurnosDisponiblesUseCase
                             return false;
 
                         var conceptId = t.TipoPrestacionDetalle?.conceptId;
-                        if (conceptId == null || !fechaMaxPorTipo.TryGetValue(conceptId, out var fechaMaxPaciente))
-                            return true;
-                        return t.FechaHora > fechaMaxPaciente;
+                        if (conceptId != null && conceptIdsConTurnoActivo.Contains(conceptId))
+                            return false;
+
+                        return true;
                     })
                     .ToList();
             }

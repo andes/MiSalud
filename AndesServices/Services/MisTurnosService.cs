@@ -147,15 +147,11 @@ namespace AndesServices.Services
             return false;
         }
 
-        public async Task<bool> RegistrarTurnoTeleConsultaAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta = "", string estado = "")
+        public async Task<bool> RegistrarTurnoTeleConsultaAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta, string telefono)
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("Andes");
-
-                string tipoTurno = "programado";
-                string emitidoPor = "misalud";
-                string nota = "Cel.: " + paciente.telefono + ". Motivo: " + motivoConsulta;
 
                 var request = new HttpRequestMessage
                 {
@@ -168,10 +164,10 @@ namespace AndesServices.Services
                         idTurno,
                         paciente,
                         tipoPrestacion,
-                        tipoTurno,
-                        emitidoPor,
-                        nota,
-                        estado,
+                        tipoTurno = "programado",
+                        emitidoPor = "misalud",
+                        nota = "Cel.: " + telefono + ". Motivo: " + motivoConsulta,
+                        estado = "solicitado",
                         motivoConsulta
                     }), System.Text.Encoding.UTF8, "application/json")
                 };
