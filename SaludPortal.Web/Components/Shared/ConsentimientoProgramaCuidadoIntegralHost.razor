@@ -18,12 +18,17 @@
                                            Programa="@_version.Programa"
                                            OnRespuesta="HandleRespuesta" />
 }
+else if (_mostrarAvisoNoElegible)
+{
+    <AvisoNoElegibleCuidar65 OnCerrar="HandleCerrarAviso" />
+}
 
 @code {
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     private bool _mostrarModal;
+    private bool _mostrarAvisoNoElegible;
     private bool _inicializado;
     private string? _idPaciente;
     private string? _dni;
@@ -81,6 +86,15 @@
                 _mostrarModal = true;
                 StateHasChanged();
             }
+            else if (evaluacion.MostrarAvisoNoElegible)
+            {
+                var yaEntendido = await JS.InvokeAsync<bool>("authApi.fueAvisoNoElegibleEntendido", _idPaciente);
+                if (!yaEntendido)
+                {
+                    _mostrarAvisoNoElegible = true;
+                    StateHasChanged();
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -113,5 +127,15 @@
             _mostrarModal = false;
             _version = null;
         }
+    }
+
+    private async Task HandleCerrarAviso()
+    {
+        if (!string.IsNullOrWhiteSpace(_idPaciente))
+        {
+            await JS.InvokeVoidAsync("authApi.marcarAvisoNoElegibleEntendido", _idPaciente);
+        }
+
+        _mostrarAvisoNoElegible = false;
     }
 }

@@ -8,6 +8,14 @@ public static class ConsentimientoConstants
 {
     public const string ProgramaCuidar65 = "Cuidar65";
     public const int EdadMinimaPrograma = 65;
+
+    public const string AvisoNoElegibleTitulo = "IMPORTANTE";
+
+    public const string AvisoNoElegibleParrafo1 =
+        "Cuidar +65 está pensado para personas sin cobertura de obra social, además de los criterios de residencia y edad.";
+
+    public const string AvisoNoElegibleParrafo2 =
+        "Si tenés PAMI, ISSN, otras obras sociales o alguna prepaga, seguís contando con tu cobertura médica habitual.";
 }
 
 public static class ConsentimientoMapper

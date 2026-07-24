@@ -1,0 +1,109 @@
+.pci-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 1rem;
+}
+
+.pci-modal {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 55, 76, 0.18);
+    max-width: 650px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pci-modal-header {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-bottom: 2px solid rgba(255, 236, 193, 0.2);
+    background: linear-gradient(135deg, #00374c 0%, #2b3e4c 100%);
+    color: #ffecc1;
+}
+
+.pci-modal-program-logo {
+    border-radius: 8px;
+    height: 54px;
+}
+
+.pci-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #ffecc1;
+    flex: 1;
+}
+
+.pci-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+    background: #f8fafc;
+}
+
+.pci-modal-section {
+    margin-bottom: 0.5rem;
+}
+
+.pci-modal-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #4b5563;
+    margin: 0 0 0.75rem;
+}
+
+.pci-modal-text:last-child {
+    margin-bottom: 0;
+}
+
+.pci-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 2px solid #e2e8ef;
+    background-color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .pci-modal {
+        max-height: 95vh;
+    }
+
+    .pci-modal-header {
+        padding: 1rem;
+        flex-direction: column;
+    }
+
+    .pci-modal-title {
+        font-size: 1.1rem;
+    }
+
+    .pci-modal-body {
+        padding: 1rem;
+    }
+
+    .pci-modal-footer {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .pci-modal-footer .btn {
+        width: 100%;
+    }
+}

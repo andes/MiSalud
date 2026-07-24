@@ -1,0 +1,38 @@
+@using SaludPortal.Application.UseCases.Consentimiento
+
+<div class="pci-modal-overlay">
+    <div class="pci-modal pci-aviso-modal" role="dialog" aria-modal="true" aria-labelledby="pci-aviso-titulo" @onclick:stopPropagation="true">
+        <div class="pci-modal-header">
+            <div class="pci-modal-title-wrapper" style="display:flex;align-items:center;gap:0.5rem;">
+                <img src="/images/programa-cuidar-65.jpg" alt="Cuidar 65" class="pci-modal-program-logo" />
+                <h2 id="pci-aviso-titulo" class="pci-modal-title">@ConsentimientoConstants.AvisoNoElegibleTitulo</h2>
+            </div>
+        </div>
+
+        <div class="pci-modal-body">
+            <section class="pci-modal-section">
+                <p class="pci-modal-text">@ConsentimientoConstants.AvisoNoElegibleParrafo1</p>
+                <p class="pci-modal-text">@ConsentimientoConstants.AvisoNoElegibleParrafo2</p>
+            </section>
+        </div>
+
+        <div class="pci-modal-footer">
+            <button type="button" class="btn btn-azul" @onclick="HandleCerrar">
+                Entendido
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnCerrar { get; set; }
+
+    private async Task HandleCerrar()
+    {
+        if (OnCerrar.HasDelegate)
+        {
+            await OnCerrar.InvokeAsync();
+        }
+    }
+}

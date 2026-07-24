@@ -44,6 +44,7 @@ public class EvaluarConsentimientoProgramaUseCase
         var validado = await _consentimientoService.ValidarPacienteAsync(documento, sexo);
         if (!validado)
         {
+            resultado.MostrarAvisoNoElegible = true;
             return resultado;
         }
 

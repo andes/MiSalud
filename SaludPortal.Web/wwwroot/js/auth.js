@@ -1,6 +1,7 @@
 window.authApi = (function () {
 
     const PENDING_CONSENT_KEY = 'PendingConsentimientoPCI';
+    const AVISO_NO_ELEGIBLE_KEY_PREFIX = 'AvisoCuidar65Entendido:';
 
     function marcarConsentimientoPendiente() {
         sessionStorage.setItem(PENDING_CONSENT_KEY, '1');
@@ -16,6 +17,24 @@ window.authApi = (function () {
 
     function limpiarConsentimientoPendiente() {
         sessionStorage.removeItem(PENDING_CONSENT_KEY);
+    }
+
+    function avisoNoElegibleKey(pacienteId) {
+        return AVISO_NO_ELEGIBLE_KEY_PREFIX + pacienteId;
+    }
+
+    function fueAvisoNoElegibleEntendido(pacienteId) {
+        if (!pacienteId) {
+            return false;
+        }
+        return localStorage.getItem(avisoNoElegibleKey(pacienteId)) === '1';
+    }
+
+    function marcarAvisoNoElegibleEntendido(pacienteId) {
+        if (!pacienteId) {
+            return;
+        }
+        localStorage.setItem(avisoNoElegibleKey(pacienteId), '1');
     }
 
     async function login(data) {
@@ -43,7 +62,7 @@ window.authApi = (function () {
                 expireCookie('MiSalud');
                 window.location.replace('/login');
             } else {
-                console.warn('Logout fallÛ', resp.status);
+                console.warn('Logout fallù', resp.status);
             }
         } catch (e) {
             console.error('Error en logout', e);
@@ -75,7 +94,14 @@ window.authApi = (function () {
         return { ok: resp.ok, status: resp.status, data, raw };
     }
 
-    return { login, logout, crearContrasenia, consumirConsentimientoPendiente };
+    return {
+        login,
+        logout,
+        crearContrasenia,
+        consumirConsentimientoPendiente,
+        fueAvisoNoElegibleEntendido,
+        marcarAvisoNoElegibleEntendido
+    };
 
 })();
 
