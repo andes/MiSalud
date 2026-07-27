@@ -36,6 +36,6 @@ public class ValidarCodigoActivacionUseCase
         if (result.Message != "new_password_needed")
             return (false, false, "Código de activación inválido.");
 
-        return (true, true, null);
+        return (true, false, null);
     }
 }
