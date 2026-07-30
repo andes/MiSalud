@@ -8,5 +8,5 @@ public class OlvideContraseniaRequestDto
     public string Email { get; set; }
 
     [JsonPropertyName("origen")]
-    public string Origen { get; set; } // Agrega esta propiedad para indicar el origen de la solicitud
+    public string Origen { get; set; }
 }

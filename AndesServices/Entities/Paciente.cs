@@ -61,7 +61,7 @@ namespace AndesServices.Entities
 
         public static string? GetDisplayName(string? nombre, string? apellido, string? alias)
         {
-            var nombreAlias = string.IsNullOrEmpty(nombre) ? alias : nombre;
+            var nombreAlias = string.IsNullOrEmpty(alias) ? nombre : alias;
             return $"{nombreAlias} {apellido}";
         }
     }

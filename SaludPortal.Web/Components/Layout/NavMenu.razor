@@ -100,7 +100,6 @@
         var alias = auth.User.GetAlias();
         var nombre = auth.User.GetNombre();
         var apellido = auth.User.GetApellido();
-        var nombreAlias = string.IsNullOrEmpty(nombre) ? alias : nombre;
         NombreUsuarioLogueado = Paciente.GetDisplayName(nombre, apellido, alias);
     }
 
