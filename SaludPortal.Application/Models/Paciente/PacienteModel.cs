@@ -70,7 +70,7 @@ public class IdentificadorModel
 
 public class FinanciadorModel
 {
-    public int CodigoPuco { get; set; }
+    public int? CodigoPuco { get; set; }
     public string? Nombre { get; set; }
     public string? Origen { get; set; }
     public DateTime FechaDeActualizacion { get; set; }
