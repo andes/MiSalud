@@ -34,7 +34,7 @@ namespace AndesServices.Services
 
                     if (unPaciente == null)
                     {
-                        Console.WriteLine("No se encontraron recetas disponibles.");
+                        Console.WriteLine("No se encontró el paciente.");
                         return null;
                     }
 
@@ -68,7 +68,7 @@ namespace AndesServices.Services
 
                     if (unaGeoreferencia == null)
                     {
-                        Console.WriteLine("No se encontraron recetas disponibles.");
+                        Console.WriteLine("No se encontró la georeferencia del paciente.");
                         return null;
                     }
 

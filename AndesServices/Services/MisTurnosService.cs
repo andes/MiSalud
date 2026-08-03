@@ -110,10 +110,6 @@ namespace AndesServices.Services
             {
                 var client = _httpClientFactory.CreateClient("Andes");
 
-                string tipoTurno = "programado";
-                string emitidoPor = "misalud";
-                string nota = "Solicitud realizada desde portal mi salud";
-
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Patch,
@@ -125,9 +121,9 @@ namespace AndesServices.Services
                         idTurno,
                         paciente,
                         tipoPrestacion,
-                        tipoTurno,
-                        emitidoPor,
-                        nota
+                        tipoTurno = "mobile",
+                        emitidoPor = "misalud",
+                        nota = "Solicitud realizada desde portal mi salud"
                     }), System.Text.Encoding.UTF8, "application/json")
                 };
 
@@ -199,6 +195,7 @@ namespace AndesServices.Services
                 var userLocationJson = JsonConvert.SerializeObject(userLocation);
                 var queryParams = new Dictionary<string, string?>
                 {
+                    ["idPaciente"] = idPaciente,
                     ["estado"] = estado,
                     ["userLocation"] = userLocationJson,
                     ["teleConsulta"] = esTeleConsulta.ToString().ToLower(),
