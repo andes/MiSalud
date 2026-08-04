@@ -1,4 +1,5 @@
-﻿using AndesServices.Entities;
+﻿using AndesServices.DTOs.Turnos;
+using AndesServices.Entities;
 using AndesServices.Interfaces;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -110,21 +111,55 @@ namespace AndesServices.Services
             {
                 var client = _httpClientFactory.CreateClient("Andes");
 
+                var body = new RegistrarTurnoRequestDto
+                {
+                    IdAgenda = idAgenda,
+                    IdBloque = idBloque,
+                    IdTurno = idTurno,
+                    Paciente = new RegistrarTurnoPacienteDto
+                    {
+                        Id = paciente.id,
+                        Documento = paciente.documento,
+                        Nombre = paciente.nombre,
+                        Alias = paciente.alias,
+                        Apellido = paciente.apellido,
+                        FechaNacimiento = paciente.fechaNacimiento,
+                        Telefono = paciente.telefono,
+                        Sexo = paciente.sexo,
+                        ObraSocial = paciente.obraSocial == null ? null : new RegistrarTurnoObraSocialDto
+                        {
+                            CodigoPuco = paciente.obraSocial.codigoPuco,
+                            Nombre = paciente.obraSocial.nombre,
+                            Financiador = paciente.obraSocial.financiador,
+                            Origen = paciente.obraSocial.origen,
+                            Prepaga = paciente.obraSocial.prepaga
+                        }
+                    },
+                    TipoPrestacion = new RegistrarTurnoTipoPrestacionDto
+                    {
+                        Auditable = tipoPrestacion.auditable,
+                        Ambito = tipoPrestacion.ambito,
+                        Queries = tipoPrestacion.queries,
+                        IdInterno = tipoPrestacion._id,
+                        Fsn = tipoPrestacion.fsn,
+                        SemanticTag = tipoPrestacion.semanticTag,
+                        ConceptId = tipoPrestacion.conceptId,
+                        Term = tipoPrestacion.term,
+                        Multiprestacion = tipoPrestacion.multiprestacion,
+                        Nombre = tipoPrestacion.nombre,
+                        Id = tipoPrestacion.id
+                    },
+                    TipoTurno = "programado",
+                    EmitidoPor = "misalud",
+                    Nota = "Solicitud realizada desde portal mi salud",
+                    MotivoConsulta = ""
+                };
+
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Patch,
                     RequestUri = new Uri($"modules/turnos/turno/{idTurno}/bloque/{idBloque}/agenda/{idAgenda}", UriKind.Relative),
-                    Content = new StringContent(JsonConvert.SerializeObject(new
-                    {
-                        idAgenda,
-                        idBloque,
-                        idTurno,
-                        paciente,
-                        tipoPrestacion,
-                        tipoTurno = "mobile",
-                        emitidoPor = "misalud",
-                        nota = "Solicitud realizada desde portal mi salud"
-                    }), System.Text.Encoding.UTF8, "application/json")
+                    Content = new StringContent(JsonConvert.SerializeObject(body), System.Text.Encoding.UTF8, "application/json")
                 };
 
                 using (HttpResponseMessage res = await client.SendAsync(request))
