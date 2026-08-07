@@ -1,5 +1,6 @@
 ﻿using AndesServices.Interfaces;
 using SaludPortal.Application.Models.Turnos;
+using SaludPortal.Application.Utils;
 
 namespace SaludPortal.Application.UseCases.Turnos;
 
@@ -36,7 +37,11 @@ public class RegistrarTurnoUseCase
             }
         }
 
-        bool resultado = await _misTurnosService.RegistrarTurnoAsync(t.Id, t.BloqueId, t.AgendaId, paciente, t.TipoPrestacionDetalle);
+        var tipoTurno = t.FechaHora.Date == DateTimeHelper.NowArgentina().Date
+            ? "delDia"
+            : "programado";
+
+        bool resultado = await _misTurnosService.RegistrarTurnoAsync(t.Id, t.BloqueId, t.AgendaId, paciente, t.TipoPrestacionDetalle, tipoTurno);
         return resultado;
     }
 }

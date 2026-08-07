@@ -1,5 +1,6 @@
 ﻿using AndesServices.Interfaces;
 using SaludPortal.Application.Models.Turnos;
+using SaludPortal.Application.Utils;
 
 namespace SaludPortal.Application.UseCases.Turnos;
 
@@ -36,6 +37,10 @@ public class SolicitarTeleconsultaUseCase
             }
         }
 
+        var tipoTurno = t.FechaHora.Date == DateTimeHelper.NowArgentina().Date
+            ? "delDia"
+            : "programado";
+
         bool resultado = await _misTurnosService.RegistrarTurnoTeleConsultaAsync(
             t.Id,
             t.BloqueId,
@@ -43,7 +48,8 @@ public class SolicitarTeleconsultaUseCase
             paciente,
             t.TipoPrestacionDetalle,
             motivoConsulta,
-            telefono);
+            telefono,
+            tipoTurno);
             
         return resultado;
     }

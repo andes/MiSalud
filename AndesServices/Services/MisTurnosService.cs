@@ -105,7 +105,7 @@ namespace AndesServices.Services
             throw new NotImplementedException();
         }
 
-        public async Task<bool> RegistrarTurnoAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion)
+        public async Task<bool> RegistrarTurnoAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string tipoTurno)
         {
             try
             {
@@ -149,7 +149,7 @@ namespace AndesServices.Services
                         Nombre = tipoPrestacion.nombre,
                         Id = tipoPrestacion.id
                     },
-                    TipoTurno = "programado",
+                    TipoTurno = tipoTurno,
                     EmitidoPor = "misalud",
                     Nota = "Solicitud realizada desde portal mi salud",
                     MotivoConsulta = ""
@@ -178,7 +178,7 @@ namespace AndesServices.Services
             return false;
         }
 
-        public async Task<bool> RegistrarTurnoTeleConsultaAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta, string telefono)
+        public async Task<bool> RegistrarTurnoTeleConsultaAsync(string idTurno, string idBloque, string idAgenda, Paciente paciente, TipoPrestacion tipoPrestacion, string motivoConsulta, string telefono, string tipoTurno)
         {
             try
             {
@@ -195,7 +195,7 @@ namespace AndesServices.Services
                         idTurno,
                         paciente,
                         tipoPrestacion,
-                        tipoTurno = "programado",
+                        tipoTurno,
                         emitidoPor = "misalud",
                         nota = "Cel.: " + telefono + ". Motivo: " + motivoConsulta,
                         estado = "solicitado",
