@@ -1,22 +1,69 @@
 window.authApi = (function () {
 
     const PENDING_CONSENT_KEY = 'PendingConsentimientoPCI';
+    const EVALUACION_CACHE_KEY_PREFIX = 'ConsentimientoPCIEvaluacion:';
     const AVISO_NO_ELEGIBLE_KEY_PREFIX = 'AvisoCuidar65Entendido:';
 
+    function evaluacionCacheKey(pacienteId) {
+        return EVALUACION_CACHE_KEY_PREFIX + pacienteId;
+    }
+
+    function limpiarCacheEvaluacionConsentimiento() {
+        const keysToRemove = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            if (key && key.startsWith(EVALUACION_CACHE_KEY_PREFIX)) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    }
+
     function marcarConsentimientoPendiente() {
+        limpiarCacheEvaluacionConsentimiento();
         sessionStorage.setItem(PENDING_CONSENT_KEY, '1');
     }
 
-    function consumirConsentimientoPendiente() {
-        const value = sessionStorage.getItem(PENDING_CONSENT_KEY);
-        if (value) {
-            sessionStorage.removeItem(PENDING_CONSENT_KEY);
-        }
-        return value === '1';
+    function tieneConsentimientoPendiente() {
+        return sessionStorage.getItem(PENDING_CONSENT_KEY) === '1';
     }
 
     function limpiarConsentimientoPendiente() {
         sessionStorage.removeItem(PENDING_CONSENT_KEY);
+        limpiarCacheEvaluacionConsentimiento();
+    }
+
+    function resolverConsentimientoPendiente(pacienteId) {
+        sessionStorage.removeItem(PENDING_CONSENT_KEY);
+        if (pacienteId) {
+            sessionStorage.removeItem(evaluacionCacheKey(pacienteId));
+        }
+    }
+
+    function obtenerEvaluacionConsentimientoCacheada(pacienteId) {
+        if (!pacienteId) {
+            return null;
+        }
+
+        const raw = sessionStorage.getItem(evaluacionCacheKey(pacienteId));
+        if (!raw) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(raw);
+        } catch {
+            sessionStorage.removeItem(evaluacionCacheKey(pacienteId));
+            return null;
+        }
+    }
+
+    function guardarEvaluacionConsentimientoCacheada(pacienteId, evaluacion) {
+        if (!pacienteId || !evaluacion) {
+            return;
+        }
+
+        sessionStorage.setItem(evaluacionCacheKey(pacienteId), JSON.stringify(evaluacion));
     }
 
     function avisoNoElegibleKey(pacienteId) {
@@ -98,25 +145,12 @@ window.authApi = (function () {
         login,
         logout,
         crearContrasenia,
-        consumirConsentimientoPendiente,
+        tieneConsentimientoPendiente,
+        resolverConsentimientoPendiente,
+        obtenerEvaluacionConsentimientoCacheada,
+        guardarEvaluacionConsentimientoCacheada,
         fueAvisoNoElegibleEntendido,
         marcarAvisoNoElegibleEntendido
     };
 
 })();
-
-
-//window.loginApi = {
-//    login: async function (data) {
-//        const resp = await fetch('api/auth/login', {
-//            method: 'POST',
-//            headers: { 'Content-Type': 'application/json' },
-//            body: JSON.stringify(data),
-//            credentials: 'include'
-//        });
-//        let text = await resp.text();
-//        let json;
-//        try { json = text ? JSON.parse(text) : null; } catch { json = { message: text }; }
-//        return { ok: resp.ok, status: resp.status, data: json ?? {}, raw: text };
-//    }
-//};

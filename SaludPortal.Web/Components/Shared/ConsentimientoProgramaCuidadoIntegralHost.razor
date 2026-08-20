@@ -2,6 +2,7 @@
 @using SaludPortal.Application.Models.Consentimiento
 @using SaludPortal.Application.UseCases.Consentimiento
 @using SaludPortal.Application.UseCases.Paciente
+@using SaludPortal.Web.Models
 @using SaludPortal.Web.Services
 
 @inject EvaluarConsentimientoProgramaUseCase EvaluarConsentimientoUseCase
@@ -47,8 +48,8 @@ else if (_mostrarAvisoNoElegible)
 
         try
         {
-            var debeConsultar = await JS.InvokeAsync<bool>("authApi.consumirConsentimientoPendiente");
-            if (!debeConsultar)
+            var tienePendiente = await JS.InvokeAsync<bool>("authApi.tieneConsentimientoPendiente");
+            if (!tienePendiente)
             {
                 return;
             }
@@ -74,19 +75,23 @@ else if (_mostrarAvisoNoElegible)
                 return;
             }
 
-            var evaluacion = await EvaluarConsentimientoUseCase.EjecutarAsync(
-                _idPaciente,
-                _dni,
-                _sexo,
-                _fechaNacimiento);
+            var evaluacion = await ObtenerEvaluacionAsync();
+
+            if (!evaluacion.MostrarPopup && !evaluacion.MostrarAvisoNoElegible)
+            {
+                await JS.InvokeVoidAsync("authApi.resolverConsentimientoPendiente", _idPaciente);
+                return;
+            }
 
             if (evaluacion.MostrarPopup && evaluacion.Version is not null)
             {
                 _version = evaluacion.Version;
                 _mostrarModal = true;
                 StateHasChanged();
+                return;
             }
-            else if (evaluacion.MostrarAvisoNoElegible)
+
+            if (evaluacion.MostrarAvisoNoElegible)
             {
                 var yaEntendido = await JS.InvokeAsync<bool>("authApi.fueAvisoNoElegibleEntendido", _idPaciente);
                 if (!yaEntendido)
@@ -94,12 +99,44 @@ else if (_mostrarAvisoNoElegible)
                     _mostrarAvisoNoElegible = true;
                     StateHasChanged();
                 }
+                else
+                {
+                    await JS.InvokeVoidAsync("authApi.resolverConsentimientoPendiente", _idPaciente);
+                }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error al consultar consentimiento del programa de cuidado integral");
         }
+    }
+
+    private async Task<EvaluarConsentimientoResult> ObtenerEvaluacionAsync()
+    {
+        var cache = await JS.InvokeAsync<ConsentimientoEvaluacionCacheDto?>(
+            "authApi.obtenerEvaluacionConsentimientoCacheada",
+            _idPaciente);
+
+        if (cache is not null)
+        {
+            return cache.ToEvaluacionResult();
+        }
+
+        var evaluacion = await EvaluarConsentimientoUseCase.EjecutarAsync(
+            _idPaciente!,
+            _dni!,
+            _sexo!,
+            _fechaNacimiento);
+
+        if (evaluacion.MostrarPopup || evaluacion.MostrarAvisoNoElegible)
+        {
+            await JS.InvokeVoidAsync(
+                "authApi.guardarEvaluacionConsentimientoCacheada",
+                _idPaciente,
+                ConsentimientoEvaluacionCacheDto.FromEvaluacion(evaluacion));
+        }
+
+        return evaluacion;
     }
 
     private async Task HandleRespuesta(bool aceptado)
@@ -126,6 +163,7 @@ else if (_mostrarAvisoNoElegible)
         {
             _mostrarModal = false;
             _version = null;
+            await JS.InvokeVoidAsync("authApi.resolverConsentimientoPendiente", _idPaciente);
         }
     }
 
@@ -134,6 +172,7 @@ else if (_mostrarAvisoNoElegible)
         if (!string.IsNullOrWhiteSpace(_idPaciente))
         {
             await JS.InvokeVoidAsync("authApi.marcarAvisoNoElegibleEntendido", _idPaciente);
+            await JS.InvokeVoidAsync("authApi.resolverConsentimientoPendiente", _idPaciente);
         }
 
         _mostrarAvisoNoElegible = false;
