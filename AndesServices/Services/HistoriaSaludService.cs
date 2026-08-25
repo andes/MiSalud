@@ -269,13 +269,13 @@ namespace AndesServices.Services
             }
         }
 
-        public async Task<string?> ObtenerImagenPrestacionUrlAsync(string idPrestacion, string fileToken)
+        public async Task<string?> ObtenerImagenPrestacionUrlAsync(string idPrestacion, string fileToken, string pacienteId)
         {
             try
             {
                 
                 var baseAddress = _andesClient.BaseAddress?.ToString().TrimEnd('/');
-                var pacsUrl = $"{baseAddress}/modules/rup/prestaciones/{idPrestacion}/pacs?token={fileToken}";
+                var pacsUrl = $"{baseAddress}/modules/rup/prestaciones/{idPrestacion}/pacs?token={fileToken}&pacienteId={Uri.EscapeDataString(pacienteId)}";
 
                 using var checkRes = await _andesClient.GetAsync(pacsUrl, HttpCompletionOption.ResponseHeadersRead);
                 if (!checkRes.IsSuccessStatusCode)

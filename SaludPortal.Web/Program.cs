@@ -166,7 +166,6 @@ builder.Services.AddHttpClient("ApiXroadssAndes", (sp, client) =>
         client.DefaultRequestHeaders.Add("X-ROAD-CLIENT", "OPTIC/GOB/GOB00008/GP-SALUD");
     })
     .ConfigurePrimaryHttpMessageHandler<XRoadCertificateHandler>();
-builder.Services.AddSession(o => o.IdleTimeout = TimeSpan.FromMinutes(60));
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 builder.Configuration.AddJsonFile("saludConfig.json", optional: false, reloadOnChange: true);
@@ -197,7 +196,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseSession();
 app.MapControllers();
 app.UseAntiforgery();
 app.MapStaticAssets();

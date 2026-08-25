@@ -11,8 +11,8 @@ public class ObtenerUrlImagenPrestacionUseCase
         _historiaSaludService = historiaSaludService;
     }
 
-    public async Task<string?> EjecutarAsync(string idPrestacion, string fileToken)
+    public async Task<string?> EjecutarAsync(string idPrestacion, string fileToken, string pacienteId)
     {
-        return await _historiaSaludService.ObtenerImagenPrestacionUrlAsync(idPrestacion, fileToken);
+        return await _historiaSaludService.ObtenerImagenPrestacionUrlAsync(idPrestacion, fileToken, pacienteId);
     }
 }

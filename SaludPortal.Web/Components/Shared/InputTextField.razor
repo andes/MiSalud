@@ -13,7 +13,7 @@
             <Icon Name="@IconName" Size="18" Fill="#666" AriaLabel="@AriaLabel" />
         </div>
         <input id="@Id"
-               type="@Type"
+               type="@EffectiveInputType"
                @bind="@CurrentValue"
                class="input-field @(Uppercase ? "uppercase" : "")"
                placeholder="@Placeholder"
@@ -22,6 +22,25 @@
                pattern="@(!string.IsNullOrWhiteSpace(Pattern) ? Pattern : null)"
                inputmode="@(!string.IsNullOrWhiteSpace(InputMode) ? InputMode : null)"
                disabled="@Disabled" />
+        @if (ShowPasswordToggle && Type.Equals("password", StringComparison.OrdinalIgnoreCase))
+        {
+            <button type="button"
+                    class="btn btn-link input-password-toggle"
+                    style="padding: 0 10px; border: 0; background: transparent; color: #666; text-decoration: none; display: flex; align-items: center; justify-content: center;"
+                    aria-label="@(_showPassword ? "Ocultar contraseña" : "Mostrar contraseña")"
+                    title="@(_showPassword ? "Ocultar contraseña" : "Mostrar contraseña")"
+                    @onclick="TogglePasswordVisibility"
+                    @onclick:preventDefault="true">
+                @if (_showPassword)
+                {
+                    <Icon Name="eye-slash" Size="18" Fill="#666" AriaLabel="Ocultar contraseña" />
+                }
+                else
+                {
+                    <Icon Name="eye" Size="18" Fill="#666" AriaLabel="Mostrar contraseña" />
+                }                
+            </button>
+        }
     </div>
     <ValidationMessage For="@ValidationFor" class="validation-message" style="color: #dc3545;" />
 </div>
@@ -38,10 +57,20 @@
     [Parameter] public bool Uppercase { get; set; } = false;
     [Parameter] public string Pattern { get; set; } = "";
     [Parameter] public string InputMode { get; set; } = "";
+    [Parameter] public bool ShowPasswordToggle { get; set; } = false;
     [Parameter] public TValue? Value { get; set; }
     [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
     [Parameter] public Expression<Func<TValue>>? ValidationFor { get; set; }
     [Parameter] public bool HasError { get; set; } = false;
+
+    private bool _showPassword;
+
+    private string EffectiveInputType => ShowPasswordToggle && Type.Equals("password", StringComparison.OrdinalIgnoreCase) && _showPassword ? "text" : Type;
+
+    private void TogglePasswordVisibility()
+    {
+        _showPassword = !_showPassword;
+    }
 
     private TValue? CurrentValue
     {
@@ -50,7 +79,6 @@
         {
             var finalValue = value;
 
-            // Si Uppercase está activado y el valor es string, convertir a mayúsculas
             if (Uppercase && finalValue is string strValue)
             {
                 finalValue = (TValue)(object)strValue.ToUpperInvariant();

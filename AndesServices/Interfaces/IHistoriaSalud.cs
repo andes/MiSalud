@@ -26,6 +26,6 @@ namespace AndesServices.Interfaces
 
         Task<string?> ObtenerFileTokenAsync();
 
-        Task<string?> ObtenerImagenPrestacionUrlAsync(string idPrestacion, string fileToken);
+        Task<string?> ObtenerImagenPrestacionUrlAsync(string idPrestacion, string fileToken, string pacienteId);
     }
 }

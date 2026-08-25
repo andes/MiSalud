@@ -83,3 +83,13 @@
     display: none;
     content: none;
 }
+
+.input-password-toggle:focus,
+.input-password-toggle:focus-visible,
+.input-password-toggle:active,
+.input-password-toggle:active:focus,
+.input-password-toggle:focus:active {
+    border: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}

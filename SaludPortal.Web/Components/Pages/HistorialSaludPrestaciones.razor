@@ -188,10 +188,17 @@
             return;
         }
 
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(pacienteId))
+        {
+            MostrarError("No se encontró el identificador del paciente.");
+            return;
+        }
+
         try
         {
             _spinnerService.Show();
-            var url = await _obtenerUrlImagenUseCase.EjecutarAsync(idPrestacion, _fileToken!);
+            var url = await _obtenerUrlImagenUseCase.EjecutarAsync(idPrestacion, _fileToken!, pacienteId);
             if (string.IsNullOrEmpty(url))
             {
                 MostrarError("No se encontró imagen para esta prestación.");
@@ -218,12 +225,19 @@
             return;
         }
 
+        var pacienteId = PacienteId;
+        if (string.IsNullOrEmpty(pacienteId))
+        {
+            MostrarError("No se encontró el identificador del paciente.");
+            return;
+        }
+
         string? url = null;
         
         try
         {
             _spinnerService.Show();
-            url = await _obtenerUrlImagenUseCase.EjecutarAsync(idPrestacion, _fileToken!);
+            url = await _obtenerUrlImagenUseCase.EjecutarAsync(idPrestacion, _fileToken!, pacienteId);
             if (string.IsNullOrEmpty(url))
             {
                 MostrarError("No se encontró imagen para esta prestación.");
