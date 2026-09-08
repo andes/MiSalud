@@ -2,6 +2,8 @@
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Icons
 
+@inject TelemetryService Telemetry
+
 <div class="laboratorio-card" @onclick="HandleDownloadClick" title="Descargar" tabindex="0">
     <div class="laboratorio-header">
         <div class="laboratorio-header-info">
@@ -50,6 +52,7 @@
         if (OnDownload.HasDelegate && !string.IsNullOrEmpty(Laboratorio.IdProtocolo))
         {
             await OnDownload.InvokeAsync(Laboratorio);
+            _ = Telemetry.TrackLaboratorioPdfDownloadAsync(Laboratorio.IdProtocolo);
         }
     }
 }

@@ -13,6 +13,7 @@
 @inject SolicitarRecuperacionContraseniaUseCase SolicitarRecuperacionContraseniaUseCase
 @inject NavigationManager Nav
 @inject ILogger<OlvidoContrasenia> _logger
+@inject TelemetryService Telemetry
 
 <PageTitle>Recuperar contraseña - Mi Salud</PageTitle>
 
@@ -71,7 +72,7 @@
 
         <div class="login-footer">
             <div class="login-footer-link">
-                <a href="/login" class="login-link">Volver al inicio de sesión</a>
+                <a href="/login" @onclick="GoToLogin" @onclick:preventDefault class="login-link">Volver al inicio de sesión</a>
             </div>
         </div>
     </div>
@@ -96,6 +97,7 @@
 
         try
         {
+            await Telemetry.TrackClickAsync("olvidocontrasenia/submit", "/olvidocontrasenia");
             var result = await SolicitarRecuperacionContraseniaUseCase.EjecutarAsync(_model.Email);
 
             if (result.success)
@@ -119,8 +121,15 @@
         }
     }
 
-    private void IrAReestablecerPassword(MouseEventArgs _)
+    private async Task IrAReestablecerPassword(MouseEventArgs _)
     {
+        await Telemetry.TrackClickAsync("olvidocontrasenia/ir-reestablecer", "/olvidocontrasenia");
         Nav.NavigateTo("/reestablecer-password");
+    }
+
+    private async Task GoToLogin()
+    {
+        await Telemetry.TrackClickAsync("olvidocontrasenia/volver-login", "/olvidocontrasenia");
+        Nav.NavigateTo("/login");
     }
 }

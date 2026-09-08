@@ -1,6 +1,9 @@
 ﻿@using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Services
 @rendermode InteractiveServer
+
+@inject TelemetryService Telemetry
 
 <section class="privacidad-modal" aria-labelledby="privacidad-titulo">
     <div class="header">
@@ -43,5 +46,9 @@
 @code {
     [CascadingParameter] BlazoredModalInstance ModalQuienesPuedenVerHS { get; set; } = default!;
 
-    private async Task Close() => await ModalQuienesPuedenVerHS.CloseAsync();
+    private async Task Close()
+    {
+        _ = Telemetry.TrackClickAsync("home/privacidad-cerrar");
+        await ModalQuienesPuedenVerHS.CloseAsync();
+    }
 }

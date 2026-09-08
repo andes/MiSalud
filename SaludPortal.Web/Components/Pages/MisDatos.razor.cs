@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using SaludPortal.Web.Components.Shared;
+using SaludPortal.Web.Services;
 using AndesServices;
 using AndesServices.DTOs;
 using AndesServices.Interfaces;
@@ -15,6 +16,7 @@ namespace SaludPortal.Web.Components.Pages
         [Inject] private SpinnerService _spinnerService { get; set; } = default!;
         [Inject] private IPaciente _pacienteService { get; set; } = default!;
         [Inject] private ITerritorio _territorioService { get; set; } = default!;
+        [Inject] private TelemetryService Telemetry { get; set; } = default!;
 
         private AndesServices.Entities.Paciente? paciente;
         private List<Provincia>? provincias;
@@ -48,34 +50,26 @@ namespace SaludPortal.Web.Components.Pages
                 return;
 
             _spinnerService.Show();
-            try
+           
+            // Cargar paciente
+            paciente = await _pacienteService.ObtenerPacientePorIdAsync(pacienteId);
+
+            // Cargar provincias
+            provincias = await _territorioService.ObtenerProvinciasAsync();
+
+            // Inicializar formulario con datos del paciente
+            if (paciente != null)
             {
-                // Cargar paciente
-                paciente = await _pacienteService.ObtenerPacientePorIdAsync(pacienteId);
+                InicializarFormulario();
 
-                // Cargar provincias
-                provincias = await _territorioService.ObtenerProvinciasAsync();
-
-                // Inicializar formulario con datos del paciente
-                if (paciente != null)
+                // Si hay provincia seleccionada, cargar localidades
+                if (!string.IsNullOrEmpty(formModel.ProvinciaId))
                 {
-                    InicializarFormulario();
-
-                    // Si hay provincia seleccionada, cargar localidades
-                    if (!string.IsNullOrEmpty(formModel.ProvinciaId))
-                    {
-                        await CargarLocalidadesIniciales();
-                    }
+                    await CargarLocalidadesIniciales();
                 }
             }
-            catch (Exception ex)
-            {
-                mensajeError = $"Error al cargar los datos: {ex.Message}";
-            }
-            finally
-            {
-                _spinnerService.Hide();
-            }
+        
+            _spinnerService.Hide();
         }
 
         private void InicializarFormulario()
@@ -202,6 +196,8 @@ namespace SaludPortal.Web.Components.Pages
 
         private void ActivarModoEdicion()
         {
+            _ = Telemetry.TrackClickAsync("misdatos/modificar", "/mis-datos");
+
             modoEdicion = true;
             mensajeExito = string.Empty;
             mensajeError = string.Empty;
@@ -215,6 +211,7 @@ namespace SaludPortal.Web.Components.Pages
 
         private async Task CancelarEdicion()
         {
+            _ = Telemetry.TrackClickAsync("misdatos/cancelar-edicion");
             modoEdicion = false;
             mensajeExito = string.Empty;
             mensajeError = string.Empty;
@@ -294,6 +291,8 @@ namespace SaludPortal.Web.Components.Pages
                 mensajeError = "No se pudo obtener el token de autenticación.";
                 return;
             }
+
+            _ = Telemetry.TrackClickAsync("misdatos/guardar", "/mis-datos");
 
             _spinnerService.Show();
             try

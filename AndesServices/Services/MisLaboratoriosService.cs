@@ -1,13 +1,8 @@
 ﻿using AndesServices.DTOs.LaboratoriosRania;
 using AndesServices.Entities;
 using AndesServices.Interfaces;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
@@ -16,17 +11,19 @@ namespace AndesServices.Services
     public class MisLaboratoriosService : IMisLaboratorios
     {
         private readonly IConfiguration _configuration;
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<MisLaboratoriosService> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _andesClient, _lachybsClient, _xroadssClient;
         private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
-        public MisLaboratoriosService(IConfiguration configuration
-            , IHttpClientFactory httpClientFactory
-            , ILogger<MisLaboratoriosService> logger)
+        public MisLaboratoriosService(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<MisLaboratoriosService> logger)
         {
             _configuration = configuration;
-            _httpClientFactory = httpClientFactory;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
+            _andesClient = httpClientFactory.CreateClient("Andes");
+            _lachybsClient = httpClientFactory.CreateClient("LACHYBS_NOREDIRECT");
+            _xroadssClient = httpClientFactory.CreateClient("ApiXroadssAndes");
         }
 
         public Task<bool> ActualizarLaboratorioAsync(string idProtocolo, string documento, string apellido, string nombre, string codigoHIV, string fechanacimiento, string sexobiologico, string numero, string fecha, string laboratorio, string medicoSolicitante, string efectorSolicitante, string origen, string tipoMuestra)
@@ -50,16 +47,15 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
                 var parametrosBody = new StringContent("{\"protocolo\":{\"data\":{\"idProtocolo\":" + idProtocolo + ",\"documento\":" + documento + "}}}", System.Text.Encoding.UTF8, "application/json");
-                using (HttpResponseMessage res = await client.PostAsync("modules/descargas/laboratorio", parametrosBody))
+                using (HttpResponseMessage res = await _andesClient.PostAsync("modules/descargas/laboratorio", parametrosBody))
                 {
                     if (res.IsSuccessStatusCode)
                     {
                         byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
                         if (fileResponse == null)
                         {
-                            Console.WriteLine("Error: File is null.");
+                            _logger.LogWarning("El contenido del archivo es null para protocolo {IdProtocolo} y documento {Documento}", idProtocolo, documento);
                             return await Task.FromResult(unByte);
                         }
 
@@ -69,7 +65,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener el archivo del laboratorio: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener el archivo del laboratorio para protocolo {IdProtocolo} y documento {Documento}", idProtocolo, documento);
                 return await Task.FromResult(unByte);
             }
             return await Task.FromResult(unByte);
@@ -78,18 +74,17 @@ namespace AndesServices.Services
         public async Task<Byte[]> DescargarLaboratorioCDAPorIdAsync(string documento)
         {
             byte[] unByte = null;
-        
+
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-                using (HttpResponseMessage res = await client.GetAsync($"modules/cda/{documento}"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync($"modules/cda/{documento}"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
                         byte[]? fileResponse = await res.Content.ReadAsByteArrayAsync();
                         if (fileResponse == null)
                         {
-                            Console.WriteLine("Error: File is null.");
+                            _logger.LogWarning("El contenido del archivo es null para documento {Documento}", documento);
                             return await Task.FromResult(unByte);
                         }
 
@@ -99,13 +94,13 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener el archivo del laboratorio: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener el archivo del laboratorio para documento {Documento}", documento);
                 return await Task.FromResult(unByte);
             }
             return await Task.FromResult(unByte);
         }
 
-        public async Task<string> DescargarLaboratorioLACHyBSPorIdAsync(string usuario, string clave,string idProtocolo)
+        public async Task<string> DescargarLaboratorioLACHyBSPorIdAsync(string usuario, string clave, string idProtocolo)
         {
             if (string.IsNullOrWhiteSpace(idProtocolo))
             {
@@ -118,7 +113,7 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("LACHYBS_NOREDIRECT");
+                var client = _lachybsClient;
                 client.DefaultRequestHeaders.Authorization = BuildBasicAuthHeader(usuario?.Trim(), clave?.Trim());
                 if (!client.DefaultRequestHeaders.Accept.Any())
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -145,14 +140,14 @@ namespace AndesServices.Services
 
                 if (!res.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning("Descargar informe LACHYBS fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
+                    _logger.LogError("Descargar informe LACHYBS fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
                     return null;
                 }
 
                 var informe = System.Text.Json.JsonSerializer.Deserialize<LaboratorioLachybsInforme>(body, JsonOpts);
                 if (informe == null || string.IsNullOrWhiteSpace(informe.informe_url))
                 {
-                    _logger.LogInformation("No se obtuvo informe_url para protocolo {Id}", idProtocolo);
+                    _logger.LogWarning("No se obtuvo informe_url para protocolo {Id}", idProtocolo);
                     return null;
                 }
 
@@ -169,9 +164,8 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
 
-                using (HttpResponseMessage res = await client.GetAsync($"modules/rup/protocolosLab?pacienteId={pacienteId}&fechaDde={fechaDde}&fechaHta={fechaHta}"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync($"modules/rup/protocolosLab?pacienteId={pacienteId}&fechaDde={fechaDde}&fechaHta={fechaHta}"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
@@ -190,7 +184,7 @@ namespace AndesServices.Services
 
                         if (listaLaboratorios == null)
                         {
-                            _logger.LogInformation("Respuesta sin Data. Body: {Body}", jsonString);
+                            _logger.LogError("Respuesta sin Data. Body: {Body}", jsonString);
                             return null;
                         }
 
@@ -226,24 +220,24 @@ namespace AndesServices.Services
             try
             {
                 // Intentar parsear en formato dd/MM/yyyy (ya está en el formato correcto)
-                if (DateTime.TryParseExact(fecha, "dd/MM/yyyy", 
-                    System.Globalization.CultureInfo.InvariantCulture, 
+                if (DateTime.TryParseExact(fecha, "dd/MM/yyyy",
+                    System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.None, out DateTime resultado))
                 {
                     return resultado.ToString("dd/MM/yyyy");
                 }
 
                 // Intentar parsear en formato ISO (yyyyMMdd)
-                if (DateTime.TryParseExact(fecha, "yyyyMMdd", 
-                    System.Globalization.CultureInfo.InvariantCulture, 
+                if (DateTime.TryParseExact(fecha, "yyyyMMdd",
+                    System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.None, out resultado))
                 {
                     return resultado.ToString("dd/MM/yyyy");
                 }
 
                 // Intentar parsear en formato yyyy-MM-dd
-                if (DateTime.TryParseExact(fecha, "yyyy-MM-dd", 
-                    System.Globalization.CultureInfo.InvariantCulture, 
+                if (DateTime.TryParseExact(fecha, "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.None, out resultado))
                 {
                     return resultado.ToString("dd/MM/yyyy");
@@ -261,7 +255,7 @@ namespace AndesServices.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error al normalizar fecha: {Fecha}", fecha);
+                _logger.LogError(ex, "Error al normalizar la fecha: {Fecha}", fecha);
                 return fecha;
             }
         }
@@ -270,11 +264,7 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
-                //string queryParams = "?pacienteId=" + pacienteId + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
-
-                using (HttpResponseMessage res = await client.GetAsync($"modules/cda/paciente/{pacienteId}"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync($"modules/cda/paciente/{pacienteId}"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
@@ -284,7 +274,6 @@ namespace AndesServices.Services
 
                         if (misLaboratorios == null)
                         {
-                            Console.WriteLine("No se encontraron laboratorios.");
                             return null;
                         }
 
@@ -294,7 +283,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener los laboratorios: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener los laboratorios CDA para paciente {PacienteId}", pacienteId);
                 return null;
             }
             return null;
@@ -307,7 +296,7 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("LACHYBS_NOREDIRECT");
+                var client = _lachybsClient;
                 client.DefaultRequestHeaders.Authorization = BuildBasicAuthHeader(usuario?.Trim(), clave?.Trim());
                 if (!client.DefaultRequestHeaders.Accept.Any())
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -319,8 +308,6 @@ namespace AndesServices.Services
                     ? res.Headers.Location
                     : new Uri(new Uri(url), res.Headers.Location);
 
-                Console.WriteLine($"[LACHYBS] Following redirect to {redirectUri}");
-
                 var secondReq = new HttpRequestMessage(HttpMethod.Get, redirectUri);
                 secondReq.Headers.Authorization = BuildBasicAuthHeader(usuario?.Trim(), clave?.Trim());
                 secondReq.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -330,18 +317,16 @@ namespace AndesServices.Services
                 res.Dispose();
                 res = await client.SendAsync(secondReq);
                 var body = await res.Content.ReadAsStringAsync();
-                Console.WriteLine($"[LACHYBS] 2nd Status {(int)res.StatusCode} {res.ReasonPhrase}");
 
                 if (!res.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning("LACHYBS fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
+                    _logger.LogError("LACHYBS fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
                     return null;
                 }
 
                 var lista = JsonSerializer.Deserialize<List<LaboratoriosLachybs>>(body, JsonOpts);
                 if (lista == null || lista.Count == 0)
                 {
-                    _logger.LogInformation("LACHYBS sin resultados para dni {Documento}", documento);
                     return null;
                 }
 
@@ -410,9 +395,7 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
-
-                using (HttpResponseMessage res = await client.GetAsync($"r1/OPTIC/COM/COM00007/GP-LABRANIA/protocolo?dni={dni}"))
+                using (HttpResponseMessage res = await _xroadssClient.GetAsync($"r1/OPTIC/COM/COM00007/GP-LABRANIA/protocolo?dni={dni}"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
@@ -420,7 +403,6 @@ namespace AndesServices.Services
 
                         if (lista == null)
                         {
-                            Console.WriteLine("No se encontraron laboratorios.");
                             return [];
                         }
 
@@ -439,7 +421,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener los laboratorios: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener los laboratorios Rania para el DNI {Dni}", dni);
                 return [];
             }
             return [];
@@ -455,9 +437,7 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
-
-                using (HttpResponseMessage res = await client.GetAsync($"r1/OPTIC/COM/COM00007/GP-LABRANIA/informe?protocolo_id={protocoloId}"))
+                using (HttpResponseMessage res = await _xroadssClient.GetAsync($"r1/OPTIC/COM/COM00007/GP-LABRANIA/informe?protocolo_id={protocoloId}"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
@@ -465,7 +445,6 @@ namespace AndesServices.Services
 
                         if (informe == null)
                         {
-                            _logger.LogInformation("No se encontró informe para el protocolo {ProtocoloId}", protocoloId);
                             return null;
                         }
 
@@ -474,7 +453,7 @@ namespace AndesServices.Services
                     else
                     {
                         var body = await res.Content.ReadAsStringAsync();
-                        _logger.LogWarning("Error al obtener informe Rania. Status: {StatusCode} Body: {Body} para protocolo {ProtocoloId}", 
+                        _logger.LogWarning("Error al obtener informe Rania. Status: {StatusCode} Body: {Body} para protocolo {ProtocoloId}",
                             res.StatusCode, body, protocoloId);
                         return null;
                     }
@@ -525,7 +504,7 @@ namespace AndesServices.Services
                     }
                     else
                     {
-                        _logger.LogWarning("Error al descargar informe Rania. Status: {StatusCode} para protocolo {ProtocoloId}", 
+                        _logger.LogWarning("Error al descargar informe Rania. Status: {StatusCode} para protocolo {ProtocoloId}",
                             res.StatusCode, protocoloId);
                         return null;
                     }

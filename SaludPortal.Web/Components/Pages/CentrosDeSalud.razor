@@ -5,9 +5,12 @@
 @using SaludPortal.Application.UseCases.CentrosDeSalud
 @using SaludPortal.Application.Models.CentrosDeSalud
 
+@using SaludPortal.Web.Services
+@inject TelemetryService Telemetry
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject ObtenerDireccionPacienteUseCase _obtenerDireccionUseCase
 @inject ObtenerCentrosSaludUseCase _obtenerCentrosUseCase
+@inject ILogger<CentrosDeSalud> _logger
 
 @inherits AuthenticatedComponentBase
 
@@ -90,7 +93,7 @@
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error cargando centros de salud: {ex.Message}");
+            _logger.LogError(ex, "Error cargando centros de salud");
             _centrosLoaded = false;
         }
         finally
@@ -104,6 +107,7 @@
         if (string.IsNullOrWhiteSpace(origen) || origen == _origenSeleccionado)
             return;
 
+        _ = Telemetry.TrackClickAsync("centros-salud/cambiar-origen", metadata: new { origen });
         _origenSeleccionado = origen;
         CentroSeleccionado = null;
         await CargarCentrosSalud(_origenSeleccionado);
@@ -111,6 +115,7 @@
 
     private void HandleCentroSeleccionado(CentroSaludModel centro)
     {
+        _ = Telemetry.TrackClickAsync("centros-salud/seleccionar-centro", metadata: new { centro = centro.Nombre });
         CentroSeleccionado = centro;
     }
 }

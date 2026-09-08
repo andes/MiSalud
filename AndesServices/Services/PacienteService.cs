@@ -8,25 +8,25 @@ namespace AndesServices.Services
 {
     public class PacienteService : IPaciente
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<PacienteService> _logger;
+        private readonly HttpClient _andesClient;
 
-        public PacienteService(IHttpClientFactory httpClientFactory)
+        public PacienteService(IHttpClientFactory httpClientFactory, ILogger<PacienteService> logger)
         {
-            _httpClientFactory = httpClientFactory;
+            _logger = logger;
+            _andesClient = httpClientFactory.CreateClient("Andes");;
         }
 
         public async Task<Paciente> ObtenerPacientePorIdAsync(string idPaciente, string? token = null)
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
                 if (!string.IsNullOrEmpty(token))
                 {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("JWT", token);
+                    _andesClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("JWT", token);
                 }
 
-                using (HttpResponseMessage res = await client.GetAsync($"modules/mobileApp/paciente/{idPaciente}"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync($"modules/mobileApp/paciente/{idPaciente}"))
                 {
                     res.EnsureSuccessStatusCode();
 
@@ -34,7 +34,6 @@ namespace AndesServices.Services
 
                     if (unPaciente == null)
                     {
-                        Console.WriteLine("No se encontró el paciente.");
                         return null;
                     }
 
@@ -44,7 +43,7 @@ namespace AndesServices.Services
 
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener los datos del paciente: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener los datos del paciente.");
                 return null;
             }
         }
@@ -53,14 +52,13 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
                     RequestUri = new Uri($"modules/georeferencia/georeferenciar?direccion={Uri.EscapeDataString(direccion)}", UriKind.Relative),
                 };
 
-                using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await _andesClient.SendAsync(request))
                 {
                     res.EnsureSuccessStatusCode();
 
@@ -68,7 +66,6 @@ namespace AndesServices.Services
 
                     if (unaGeoreferencia == null)
                     {
-                        Console.WriteLine("No se encontró la georeferencia del paciente.");
                         return null;
                     }
 
@@ -78,7 +75,7 @@ namespace AndesServices.Services
 
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener los datos del paciente: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener los datos del paciente.");
                 return null;
             }
         }
@@ -103,8 +100,6 @@ namespace AndesServices.Services
             
             try
             {
-                HttpClient client = _httpClientFactory.CreateClient("Andes");
-
                 // Obtener el paciente original del servidor para comparar cambios
                 Paciente pacienteOriginal = await ObtenerPacientePorIdAsync(idPaciente);
                 if (pacienteOriginal == null)
@@ -167,7 +162,7 @@ namespace AndesServices.Services
                     Content = new StringContent(JsonConvert.SerializeObject(dto), System.Text.Encoding.UTF8, "application/json")
                 };
 
-                using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await _andesClient.SendAsync(request))
                 {
                     res.EnsureSuccessStatusCode();
 
@@ -183,7 +178,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al modificar los datos del paciente: {exception.Message}");
+                _logger.LogError(exception, "Error al modificar los datos del paciente.");
                 throw;
             }
         }

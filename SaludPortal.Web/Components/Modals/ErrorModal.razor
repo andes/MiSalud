@@ -1,4 +1,7 @@
 ﻿@using SaludPortal.Web.Components.Shared
+@using SaludPortal.Web.Services
+
+@inject TelemetryService Telemetry
 
 <div>
     <div class="d-flex align-items-center mb-3">
@@ -20,5 +23,9 @@
     [Parameter] public string Titulo { get; set; } = "Error";
     [Parameter] public string Mensaje { get; set; } = "";
     
-    private async Task Close() => await ModalInstance.CloseAsync();
+    private async Task Close()
+    {
+        _ = Telemetry.TrackClickAsync("modal/error-cerrar");
+        await ModalInstance.CloseAsync();
+    }
 }

@@ -1,9 +1,13 @@
 @using Microsoft.AspNetCore.Components
+@using SaludPortal.Web.Services
+
+@inject TelemetryService Telemetry
+@inject NavigationManager Navigation
 
 <div class="page-header-with-back">
     <PageHeader Title="@Title" Subtitle="@Subtitle" />
     <div class="page-header-with-back__back">
-        <ButtonPrimaryOutlined Href="@BackHref"
+        <ButtonPrimaryOutlined OnClick="HandleBack"
                                Text="@BackText"
                                AriaLabel="@BackAriaLabel"
                                Size="sm" />
@@ -25,4 +29,11 @@
 
     [Parameter, EditorRequired]
     public string BackAriaLabel { get; set; } = string.Empty;
+
+    private void HandleBack()
+    {
+        var currentPath = new Uri(Navigation.Uri).AbsolutePath;
+        _ = Telemetry.TrackClickAsync("volver", currentPath, new { backHref = BackHref });
+        Navigation.NavigateTo(BackHref);
+    }
 }

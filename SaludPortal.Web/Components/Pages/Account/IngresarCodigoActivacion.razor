@@ -13,6 +13,7 @@
 @inject NavigationManager Nav
 @inject ValidarCodigoActivacionUseCase ValidarCodigoActivacionUseCase
 @inject ILogger<IngresarCodigoActivacion> Logger
+@inject TelemetryService Telemetry
 
 <PageTitle>Activar cuenta - Mi Salud</PageTitle>
 
@@ -119,6 +120,7 @@
 
         try
         {
+            await Telemetry.TrackClickAsync("activacion/submit", "/ingresar-codigo-activacion");
             var result = await ValidarCodigoActivacionUseCase.EjecutarAsync(_model.Email, _model.CodigoActivacion);
             if (!result.valid)
             {
@@ -150,8 +152,9 @@
         }
     }
 
-    private void GoToLogin()
+    private async Task GoToLogin()
     {
+        await Telemetry.TrackClickAsync("activacion/volver-login", "/ingresar-codigo-activacion");
         Nav.NavigateTo("/login", true);
     }
 }

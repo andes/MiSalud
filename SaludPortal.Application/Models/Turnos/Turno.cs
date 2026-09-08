@@ -9,6 +9,11 @@ public class Turno
     public Organizacion? Organizacion { get; set; }
     public DateTime FechaHora { get; set; }
     public bool EsDiaDelTurno { get; set; }
+    /// <summary>
+    /// Indica si el paciente puede ingresar a la videollamada:
+    /// día del turno o dentro de la ventana de visualización post-inicio.
+    /// </summary>
+    public bool PuedeIngresarVideollamada { get; set; }
     public int DuracionMinutos { get; set; }
     public string? Asistencia { get; set; }
     public DateTime? FechaHoraAsistencia { get; set; }

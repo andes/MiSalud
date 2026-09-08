@@ -1,5 +1,8 @@
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Services
+
+@inject TelemetryService Telemetry
 
 <div class="consentimiento-modal-overlay">
     <div class="consentimiento-modal">
@@ -55,6 +58,7 @@
 
     private async Task HandleAceptar()
     {
+        _ = Telemetry.TrackClickAsync("telesalud/aceptar-consentimiento", "/turnostelesalud");
         if (OnAceptar.HasDelegate)
         {
             await OnAceptar.InvokeAsync();
@@ -63,6 +67,7 @@
 
     private async Task HandleRechazar()
     {
+        _ = Telemetry.TrackClickAsync("telesalud/rechazar-consentimiento", "/turnostelesalud");
         if (OnRechazar.HasDelegate)
         {
             await OnRechazar.InvokeAsync();

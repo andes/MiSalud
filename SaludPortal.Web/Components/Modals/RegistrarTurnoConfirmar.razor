@@ -8,6 +8,7 @@
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject MessageService MessageService
 @inject RegistrarTurnoUseCase _registrarTurnoUseCase
+@inject TelemetryService Telemetry
 
 @inherits AuthenticatedComponentBase
 
@@ -57,7 +58,11 @@
     [Parameter] public string Paciente { get; set; }
     [Parameter] public TurnoDisponible TurnoDisponible { get; set; }
 
-    private async Task Close() => await ModalConfirmarTurno.CloseAsync();
+    private async Task Close()
+    {
+        _ = Telemetry.TrackClickAsync("turnos/confirmar-cerrar-modal");
+        await ModalConfirmarTurno.CloseAsync();
+    }
 
     private async Task ConfirmarTurno()
     {
@@ -68,6 +73,8 @@
         var pacienteId = PacienteId;
         if (string.IsNullOrEmpty(pacienteId))
             return;
+
+        _ = Telemetry.TrackClickAsync("turnos/confirmar", metadata: new { turnoId = TurnoDisponible.Id, efector = TurnoDisponible.NombreEfector });
 
         _spinnerService.Show();
         bool resultado = await _registrarTurnoUseCase.EjecutarAsync(pacienteId, TurnoDisponible);

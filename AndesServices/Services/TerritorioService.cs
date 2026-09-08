@@ -1,26 +1,25 @@
 using AndesServices.DTOs;
 using AndesServices.Entities;
 using AndesServices.Interfaces;
-using System.Net.Http;
 
 namespace AndesServices.Services
 {
     public class TerritorioService : ITerritorio
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _andesClient;
+        private readonly ILogger<TerritorioService> _logger;
 
-        public TerritorioService(IHttpClientFactory httpClientFactory)
+        public TerritorioService(IHttpClientFactory httpClientFactory, ILogger<TerritorioService> logger)
         {
-            _httpClientFactory = httpClientFactory;
+            _andesClient = httpClientFactory.CreateClient("Andes");
+            _logger = logger;
         }
 
         public async Task<List<Provincia>> ObtenerProvinciasAsync()
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
-                using (HttpResponseMessage res = await client.GetAsync("core/tm/provincias"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync("core/tm/provincias"))
                 {
                     res.EnsureSuccessStatusCode();
 
@@ -28,7 +27,7 @@ namespace AndesServices.Services
 
                     if (provinciasDto == null)
                     {
-                        Console.WriteLine("No se encontraron provincias.");
+                        _logger.LogWarning("No se encontraron provincias.");
                         return new List<Provincia>();
                     }
 
@@ -43,7 +42,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener las provincias: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener las provincias.");
                 return new List<Provincia>();
             }
         }
@@ -57,7 +56,6 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
                 var url = $"core/tm/localidades?provincia={Uri.EscapeDataString(idProvincia)}";
                 
                 if (!string.IsNullOrEmpty(nombre))
@@ -65,7 +63,7 @@ namespace AndesServices.Services
                     url += $"&nombre={Uri.EscapeDataString(nombre)}";
                 }
 
-                using (HttpResponseMessage res = await client.GetAsync(url))
+                using (HttpResponseMessage res = await _andesClient.GetAsync(url))
                 {
                     res.EnsureSuccessStatusCode();
 
@@ -73,7 +71,6 @@ namespace AndesServices.Services
 
                     if (localidadesDto == null)
                     {
-                        Console.WriteLine($"No se encontraron localidades para la provincia {idProvincia}.");
                         return new List<Localidad>();
                     }
 
@@ -87,7 +84,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener las localidades para la provincia {idProvincia}: {exception.Message}");
+                _logger.LogError(exception, $"Error al obtener las localidades para la provincia {idProvincia}.");
                 return new List<Localidad>();
             }
         }

@@ -1,27 +1,26 @@
 ﻿using AndesServices.Entities;
 using AndesServices.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 
 namespace AndesServices.Services
 {
     public class FarmaciasTurnoService : IFarmaciasTurno
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _andesClient;
+        private readonly ILogger<FarmaciasTurnoService> _logger;
 
-        public FarmaciasTurnoService(IHttpClientFactory httpClientFactory)
+        public FarmaciasTurnoService(IHttpClientFactory httpClientFactory, ILogger<FarmaciasTurnoService> logger)
         {
-            _httpClientFactory = httpClientFactory;
+            _andesClient = httpClientFactory.CreateClient("Andes-NoJWT");
+            _logger = logger;
         }
 
         public async Task<List<FarmaciasTurno>?> ObtenerFarmaciasTurnoAsync(string localidadId, string fechaDesde, string fechaHasta)
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 string url = $"modules/mobileApp/farmacias/turnos?localidad={localidadId}&desde={fechaDesde}&hasta={fechaHasta}";
 
-                using (HttpResponseMessage res = await client.GetAsync(url))
+                using (HttpResponseMessage res = await _andesClient.GetAsync(url))
                 {
                     if (res.IsSuccessStatusCode)
                     {
@@ -31,7 +30,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener las farmacias: {exception.Message}");
+                _logger.LogError(exception, $"Error al obtener las farmacias de turno para la localidad {localidadId}.");
                 return null;
             }
             return null;
@@ -41,15 +40,13 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
-                using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/farmacias/localidades"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync("modules/mobileApp/farmacias/localidades"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
                         List<Localidad>? LstLocalidades = await res.Content.ReadFromJsonAsync<List<Localidad>>();
                         if (LstLocalidades == null)
                         {
-                            Console.WriteLine("No se encontraron farmacias disponibles.");
                             return null;
                         }
 
@@ -59,7 +56,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener las localidades: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener las localidades de farmacias.");
                 return null;
             }
             return null;

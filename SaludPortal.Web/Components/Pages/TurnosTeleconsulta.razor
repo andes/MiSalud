@@ -14,6 +14,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject ObtenerTurnosDisponiblesUseCase _obtenerTurnosDisponiblesUseCase
+@inject ILogger<TurnosTeleconsulta> _logger
 
 @inherits AuthenticatedComponentBase
 
@@ -131,7 +132,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogError(ex, "Error al cargar las agendas de organizaciones para telesalud");
         }
         finally
         {

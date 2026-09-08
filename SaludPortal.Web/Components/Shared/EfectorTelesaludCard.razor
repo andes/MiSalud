@@ -1,6 +1,8 @@
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Web.Components.Icons
-@using AndesServices.Entities
+@using SaludPortal.Web.Services
+
+@inject TelemetryService Telemetry
 
 <div class="teleconsulta-efector-card">
     <div class="teleconsulta-efector-header">
@@ -31,6 +33,7 @@
 
     private async Task HandleSolicitar()
     {
+        _ = Telemetry.TrackClickAsync("telesalud/solicitar", "/turnostelesalud", new { efector = EfectorNombre });
         if (OnSolicitar.HasDelegate)
         {
             await OnSolicitar.InvokeAsync();

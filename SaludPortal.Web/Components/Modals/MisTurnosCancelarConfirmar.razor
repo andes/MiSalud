@@ -7,6 +7,7 @@
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject MessageService MessageService
 @inject CancelarTurnoUseCase _cancelarTurnoUseCase
+@inject TelemetryService Telemetry
 
 @inherits AuthenticatedComponentBase
 
@@ -69,10 +70,16 @@
     [Parameter] public string NombrePaciente { get; set; }
     [Parameter] public string ApellidoPaciente { get; set; }
 
-    private async Task Close() => await ModalCancelarConfirmarTurno.CloseAsync();
+    private async Task Close()
+    {
+        _ = Telemetry.TrackClickAsync("turnos/cancelar-cerrar-modal");
+        await ModalCancelarConfirmarTurno.CloseAsync();
+    }
 
     private async Task CancelarTurno()
     {
+        _ = Telemetry.TrackClickAsync("turnos/cancelar", metadata: new { turnoId = IdTurno, esTeleconsulta = EsTeleconsulta });
+
         _spinnerService.Show();
 
         var pacienteId = PacienteId;

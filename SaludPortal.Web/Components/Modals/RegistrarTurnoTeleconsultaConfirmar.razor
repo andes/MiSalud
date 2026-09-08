@@ -9,6 +9,8 @@
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject MessageService MessageService
 @inject SolicitarTeleconsultaUseCase SolicitarTeleconsultaUseCase
+@inject ILogger<RegistrarTurnoTeleconsultaConfirmar> _logger
+@inject TelemetryService Telemetry
 
 @inherits AuthenticatedComponentBase
 
@@ -483,7 +485,11 @@
         return $"{codigoArea}{telefono}";
     }
 
-    private async Task Close() => await ModalConfirmarTurno.CloseAsync();
+    private async Task Close()
+    {
+        _ = Telemetry.TrackClickAsync("telesalud/confirmar-cerrar-modal");
+        await ModalConfirmarTurno.CloseAsync();
+    }
 
     private async Task ConfirmarTurno()
     {
@@ -529,6 +535,8 @@
         if (string.IsNullOrEmpty(pacienteId))
             return;
 
+        _ = Telemetry.TrackClickAsync("telesalud/confirmar", metadata: new { turnoId = turnoDisponible.Id, efector = turnoDisponible.NombreEfector });
+
         _spinnerService.Show();
 
         try
@@ -563,7 +571,7 @@
         {
             _spinnerService.Hide();
             mensajeError = "Ocurrió un error al confirmar el turno. Por favor, intente nuevamente.";
-            Console.WriteLine($"Error al confirmar turno: {ex.Message}");
+            _logger.LogError(ex, "Error al confirmar turno");
         }
     }
 }

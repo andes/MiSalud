@@ -1,6 +1,7 @@
 @using Microsoft.AspNetCore.Components
 @using SaludPortal.Application.Models.CentrosDeSalud
 @inject IJSRuntime JS
+@inject ILogger<CentrosSaludMap> _logger
 
 <div class="centros-mapa-container">
 	<div id="@_mapElementId" class="map-canvas"></div>
@@ -71,7 +72,7 @@
 		}
 		catch (Exception ex)
 		{
-			Console.Error.WriteLine($"Error inicializando mapa: {ex.Message}");
+			_logger.LogError(ex, "Error inicializando el mapa de centros de salud");
 		}
 	}
 
@@ -90,7 +91,7 @@
 		}
 		catch (Exception ex)
 		{
-			Console.Error.WriteLine($"Error actualizando markers: {ex.Message}");
+			_logger.LogError(ex, "Error actualizando markers en el mapa de centros de salud");
 		}
 	}
 
@@ -108,7 +109,7 @@
 		}
 		catch (Exception ex)
 		{
-			Console.Error.WriteLine($"Error enfocando centro en mapa: {ex.Message}");
+			_logger.LogError(ex, "Error enfocando centro en mapa");
 		}
 	}
 
@@ -148,7 +149,7 @@
 		}
 		catch (Exception ex)
 		{
-			Console.Error.WriteLine($"Error mostrando dirección del paciente en mapa: {ex.Message}");
+			_logger.LogError(ex, "Error mostrando dirección del paciente en mapa");
 		}
 	}
 

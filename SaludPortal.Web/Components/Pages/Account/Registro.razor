@@ -17,6 +17,7 @@
 @inject ValidarConexionXroadssUseCase ValidarConexionXroadssUseCase
 @inject RegistrarCuentaUseCase RegistrarCuentaUseCase
 @inject AppToastService ToastService
+@inject TelemetryService Telemetry
 
 <PageTitle>Registrarse - Mi Salud</PageTitle>
 
@@ -215,6 +216,7 @@
 
         try
         {
+            await Telemetry.TrackClickAsync("registro/submit", "/registro");
             char sexo = _model.Sexo switch
             {
                 "masculino" => 'M',
@@ -251,6 +253,7 @@
 
     private async Task GoToLogin()
     {
+        await Telemetry.TrackClickAsync("registro/volver-login", "/registro");
         Nav.NavigateTo("/login", true);
     }
 }

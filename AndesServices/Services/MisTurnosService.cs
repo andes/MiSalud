@@ -1,24 +1,19 @@
 ﻿using AndesServices.DTOs.Turnos;
 using AndesServices.Entities;
 using AndesServices.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using System.Net.Http;
-using System.Net.Mime;
-using System.Reflection;
-using System.Text;
 
 namespace AndesServices.Services
 {
     public class MisTurnosService : IMisTurnos
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<MisTurnosService> _logger;
+        private readonly HttpClient _andesClient;
 
-        public MisTurnosService(IHttpClientFactory? httpClientFactory)
+        public MisTurnosService(IHttpClientFactory httpClientFactory, ILogger<MisTurnosService> logger)
         {
-            _httpClientFactory = httpClientFactory;
+            _logger = logger;
+            _andesClient = httpClientFactory.CreateClient("Andes");
         }
 
 
@@ -31,7 +26,6 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
 
                 string jsonCancelarTurno = $@"{{
                         ""agenda_id"": ""{idAgenda}"",
@@ -55,18 +49,23 @@ namespace AndesServices.Services
                     Content = new StringContent(jsonCancelarTurno, System.Text.Encoding.UTF8, "application/json")
                 };
 
-                using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await _andesClient.SendAsync(request))
                     {
                         if (res.IsSuccessStatusCode)
                         {
-                            Console.WriteLine("Turno cancelado.");
                             return true;
+                        }
+                        else
+                        {
+                            string body = await res.Content.ReadAsStringAsync();
+                            _logger.LogError("Cancelar turno fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
+                            return false;
                         }
                     }
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al cancelar el turno: {exception.Message}");
+                _logger.LogError(exception, "Error al cancelar el turno");
             }
             return false;
         }
@@ -75,29 +74,25 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
-                using (HttpResponseMessage res = await client.GetAsync("modules/mobileApp/turnos"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync("modules/mobileApp/turnos"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
-                        List<MisTurnos?> misTurnos = await res.Content.ReadFromJsonAsync<List<MisTurnos>>();
-                        if (misTurnos == null)
-                        {
-                            Console.WriteLine("No se encontraron turnos.");
-                            return null;
-                        }
-
-                        return misTurnos;
+                        return await res.Content.ReadFromJsonAsync<List<MisTurnos>>();
+                    }
+                    else
+                    {
+                        string body = await res.Content.ReadAsStringAsync();
+                        _logger.LogError("Obtener turnos fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
+                        return null;
                     }
                 }                
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener los turnos: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener los turnos");
                 return null;
             }
-            return null;
         }
 
         public Task<MisTurnos> ObtenerTurnoPorIdAsync(string idTurno)
@@ -109,8 +104,6 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
                 var body = new RegistrarTurnoRequestDto
                 {
                     IdAgenda = idAgenda,
@@ -162,18 +155,23 @@ namespace AndesServices.Services
                     Content = new StringContent(JsonConvert.SerializeObject(body), System.Text.Encoding.UTF8, "application/json")
                 };
 
-                using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await _andesClient.SendAsync(request))
                     {
                         if (res.IsSuccessStatusCode)
                         {
-                            Console.WriteLine("Turno confirmado.");
                             return true;
+                        }
+                        else
+                        {
+                            string bodyResponse = await res.Content.ReadAsStringAsync();
+                            _logger.LogError("Registrar turno fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, bodyResponse);
+                            return false;
                         }
                     }
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al registrar el turno: {exception.Message}");
+                _logger.LogError(exception, "Error al registrar el turno");
             }
             return false;
         }
@@ -182,8 +180,6 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
                 var request = new HttpRequestMessage
                 {
                     Method = HttpMethod.Patch,
@@ -203,18 +199,23 @@ namespace AndesServices.Services
                     }), System.Text.Encoding.UTF8, "application/json")
                 };
 
-                using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await _andesClient.SendAsync(request))
                     {
                         if (res.IsSuccessStatusCode)
                         {
-                            Console.WriteLine("Turno confirmado.");
                             return true;
+                        }
+                        else
+                        {
+                            string body = await res.Content.ReadAsStringAsync();
+                            _logger.LogError("Registrar turno fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
+                            return false;
                         }
                     }
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al registrar el turno: {exception.Message}");
+                _logger.LogError(exception, "Error al registrar el turno");
             }
             return false;
         }
@@ -225,8 +226,6 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
                 var userLocationJson = JsonConvert.SerializeObject(userLocation);
                 var queryParams = new Dictionary<string, string?>
                 {
@@ -244,14 +243,13 @@ namespace AndesServices.Services
                     RequestUri = new Uri(finalUrl, UriKind.Relative)
                 };
 
-                using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await _andesClient.SendAsync(request))
                 {
                     if (res.IsSuccessStatusCode)
                     {
                         List<OrganizacionAgenda?> organizacionAgendas = await res.Content.ReadFromJsonAsync<List<OrganizacionAgenda>>();
                         if (organizacionAgendas == null)
                         {
-                            Console.WriteLine("No se encontraron agendas.");
                             return null;
                         }
 
@@ -262,14 +260,19 @@ namespace AndesServices.Services
 
                         return organizacionAgendas;
                     }
+                    else
+                    {
+                        string body = await res.Content.ReadAsStringAsync();
+                        _logger.LogError("Obtener agendas fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
+                        return null;
+                    }
                 }
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener las agendas: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener las agendas");
                 return null;
             }
-            return null;
         }
 
         private async Task<List<OrganizacionAgenda>> filtrarAgendasOrganizacionesTeleConsultaAsync(List<OrganizacionAgenda> organizacionAgendas)
@@ -349,8 +352,6 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
                 var queryParams = new Dictionary<string, string?>
                 {
                     ["teleConsulta"] = esTeleConsulta.ToString().ToLower(),
@@ -363,27 +364,31 @@ namespace AndesServices.Services
                     RequestUri = new Uri(finalUrl, UriKind.Relative)
                 };
 
-                using (HttpResponseMessage res = await client.SendAsync(request))
+                using (HttpResponseMessage res = await _andesClient.SendAsync(request))
                 {
                     if (res.IsSuccessStatusCode)
                     {
                         List<ConceptoTurneable?> conceptosTurneables = await res.Content.ReadFromJsonAsync<List<ConceptoTurneable>>();
                         if (conceptosTurneables == null)
                         {
-                            Console.WriteLine("No se encontraron conceptos turneables.");
                             return null;
                         }
 
                         return conceptosTurneables;
                     }
+                    else
+                    {
+                        string body = await res.Content.ReadAsStringAsync();
+                        _logger.LogError("Obtener conceptos turneables fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
+                        return null;
+                    }
                 }
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener los conceptos turneables: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener los conceptos turneables");
                 return null;
             }
-            return null;
         }
     }
 }

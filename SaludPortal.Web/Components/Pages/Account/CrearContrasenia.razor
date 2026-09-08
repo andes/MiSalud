@@ -11,6 +11,7 @@
 @inject NavigationManager Nav
 @inject ILogger<CrearContrasenia> Logger
 @inject IJSRuntime JS
+@inject TelemetryService Telemetry
 
 <PageTitle>Crear contraseña - Mi Salud</PageTitle>
 
@@ -138,6 +139,7 @@
 
         try
         {
+            await Telemetry.TrackClickAsync("crearcontrasenia/submit", "/crear-contrasenia");
             var result = await JS.InvokeAsync<CrearContraseniaResult>("authApi.crearContrasenia", new
             {
                 email = _model.Email,
@@ -202,8 +204,9 @@
         return null;
     }
 
-    private void GoToLogin()
+    private async Task GoToLogin()
     {
+        await Telemetry.TrackClickAsync("crearcontrasenia/volver-login", "/crear-contrasenia");
         Nav.NavigateTo("/login", true);
     }
 }

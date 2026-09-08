@@ -12,6 +12,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject ObtenerHistorialTurnosUseCase _obtenerHistorialTurnosUseCase
+@inject TelemetryService Telemetry
 
 @inherits AuthenticatedComponentBase
 
@@ -50,7 +51,7 @@
 
     @foreach (var grupo in turnosAgrupados)
     {
-            var turnosPasados = grupo.Turnos.Where(t => t.FechaHora < DateTime.Now).OrderByDescending(t => t.FechaHora).ToList();
+            var turnosPasados = grupo.Turnos.OrderByDescending(t => t.FechaHora).ToList();
             
             @if (turnosPasados.Any())
         {
@@ -82,7 +83,7 @@
 
     @if (turnosSinTipo.Any())
     {
-            var turnosSinTipoPasados = turnosSinTipo.Where(t => t.FechaHora < DateTime.Now).OrderByDescending(t => t.FechaHora).ToList();
+            var turnosSinTipoPasados = turnosSinTipo.OrderByDescending(t => t.FechaHora).ToList();
             
             @if (turnosSinTipoPasados.Any())
             {
@@ -121,6 +122,8 @@
 
     private async Task HandleTurnoClick(Turno turno)
     {
+        _ = Telemetry.TrackClickAsync("turnos/detalle-historial", "/turnosHistorial", new { turnoId = turno.Id });
+
         var options = new ModalOptions()
         {
             Size = ModalSize.Automatic,

@@ -1,4 +1,8 @@
-﻿<div>
+﻿@using SaludPortal.Web.Services
+
+@inject TelemetryService Telemetry
+
+<div>
     <h2>CENTRO DE AGENDAS Y TURNOS</h2>
     <h3>
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
@@ -42,5 +46,9 @@
     [Parameter] public string FechaHoraTurno { get; set; }
     [Parameter] public string DatosConsulta { get; set; }
     [Parameter] public string Lugar { get; set; }
-     private async Task Close() => await ModalDetalleTurno.CloseAsync();
+     private async Task Close()
+     {
+         _ = Telemetry.TrackClickAsync("turnos/detalle-cerrar");
+         await ModalDetalleTurno.CloseAsync();
+     }
 }

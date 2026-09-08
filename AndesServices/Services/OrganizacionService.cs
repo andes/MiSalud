@@ -5,26 +5,27 @@ namespace AndesServices.Services
 {
     public class OrganizacionService : IOrganizacion
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<OrganizacionService> _logger;
+        private readonly HttpClient _andesClient;
 
-        public OrganizacionService(IHttpClientFactory? httpClientFactory)
+        public OrganizacionService(IHttpClientFactory httpClientFactory, ILogger<OrganizacionService> logger)
         {
-            _httpClientFactory = httpClientFactory;
+            _logger = logger;
+            _andesClient = httpClientFactory.CreateClient("Andes");
         }
         public async Task<Organizacion> ObtenerOrganizacionPorIdAsync(string id)
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
-                using (HttpResponseMessage res = await client.GetAsync($"core/tm/organizaciones/{id}"))
+                using (HttpResponseMessage res = await _andesClient.GetAsync($"core/tm/organizaciones/{id}"))
                 {
                     if (res.IsSuccessStatusCode)
                     {
                         Organizacion organizacion = await res.Content.ReadFromJsonAsync<Organizacion>();
                         if (organizacion == null)
                         {
-                            Console.WriteLine("No se encontró la organización.");
+                            string body = await res.Content.ReadAsStringAsync();
+                            _logger.LogError("Obtener organizacion por id fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
                             return null;
                         }
 
@@ -34,7 +35,7 @@ namespace AndesServices.Services
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener los turnos: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener la organizacion por id");
                 return null;
             }
             return null;

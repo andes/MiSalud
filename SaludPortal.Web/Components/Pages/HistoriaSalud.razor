@@ -16,6 +16,7 @@
 @inherits AuthenticatedComponentBase
 @inject ObtenerCategoriasHistoriaSaludUseCase _obtenerCategoriasUseCase
 @inject ObtenerPrestacionesHistoriaSaludUseCase _obtenerPrestacionesUseCase
+@inject TelemetryService Telemetry
 
 <PageTitle>Historia de salud - Mi Salud</PageTitle>
 
@@ -92,6 +93,8 @@
 
         if (string.IsNullOrWhiteSpace(expresionSnomed))
             return;
+
+        _ = Telemetry.TrackClickAsync("historiasalud/categoria", "/historiasalud", new { expresionSnomed, titulo });
 
         var cfg = new ConexionServicios();
         Configuration.GetSection("urlServicios").Bind(cfg);

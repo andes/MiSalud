@@ -17,6 +17,7 @@
 @inject IJSRuntime JS
 @inject ValidarConexionXroadssUseCase ValidarConexionXroadssUseCase
 @inject AppToastService ToastService
+@inject TelemetryService Telemetry
 
 <PageTitle>Ingresar - Mi Salud</PageTitle>
 
@@ -125,6 +126,7 @@
         _busy = true; _error = null;
         try
         {
+            await Telemetry.TrackClickAsync("login/submit", "/login");
             var result = await JS.InvokeAsync<LoginResult>("authApi.login", new
             {
                 Email = _model.Email,
@@ -156,16 +158,19 @@
 
     private async Task Register()
     {
+        await Telemetry.TrackClickAsync("login/registro", "/login");
         Nav.NavigateTo("/registro", true);
     }
 
     private async Task GoToOlvidoContrasenia()
     {
-        Nav.NavigateTo("/olvidocontrasenia");
+        await Telemetry.TrackClickAsync("login/olvido", "/login");
+        Nav.NavigateTo("/olvidocontrasenia", true);
     }
 
     private async Task GoToActivacion()
     {
+        await Telemetry.TrackClickAsync("login/activacion", "/login");
         Nav.NavigateTo("/ingresar-codigo-activacion");
     }
 }

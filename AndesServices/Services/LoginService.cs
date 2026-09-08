@@ -1,28 +1,22 @@
-﻿using AndesServices.DTOs;
-using AndesServices.DTOs.Login;
+﻿using AndesServices.DTOs.Login;
 using AndesServices.Entities;
 using AndesServices.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Text;
 
 namespace AndesServices.Services
 {
     public class LoginService : ILoginService<User>
     {
         private readonly ILogger<LoginService> _logger;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _andesClient, _xroadssClient;
         private readonly string _tokenRestablecerPassword;
 
         public LoginService(ILogger<LoginService> logger, IHttpClientFactory httpClientFactory, IConfiguration configuration) // Inject logger via constructor
         {
+            _andesClient = httpClientFactory.CreateClient("Andes-NoJWT");
+            _xroadssClient = httpClientFactory.CreateClient("ApiXroadssAndes");
             _logger = logger; // Assign the injected logger
-            _httpClientFactory = httpClientFactory;
             _tokenRestablecerPassword = configuration["TokenRestablecerPassword"] ?? string.Empty;
         }
 
@@ -36,9 +30,8 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 var userJson = new StringContent(JsonConvert.SerializeObject(user), System.Text.Encoding.UTF8, "application/json");
-                using (HttpResponseMessage res = await client.PostAsync("modules/mobileApp/login", userJson))
+                using (HttpResponseMessage res = await _andesClient.PostAsync("modules/mobileApp/login", userJson))
                 {
                     try
                     {
@@ -53,7 +46,6 @@ namespace AndesServices.Services
 
                             loginResp.user.token = loginResp.token;
 
-                            _logger.LogInformation("OK: Todo ok");
                             return loginResp.user;
                         }
                     }
@@ -81,9 +73,8 @@ namespace AndesServices.Services
 
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes-NoJWT");
                 var userJson = new StringContent(JsonConvert.SerializeObject(user), System.Text.Encoding.UTF8, "application/json");
-                using (HttpResponseMessage res = await client.PostAsync("modules/mobileApp/login", userJson))
+                using (HttpResponseMessage res = await _andesClient.PostAsync("modules/mobileApp/login", userJson))
                 {
                     if (res.IsSuccessStatusCode)
                     {
@@ -96,7 +87,6 @@ namespace AndesServices.Services
 
                         loginResp.user.token = loginResp.token;
 
-                        _logger.LogInformation("OK: Todo ok");
                         return loginResp.user;
                     }
                     else
@@ -145,23 +135,20 @@ namespace AndesServices.Services
 
         public async Task<OlvideContraseniaResponseDto?> OlvideContrasenia(OlvideContraseniaRequestDto request)
         {
-            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
-            var response = await client.PostAsJsonAsync("modules/mobileApp/olvide-password", request);
+            var response = await _andesClient.PostAsJsonAsync("modules/mobileApp/olvide-password", request);
             return await response.Content.ReadFromJsonAsync<OlvideContraseniaResponseDto>();
         }
 
         public async Task<bool> RestablecerPassword(string email)
         {
-            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
-            client.DefaultRequestHeaders.Add("Authorization", "JWT " + _tokenRestablecerPassword);
-            var response = await client.GetFromJsonAsync<RestablecerPasswordDto>($"modules/mobileApp/restablecerPassword?email={email}");
+            _andesClient.DefaultRequestHeaders.Add("Authorization", "JWT " + _tokenRestablecerPassword);
+            var response = await _andesClient.GetFromJsonAsync<RestablecerPasswordDto>($"modules/mobileApp/restablecerPassword?email={email}");
             return response != null && response.RestablecerPassword;
         }
 
         public async Task<ReestablecerPasswordResponseDto?> ReestablecerPassword(ReestablecerPasswordRequestDto request)
         {
-            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
-            var response = await client.PostAsJsonAsync("modules/mobileApp/reestablecer-password", request);
+            var response = await _andesClient.PostAsJsonAsync("modules/mobileApp/reestablecer-password", request);
             return await response.Content.ReadFromJsonAsync<ReestablecerPasswordResponseDto>();
         }
 
@@ -169,8 +156,7 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
-                using var response = await client.GetAsync("/r1/OPTIC/GOB/GOB00001/GP-RENAPER/WS_RENAPER_DOCUMENTO/00000000/M");
+                using var response = await _xroadssClient.GetAsync("/r1/OPTIC/GOB/GOB00001/GP-RENAPER/WS_RENAPER_DOCUMENTO/00000000/M");
                 return response.StatusCode == HttpStatusCode.OK;
             }
             catch (Exception ex)
@@ -182,14 +168,12 @@ namespace AndesServices.Services
 
         public async Task<VerificarUsuarioXroadssResponseDto?> VerificarUsuarioXroads(string dni, char sexo)
         {
-            var client = _httpClientFactory.CreateClient("ApiXroadssAndes");
-            return await client.GetFromJsonAsync<VerificarUsuarioXroadssResponseDto>($"/r1/OPTIC/GOB/GOB00001/GP-RENAPER/WS_RENAPER_DOCUMENTO/{dni}/{sexo.ToString().ToUpper()}");
+            return await _xroadssClient.GetFromJsonAsync<VerificarUsuarioXroadssResponseDto>($"/r1/OPTIC/GOB/GOB00001/GP-RENAPER/WS_RENAPER_DOCUMENTO/{dni}/{sexo.ToString().ToUpper()}");
         }
 
         public async Task<(RegistroResponseDto? response, string? errorMessage)> Registro(RegistroRequestDto dto)
         {
-            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
-            var response = await client.PostAsJsonAsync("modules/mobileApp/registro", dto);
+            var response = await _andesClient.PostAsJsonAsync("modules/mobileApp/registro", dto);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -204,16 +188,14 @@ namespace AndesServices.Services
 
         public async Task<ValidarCodigoActivacionResponseDto?> ValidarCodigoActivacion(ValidarCodigoActivacionRequestDto dto)
         {
-            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
-            var response = await client.PostAsJsonAsync("modules/mobileApp/login", dto);
+            var response = await _andesClient.PostAsJsonAsync("modules/mobileApp/login", dto);
 
             return await response.Content.ReadFromJsonAsync<ValidarCodigoActivacionResponseDto>();
         }
 
         public async Task<(CrearContraseniaResponseDto? response, string? errorMessage)> CrearContrasenia(CrearContraseniaRequestDto dto)
         {
-            var client = _httpClientFactory.CreateClient("Andes-NoJWT");
-            var response = await client.PostAsJsonAsync("modules/mobileApp/login", dto);
+            var response = await _andesClient.PostAsJsonAsync("modules/mobileApp/login", dto);
 
             if (!response.IsSuccessStatusCode)
             {

@@ -13,6 +13,8 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject BlazorSpinner.SpinnerService _spinnerService
 @inject ObtenerTurnosDisponiblesUseCase _obtenerTurnosDisponiblesUseCase
+@inject ILogger<TurnosNuevo> _logger
+@inject TelemetryService Telemetry
 
 @inherits AuthenticatedComponentBase
 
@@ -108,7 +110,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogError(ex, "Error al cargar las agendas de organizaciones");
         }
         finally
         {
@@ -132,6 +134,7 @@
 
     private async Task HandleTurnoSeleccionado(TurnoDisponible turno)
     {
+        _ = Telemetry.TrackClickAsync("turnos/seleccionar-horario", "/turnosnuevo", new { turnoId = turno.Id, efector = turno.NombreEfector });
         await ShowModalConfirmar(turno);
     }
 }

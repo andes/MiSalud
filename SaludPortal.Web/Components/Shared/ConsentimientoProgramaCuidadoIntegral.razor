@@ -2,6 +2,7 @@
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Services
 @inject ConsentimientoContenidoRenderer Renderer
+@inject TelemetryService Telemetry
 
 <div class="pci-modal-overlay" @onclick="HandleOverlayClick">
     <div class="pci-modal" role="dialog" aria-modal="true" aria-labelledby="pci-modal-titulo" @onclick:stopPropagation="true">
@@ -102,6 +103,7 @@
 
     private async Task HandleCerrar()
     {
+        _ = Telemetry.TrackClickAsync("programas/cuidado-integral-cerrar");
         if (OnCerrar.HasDelegate)
         {
             await OnCerrar.InvokeAsync();

@@ -4,7 +4,6 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -18,6 +17,7 @@
 
 	<ItemGroup>
 		<!--<PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />-->
+		<PackageReference Include="Npgsql" Version="9.*" />
 		<PackageReference Include="Blazored.Modal" Version="7.3.1" />
 		<PackageReference Include="BlazorSpinner" Version="3.1.1" />
 		<PackageReference Include="HtmlSanitizer" Version="9.0.892" />
@@ -30,7 +30,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\AndesServices\AndesServices.csproj" />
 		<ProjectReference Include="..\SaludPortal.Application\SaludPortal.Application.csproj" />
-		<ProjectReference Include="..\SaludPortal.ServiceDefaults\SaludPortal.ServiceDefaults.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -23,14 +23,9 @@ using SaludPortal.Application.UseCases.Laboratorios;
 using SaludPortal.Application.UseCases.GrupoFamiliar;
 using SaludPortal.Application.UseCases.Account;
 using SaludPortal.Application.UseCases.Consentimiento;
+using SaludPortal.Application;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add service defaults & Aspire client integrations.
-builder.AddServiceDefaults();
-
-// Add services to the container.
-//var docker = builder.AddDockerfile("SaludPortal.Web.Dockerfile", "relative/context/path");
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -59,6 +54,9 @@ builder.Services.AddBlazoredModal();
 builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddScoped<AppToastService>();
 builder.Services.AddScoped<UserContext>();
+builder.Services.AddScoped<ClientContextService>();
+builder.Services.AddSingleton<BrowserContextCache>();
+builder.Services.AddScoped<TelemetryService>();
 builder.Services.AddScoped<VMFarmaciasTurno>();
 builder.Services.AddSingleton<MessageService>();
 builder.Services.AddSingleton<ConsentimientoContenidoRenderer>();
@@ -178,6 +176,40 @@ builder.Services
 
 builder.Services.AddSingleton
     (sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SaludConfiguracion>>().Value);
+
+builder.Services
+    .AddOptions<TurnosConfiguracion>()
+    .BindConfiguration(TurnosConfiguracion.SectionName);
+
+builder.Services.AddSingleton
+    (sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<TurnosConfiguracion>>().Value);
+
+var adminLogsApiKey = builder.Configuration["AdminLogs:ApiKey"];
+if (!string.IsNullOrEmpty(adminLogsApiKey))
+{
+    builder.Services
+        .AddOptions<AdminIngestionOptions>()
+        .BindConfiguration(AdminIngestionOptions.SectionName);
+
+    var httpTimeoutSeconds = builder.Configuration.GetValue("AdminLogs:HttpTimeoutSeconds", 10);
+
+    builder.Services.AddHttpClient<AdminApiClient>(client =>
+    {
+        // In Development: AdminLogs:BaseUrl (e.g. https://localhost:7180).
+        // In Docker: override with AdminLogs__BaseUrl=http://admin:8080.
+        var adminUrl = builder.Configuration["AdminLogs:BaseUrl"];
+        if (string.IsNullOrWhiteSpace(adminUrl))
+            throw new InvalidOperationException(
+                "AdminLogs:BaseUrl is required when AdminLogs:ApiKey is set.");
+        client.BaseAddress = new Uri(adminUrl);
+        client.Timeout = TimeSpan.FromSeconds(Math.Max(1, httpTimeoutSeconds));
+        client.DefaultRequestHeaders.Add("X-Api-Key", adminLogsApiKey);
+    });
+
+    builder.Services.AddSingleton<AdminIngestionQueue>();
+    builder.Services.AddHostedService<AdminIngestionWorker>();
+    builder.Services.AddSingleton<ILoggerProvider, ApiLoggerProvider>();
+}
 
 var app = builder.Build();
 

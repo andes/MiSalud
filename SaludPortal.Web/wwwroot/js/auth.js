@@ -109,7 +109,7 @@ window.authApi = (function () {
                 expireCookie('MiSalud');
                 window.location.replace('/login');
             } else {
-                console.warn('Logout fallù', resp.status);
+                console.warn('Logout fall√≥', resp.status);
             }
         } catch (e) {
             console.error('Error en logout', e);

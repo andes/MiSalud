@@ -10,6 +10,7 @@
 @inject ObtenerVersionProgramaUseCase _obtenerVersionProgramaUseCase
 @inject GuardarRespuestaConsentimientoUseCase _guardarRespuestaUseCase
 @inject ILogger<MisProgramas> Logger
+@inject TelemetryService Telemetry
 
 @inherits AuthenticatedComponentBase
 
@@ -83,6 +84,8 @@
 
     private async Task HandleRevisar(ConsentimientoModel consentimiento)
     {
+        _ = Telemetry.TrackClickAsync("programas/revisar", "/mis-programas", new { programa = consentimiento.Programa });
+
         _spinnerService.Show();
         try
         {
@@ -119,6 +122,8 @@
             _consentimientoRevisar = null;
             return;
         }
+
+        _ = Telemetry.TrackClickAsync("programas/responder", "/mis-programas", new { programa = _versionRevisar.Programa, aceptado });
 
         _spinnerService.Show();
         try

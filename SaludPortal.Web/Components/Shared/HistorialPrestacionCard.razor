@@ -6,6 +6,8 @@
 @using System.Text.Json
 @using System.Linq
 
+@inject TelemetryService Telemetry
+
 <div class="prestacion-card" tabindex="0">
     <div class="prestacion-header">
         <span class="prestacion-tipo">@(Prestacion.Solicitud?.TipoPrestacion?.Term ?? "Prestación")</span>
@@ -145,6 +147,7 @@
         if (OnDownload.HasDelegate)
         {
             await OnDownload.InvokeAsync(Prestacion);
+            _ = Telemetry.TrackPrestacionPdfDownloadAsync(Prestacion.Id ?? "", Prestacion.Solicitud?.TipoPrestacion?.Term ?? "");
         }
     }
 
@@ -153,6 +156,7 @@
         if (OnViewImage.HasDelegate)
         {
             await OnViewImage.InvokeAsync(Prestacion);
+            _ = Telemetry.TrackPrestacionViewImageAsync(Prestacion.Id ?? "", Prestacion.Solicitud?.TipoPrestacion?.Term ?? "");
         }
     }
 
@@ -161,6 +165,7 @@
         if (OnCopyLink.HasDelegate)
         {
             await OnCopyLink.InvokeAsync(Prestacion);
+            _ = Telemetry.TrackPrestacionCopyLinkAsync(Prestacion.Id ?? "", Prestacion.Solicitud?.TipoPrestacion?.Term ?? "");
         }
     }
 }

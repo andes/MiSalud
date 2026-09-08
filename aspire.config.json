@@ -1,0 +1,5 @@
+{
+    "appHost": {
+        "path": "aspire\\SaludPortal.AppHost\\SaludPortal.AppHost.csproj"
+    }
+}

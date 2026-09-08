@@ -15,6 +15,7 @@
 @inject ObtenerTurnosUseCase _obtenerTurnosUseCase
 @inject ILogger<Misturnos> _logger
 @inject NavigationManager Nav
+@inject TelemetryService Telemetry
 
 @inherits AuthenticatedComponentBase
 
@@ -25,11 +26,11 @@
                         BackAriaLabel="Volver al Inicio" />
 
     <div class="misturnos-actions">
-        <a href="/turnosNuevo" class="btn btn-success">
+        <a href="/turnosNuevo" class="btn btn-success" @onclick='() => TrackClick("turnos/solicitar", "/turnosnuevo")'>
             <Icon Name="calendar-plus" Size="20" Fill="#fff" class="me-2" AriaLabel="Solicitar" />
             Solicitar turno
         </a>
-        <a href="/turnosHistorial" class="btn btn-primary">
+        <a href="/turnosHistorial" class="btn btn-primary" @onclick='() => TrackClick("turnos/historial", "/turnosHistorial")'>
             <Icon Name="clock-history" Size="20" Fill="#fff" class="me-2" AriaLabel="Historial" />
             Historial de turnos
         </a>
@@ -131,6 +132,8 @@
 
     private async Task HandleClickTelesalud()
     {
+        _ = Telemetry.TrackClickAsync("turnos/telesalud", "/misturnos");
+
         // Verificar si ya tiene un turno de telesalud futuro activo
         var turnosFuturos = turnos
             .Where(t => t.EsTeleconsulta
@@ -168,5 +171,10 @@
             // Si no tiene turno, navegar normalmente
             Nav.NavigateTo("/turnosTelesalud");
         }
+    }
+
+    private void TrackClick(string target, string route)
+    {
+        _ = Telemetry.TrackClickAsync(target, route);
     }
 }

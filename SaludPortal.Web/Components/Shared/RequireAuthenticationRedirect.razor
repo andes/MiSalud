@@ -1,0 +1,22 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is null)
+        {
+            return;
+        }
+
+        var state = await AuthStateTask;
+        if (state.User.Identity?.IsAuthenticated != true)
+        {
+            var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+            var target = string.IsNullOrWhiteSpace(returnUrl) ? "/home" : "/" + returnUrl;
+            Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(target)}", true);
+        }
+    }
+}

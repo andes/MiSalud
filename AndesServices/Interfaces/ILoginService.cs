@@ -5,6 +5,7 @@ namespace AndesServices.Interfaces
 {
     public interface ILoginService<T>
     {
+        Task<User?> Login(string email, string password);
         Task<User> Login(string email, string password, Ref<string> mensaje);
         Task<bool> Logout(string token);
         Task<bool> UpdateUser(T user);

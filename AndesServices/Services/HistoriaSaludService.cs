@@ -38,7 +38,6 @@ namespace AndesServices.Services
 
                         if (listaCategoriasHistoriaSalud == null)
                         {
-                            _logger.LogWarning("No se encontraron categorias.");
                             return null;
                         }
 

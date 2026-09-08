@@ -6,18 +6,20 @@ namespace AndesServices.Services;
 
 public class CentrosSaludService : ICentrosSalud
 {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _andesClient;
+    private readonly ILogger<CentrosSaludService> _logger;
 
-    public CentrosSaludService(IHttpClientFactory httpClientFactory)
+    public CentrosSaludService(IHttpClientFactory httpClientFactory, ILogger<CentrosSaludService> logger)
     {
-        _httpClient = httpClientFactory.CreateClient("Andes");
+        _andesClient = httpClientFactory.CreateClient("Andes");
+        _logger = logger;
     }
 
     public async Task<List<CentroSaludAraucania>> ObtenerCentrosDeSaludAraucania()
     {
         try
         {
-            using HttpResponseMessage response = await _httpClient.GetAsync("core/tm/areaAraucania");
+            using HttpResponseMessage response = await _andesClient.GetAsync("core/tm/areaAraucania");
 
             if (response.IsSuccessStatusCode)
             {
@@ -34,6 +36,7 @@ public class CentrosSaludService : ICentrosSalud
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener los centros de salud en Araucania.");
             return new List<CentroSaludAraucania>();
         }
 
@@ -44,7 +47,7 @@ public class CentrosSaludService : ICentrosSalud
     {
         try
         {
-            using HttpResponseMessage response = await _httpClient.GetAsync("core/tm/organizaciones?showMapa=false");
+            using HttpResponseMessage response = await _andesClient.GetAsync("core/tm/organizaciones?showMapa=false");
             if (response.IsSuccessStatusCode)
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
@@ -58,6 +61,7 @@ public class CentrosSaludService : ICentrosSalud
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error al obtener los centros de salud en la provincia.");
             return new List<CentroSaludProvincia>();
         }
         return new List<CentroSaludProvincia>();

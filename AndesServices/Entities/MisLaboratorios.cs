@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-namespace AndesServices.Entities
+﻿namespace AndesServices.Entities
 {
 
     public class MisLaboratoriosResponse

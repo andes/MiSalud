@@ -2,8 +2,10 @@
 @using Microsoft.JSInterop
 @using SaludPortal.Application.Models.Turnos
 @using SaludPortal.Web.Components.Icons
+@using SaludPortal.Web.Services
 
 @inject IJSRuntime JS
+@inject TelemetryService Telemetry
 
 <div class="turno-futuro-card">
     <div class="turno-futuro-header">
@@ -43,10 +45,10 @@
     </div>
     <div class="turno-futuro-footer">
         <button class="turno-futuro-link-button" @onclick="HandleJoin" @onclick:stopPropagation="true"
-                disabled="@(!(Turno?.EsDiaDelTurno ?? false))"
-                title="@((Turno?.EsDiaDelTurno ?? false) ? "Ingresar a la videollamada" : "Solo disponible el día del turno")"
+                disabled="@(!PuedeIngresar)"
+                title="@(PuedeIngresar ? "Ingresar a la videollamada" : "Solo disponible el día del turno")"
                 type="button">
-            <Icon Name="camera-video" Size="20" Fill="@((Turno?.EsDiaDelTurno ?? false) ? "#2f7d32" : "#999")" AriaLabel="Videollamada" />
+            <Icon Name="camera-video" Size="20" Fill="@(PuedeIngresar ? "#2f7d32" : "#999")" AriaLabel="Videollamada" />
             <span>Ingresar</span>
         </button>
         <button class="turno-futuro-cancel-button" @onclick="HandleCancel" @onclick:stopPropagation="true"
@@ -64,8 +66,11 @@
     [Parameter]
     public EventCallback<Turno> OnCancel { get; set; }
 
+    private bool PuedeIngresar => Turno?.PuedeIngresarVideollamada ?? false;
+
     private async Task HandleCancel()
     {
+        _ = Telemetry.TrackClickAsync("turnos/cancelar-videoconferencia", metadata: new { turnoId = Turno.Id });
         if (OnCancel.HasDelegate)
         {
             await OnCancel.InvokeAsync(Turno);
@@ -74,8 +79,12 @@
 
     private async Task HandleJoin()
     {
+        if (!PuedeIngresar)
+            return;
+
         if (!string.IsNullOrWhiteSpace(Turno?.WebexLinks?.patientLink))
         {
+            _ = Telemetry.TrackClickAsync("turnos/videollamada", metadata: new { turnoId = Turno.Id });
             await JS.InvokeVoidAsync("open", Turno.WebexLinks.patientLink, "_blank", "noopener,noreferrer");
         }
     }

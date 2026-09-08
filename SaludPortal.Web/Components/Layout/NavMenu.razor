@@ -4,6 +4,7 @@
 @using SaludPortal.Web.Components.Icons
 @using SaludPortal.Web.Services
 @inject NavigationManager Nav
+@inject TelemetryService Telemetry
 @inject IJSRuntime JS
 @inject ObtenerConsentimientosUseCase ObtenerConsentimientosUseCase
 
@@ -16,11 +17,11 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li>
-                        <a href="/mis-datos" class="dropdown-item"><Icon Name="mis-datos" Fill="#000" AriaLabel="Mis datos" /> Mis datos</a>
+                        <a href="/mis-datos" class="dropdown-item" @onclick='() => TrackClick("account/mis-datos", "/mis-datos")'><Icon Name="mis-datos" Fill="#000" AriaLabel="Mis datos" /> Mis datos</a>
                     </li>
                     <li>
                         <form action="/logout" method="post">
-                            <button type="submit" class="dropdown-item"><Icon Name="logout" Fill="#000" AriaLabel="Cerrar sesión" /> Cerrar Sesión</button>
+                            <button type="submit" class="dropdown-item" @onclick='() => TrackClick("account/logout", "/logout")'><Icon Name="logout" Fill="#000" AriaLabel="Cerrar sesión" /> Cerrar Sesión</button>
                         </form>
                     </li>
                 </ul>
@@ -33,52 +34,52 @@
     <div class="nav-scrollable">
         <nav class="nav flex-column">
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All" alt="Inicio" title="Inicio" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All" alt="Inicio" title="Inicio" @onclick='() => OnNavClick("menu/inicio", "/")'>
                     <span class="bi bi-house-door-fill"></span> Inicio
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="misvacunas" title="Mis vacunas" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="misvacunas" title="Mis vacunas" @onclick='() => OnNavClick("menu/mis-vacunas", "/misvacunas")'>
                     <span class="bi bi-syringe"></span>Mis vacunas
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="GrupoFamiliar" title="Grupo familiar" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="GrupoFamiliar" title="Grupo familiar" @onclick='() => OnNavClick("menu/grupo-familiar", "/GrupoFamiliar")'>
                     <span class="bi bi-people-group"></span> Grupo familiar
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="HistoriaSalud" title="Historia de salud" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="HistoriaSalud" title="Historia de salud" @onclick='() => OnNavClick("menu/historia-salud", "/HistoriaSalud")'>
                     <span class="bi bi-clipboard2-heart"></span> Historia de salud
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="MisLaboratorios" title="Mis laboratorios" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="MisLaboratorios" title="Mis laboratorios" @onclick='() => OnNavClick("menu/mis-laboratorios", "/MisLaboratorios")'>
                     <span class="bi bi-flask-vial"></span> Mis laboratorios
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="MisRecetas" title="Mis recetas" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="MisRecetas" title="Mis recetas" @onclick='() => OnNavClick("menu/mis-recetas", "/MisRecetas")'>
                     <span class="bi bi-file-medical"></span> Mis recetas
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="Misturnos" title="Mis turnos" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="Misturnos" title="Mis turnos" @onclick='() => OnNavClick("menu/mis-turnos", "/Misturnos")'>
                     <span class="bi bi-turnos"></span> Mis turnos
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="Farmaciasdeturno" title="Farmacias de turno" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="Farmaciasdeturno" title="Farmacias de turno" @onclick='() => OnNavClick("menu/farmacias-turno", "/Farmaciasdeturno")'>
                     <span class="bi bi-farmaciasturno"></span> Farmacias de turno
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="centros-salud" title="Centros de Salud" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="centros-salud" title="Centros de Salud" @onclick='() => OnNavClick("menu/centros-salud", "/centros-salud")'>
                     <span class="bi bi-hospital-fill"></span> Centros de Salud
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="mis-programas" title="Mis Programas" @onclick="CollapseNavMenu">
+                <NavLink class="nav-link" href="mis-programas" title="Mis Programas" @onclick='() => OnNavClick("menu/mis-programas", "/mis-programas")'>
                     <span class="bi bi-clipboard2-heart"></span> Mis Programas
                 </NavLink>
             </div>
@@ -103,29 +104,15 @@
         NombreUsuarioLogueado = Paciente.GetDisplayName(nombre, apellido, alias);
     }
 
-    private void CollapseNavMenu()
+    private void OnNavClick(string target, string route)
     {
         isNavMenuOpen = false;
+        _ = Telemetry.TrackClickAsync(target, route, new { component = "NavMenu" });
     }
 
-    private async Task OnLogout()
+    private void TrackClick(string target, string route)
     {
-        try
-        {
-            await JS.InvokeVoidAsync("authApi.logout");
-        }
-        catch
-        {
-            Nav.NavigateTo("/login", true);
-        }
-        Nav.NavigateTo("/login", true);
-    }
-
-    private class AuthStatusDto
-    {
-        public bool Authenticated { get; set; }
-        public string? Name { get; set; }
-        public Dictionary<string, string>? Claims { get; set; }
+        _ = Telemetry.TrackClickAsync(target, route, new { component = "AccountMenu" });
     }
 }
 <script src="../js/auth.js"></script>

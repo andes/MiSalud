@@ -10,6 +10,7 @@
 @inject ValidarConexionXroadssUseCase ValidarConexionXroadssUseCase
 @inject AppToastService ToastService
 @inject ILogger<Home> Logger
+@inject TelemetryService Telemetry
 
 
 <PageTitle>Inicio - Mi Salud</PageTitle>
@@ -44,6 +45,8 @@
 
     private async Task ShowModal()
     {
+        _ = Telemetry.TrackClickAsync("home/privacidad", "/home");
+
         var options = new ModalOptions()
         {
             Class = "privacidad-modal",

@@ -1,4 +1,7 @@
 @using SaludPortal.Application.UseCases.Consentimiento
+@using SaludPortal.Web.Services
+
+@inject TelemetryService Telemetry
 
 <div class="pci-modal-overlay">
     <div class="pci-modal pci-aviso-modal" role="dialog" aria-modal="true" aria-labelledby="pci-aviso-titulo" @onclick:stopPropagation="true">
@@ -30,6 +33,7 @@
 
     private async Task HandleCerrar()
     {
+        _ = Telemetry.TrackClickAsync("programas/cuidar65-entendido");
         if (OnCerrar.HasDelegate)
         {
             await OnCerrar.InvokeAsync();

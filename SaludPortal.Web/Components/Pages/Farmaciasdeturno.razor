@@ -9,6 +9,8 @@
 @using SaludPortal.Application.UseCases.Paciente
 @using SaludPortal.Web.Models
 
+@using SaludPortal.Web.Services
+@inject TelemetryService Telemetry
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ObtenerFarmaciasTurnoUseCase _obtenerFarmaciasTurnoUseCase
 @inject ObtenerLocalidadesDeFarmaciasUseCase _obtenerLocalidadesDeFarmaciasUseCase
@@ -106,6 +108,7 @@
             Nav.NavigateTo($"/login", true);
         }
 
+        _ = Telemetry.TrackClickAsync("farmacias/buscar-localidad", metadata: new { localidadId = Model.LocalidadId });
         _spinnerService.Show();
         _farmacias = await _obtenerFarmaciasTurnoUseCase.EjecutarAsync(Model.LocalidadId);
         _spinnerService.Hide();

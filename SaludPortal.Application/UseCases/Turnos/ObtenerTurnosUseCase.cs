@@ -9,10 +9,12 @@ namespace SaludPortal.Application.UseCases.Turnos;
 public class ObtenerTurnosUseCase
 {
     private readonly IMisTurnos _misTurnosService;
+    private readonly TurnosConfiguracion _turnosConfig;
 
-    public ObtenerTurnosUseCase(IMisTurnos misTurnosService)
+    public ObtenerTurnosUseCase(IMisTurnos misTurnosService, TurnosConfiguracion turnosConfig)
     {
         _misTurnosService = misTurnosService;
+        _turnosConfig = turnosConfig;
     }
 
     public async Task<List<Turno>> EjecutarAsync()
@@ -25,12 +27,25 @@ public class ObtenerTurnosUseCase
         }
 
         var ahora = DateTimeHelper.ToArgentinaTime(DateTime.UtcNow);
+        var minutosVisualizacion = Math.Max(0, _turnosConfig.MinutosVisualizacionTelemedicina);
 
         // Obtengo los turnos
         return (await _misTurnosService.ObtenerMisTurnosAsync(""))
             .Where(t => t != null)
-            .Select(t => t.MapToTurno(conceptosTeleconsulta))
-            .Where(t => t.FechaHora >= ahora || (t.VideoConferencia && t.FechaHora.AddMinutes(t.DuracionMinutos) >= ahora))
+            .Select(t =>
+            {
+                var turno = t.MapToTurno(conceptosTeleconsulta);
+                if (turno.VideoConferencia)
+                {
+                    var finVentana = turno.FechaHora.AddMinutes(minutosVisualizacion);
+                    turno.PuedeIngresarVideollamada =
+                        turno.EsDiaDelTurno
+                        || (ahora >= turno.FechaHora && ahora < finVentana);
+                }
+                return turno;
+            })
+            .Where(t => t.FechaHora >= ahora
+                || (t.VideoConferencia && t.FechaHora.AddMinutes(minutosVisualizacion) >= ahora))
             .OrderBy(t => t.FechaHora)
             .ToList();
     }

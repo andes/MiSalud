@@ -1,17 +1,17 @@
 ﻿using AndesServices.Entities;
 using AndesServices.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 
 namespace AndesServices.Services
 {
     public class MisRecetasService : IMisRecetas
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<MisRecetasService> _logger;
+        private readonly HttpClient _andesClient;
 
-        public MisRecetasService(IHttpClientFactory httpClientFactory)
+        public MisRecetasService(IHttpClientFactory httpClientFactory, ILogger<MisRecetasService> logger)
         {
-            _httpClientFactory = httpClientFactory;
+            _logger = logger;
+            _andesClient = httpClientFactory.CreateClient("Andes");
         }
 
         public Task<bool> ActualizarEstadoRecetaAsync(string recetaId, Estado nuevoEstado)
@@ -28,30 +28,27 @@ namespace AndesServices.Services
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Andes");
-
                 string estado = "sin-dispensa,dispensada,dispensa-parcial";
                 //string queryParams = "?estado=" + estado + "&dni=" + dni + "&fecNac=" + fecNac + "&apellido=" + apellido + "&fechaDde=" + fechaDde + "&fechaHta=" + fechaHta;
                 string url = $"modules/recetas?pacienteId={pacienteId}&estadoDispensa={estado}";
 
-                using (HttpResponseMessage res = await client.GetAsync(url))
+                using (HttpResponseMessage res = await _andesClient.GetAsync(url))
                 {
                     if (res.IsSuccessStatusCode)
                     {
-                        List<MisReceta?> LstMisReceta = await res.Content.ReadFromJsonAsync<List<MisReceta>>();
-                        if (LstMisReceta == null)
-                        {
-                            Console.WriteLine("No se encontraron recetas disponibles.");
-                            return null;
-                        }
-
-                        return LstMisReceta;
+                        return await res.Content.ReadFromJsonAsync<List<MisReceta>>();
+                    }
+                    else
+                    {
+                        string body = await res.Content.ReadAsStringAsync();
+                        _logger.LogError("Obtener recetas fallo HTTP {Code} {Reason} Body:{Body}", (int)res.StatusCode, res.ReasonPhrase, body);
+                        return null;
                     }
                 }
             }
             catch (Exception exception)
             {
-                Console.WriteLine($"Error al obtener las recetas: {exception.Message}");
+                _logger.LogError(exception, "Error al obtener las recetas para el paciente {PacienteId}", pacienteId);
                 return null;
             }
             return null;
