@@ -38,8 +38,15 @@ public class ConsentimientoProgramaCuidadoIntegralService : IConsentimientoProgr
             var response = await client.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
-            var consentimientos = await response.Content.ReadFromJsonAsync<List<ConsentimientoDto>>(JsonOptions, ct);
-            return consentimientos ?? [];
+            await using var stream = await response.Content.ReadAsStreamAsync(ct);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+
+            // Andes: con resultados → array; sin resultados → { encontrado: false }
+            return document.RootElement.ValueKind switch
+            {
+                JsonValueKind.Array => document.RootElement.Deserialize<List<ConsentimientoDto>>(JsonOptions) ?? [],
+                _ => []
+            };
         }
         catch (Exception ex)
         {
@@ -107,8 +114,8 @@ public class ConsentimientoProgramaCuidadoIntegralService : IConsentimientoProgr
             var response = await client.PostAsJsonAsync("core/tm/consentimiento", body, JsonOptions, ct);
             response.EnsureSuccessStatusCode();
 
-            var consentimientos = await response.Content.ReadFromJsonAsync<List<ConsentimientoDto>>(JsonOptions, ct);
-            return consentimientos?.FirstOrDefault();
+            // Andes POST responde un solo documento, no un array
+            return await response.Content.ReadFromJsonAsync<ConsentimientoDto>(JsonOptions, ct);
         }
         catch (Exception ex)
         {
